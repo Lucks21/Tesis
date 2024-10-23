@@ -13,16 +13,7 @@ try {
     $conn = new PDO("sqlsrv:Server=$serverName;Database=$database;Encrypt=Optional", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    echo "Conexión exitosa a la base de datos.<br>";
-    
-    $query = "SELECT name FROM sys.databases";
-    $stmt = $conn->query($query);
-
-    $databases = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo "Bases de datos disponibles:<br>";
-    foreach ($databases as $database) {
-        echo $database['name'] . "<br>";
-    }
+    echo "Conexión exitosa a la base de datos";
 
 } catch (PDOException $e) {
     echo "Error al conectar a la base de datos: " . $e->getMessage();
