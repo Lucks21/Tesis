@@ -2,12 +2,15 @@
 Este proyecto tiene como objetivo actualizar el sistema de bibliotecas en línea de la Universidad del Bío-Bío, conocido como WERKEN, con el propósito de mejorar la búsqueda de recursos académicos y optimizar la experiencia de usuario. Esta actualización proporcionará una plataforma más accesible y eficiente, facilitando el acceso y gestión de información académica para apoyar el aprendizaje y la investigación en la comunidad universitaria.
 ## Requisitos
 Para ejecutar este proyecto, necesitas tener instalado en tu sistema:
-- **Docker**: Sigue las instrucciones a continuación para instalarlo en Windows.
+- **Docker**: Sigue las instrucciones a continuación para instalarlo en tu sistema operativo.
 - **Acceso a Internet**: Para descargar Docker Desktop y otros recursos.
-## Instalación de Docker en Windows
-1. **Descargar Docker Desktop**: Ve a [Docker Desktop para Windows](https://desktop.docker.com/) y descarga la versión para Windows.
-2. **Instalar Docker Desktop**: Ejecuta el archivo descargado y sigue las instrucciones en pantalla.
-3. **Verificar la instalación**: Una vez instalado, abre una terminal de PowerShell y ejecuta el comando `docker --version` para confirmar que Docker está correctamente instalado.
+## Instalación de Docker
+1. **Descargar Docker Desktop**: Descargar la version de `Docker Desktop` que corresponda a tu sistema operativo: [Docker Desktop para Windows](https://docs.docker.com/desktop/install/windows-install/), [Docker Desktop para Linux](https://docs.docker.com/desktop/install/linux/) o [Docker Desktop para Mac](https://docs.docker.com/desktop/install/mac-install/).
+2. **Instalar Docker Desktop**: Sigue los pasos que correspondan para tu sistema operativo.
+3. **Verificar la instalación**: Para verificar que Docker Desktop esta correctamente instalado, abre una terminal y ejecuta el comando 
+```bash
+docker --version
+```
 ## Preparación del Proyecto
 1. **Clonar el repositorio**:
 - Abre PowerShell y navega al directorio donde deseas clonar el proyecto.
@@ -45,9 +48,12 @@ Para detener y eliminar el contenedor, usa los siguientes comandos:
 1. **Detener el Contenedor**:
 ```bash
 docker stop mi_contenedor_php
+```
 2. **Eliminar el Contenedor**:
 ```bash
 docker rm mi_contenedor_php
+```
 3. **Eliminar la Imagen**:
 ```bash
 docker rmi mi_imagen_php
+```
