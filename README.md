@@ -13,7 +13,7 @@ docker --version
 ```
 ## Preparación del Proyecto
 1. **Clonar el repositorio**:
-- Abre PowerShell y navega al directorio donde deseas clonar el proyecto.
+- Abre una terminal y navega al directorio donde deseas clonar el proyecto.
 - Clona el repositorio usando:
 ```bash
 git clone <URL_DEL_REPOSITORIO>
