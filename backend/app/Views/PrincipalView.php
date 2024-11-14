@@ -13,7 +13,7 @@
             display: flex;
             background-color: #00304E	;
             padding: 10px;
-            align-items: center; /* Centra los elementos verticalmente */
+            align-items: center; 
         }
         .navbar a {
             color: white;
