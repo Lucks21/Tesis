@@ -1,9 +1,8 @@
 <?php
 session_start();
+//Esto es para verificar si el usuario ha iniciado sesión
 
-// Verificar si el usuario ha iniciado sesión
 if (!isset($_SESSION['rut_usuario'])) {
-    // Si no hay sesión activa, redirigir al login
     header('Location: login.php');
     exit;
 }
