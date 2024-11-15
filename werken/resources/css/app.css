@@ -45,3 +45,18 @@ body {
 .dropdown:hover .dropdown-content {
     display: block;
 }
+.center-screen {
+    @apply flex items-center justify-center min-h-screen bg-gray-100;
+}
+
+.main-container {
+    @apply w-full max-w-3xl text-center bg-white shadow-lg rounded p-6;
+}
+
+.navbar {
+    @apply flex justify-center bg-blue-900 p-4 rounded mb-4;
+}
+
+.navbar-link {
+    @apply text-white mx-4;
+}

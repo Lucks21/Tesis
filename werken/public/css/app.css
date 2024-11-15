@@ -511,12 +511,19 @@ video {
 .top-0 {
   top: 0px;
 }
+.mx-4 {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
 }
 .-mt-px {
   margin-top: -1px;
+}
+.mb-4 {
+  margin-bottom: 1rem;
 }
 .ml-1 {
   margin-left: 0.25rem;
@@ -584,6 +591,11 @@ video {
 .justify-center {
   justify-content: center;
 }
+.space-x-1 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(0.25rem * var(--tw-space-x-reverse));
+  margin-left: calc(0.25rem * calc(1 - var(--tw-space-x-reverse)));
+}
 .overflow-hidden {
   overflow: hidden;
 }
@@ -622,6 +634,10 @@ video {
 .text-center {
   text-align: center;
 }
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
 .text-lg {
   font-size: 1.125rem;
   line-height: 1.75rem;
@@ -629,6 +645,9 @@ video {
 .text-sm {
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+.font-bold {
+  font-weight: 700;
 }
 .font-semibold {
   font-weight: 600;
@@ -720,6 +739,45 @@ body {
 .dropdown:hover .dropdown-content {
     display: block;
 }
+.center-screen {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  --tw-bg-opacity: 1;
+  background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+}
+
+.main-container {
+  width: 100%;
+  max-width: 48rem;
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+  padding: 1.5rem;
+  text-align: center;
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.navbar {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgb(30 58 138 / var(--tw-bg-opacity, 1));
+  padding: 1rem;
+}
+
+.navbar-link {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
 @media (min-width: 640px) {
 
   .sm\:ml-0 {
@@ -767,6 +825,7 @@ body {
     text-align: right;
   }
 }
+
 @media (min-width: 768px) {
 
   .md\:grid-cols-2 {
@@ -781,6 +840,7 @@ body {
     border-top-width: 0px;
   }
 }
+
 @media (min-width: 1024px) {
 
   .lg\:px-8 {
@@ -788,6 +848,7 @@ body {
     padding-right: 2rem;
   }
 }
+
 @media (prefers-color-scheme: dark) {
 
   .dark\:border-gray-700 {
@@ -815,3 +876,4 @@ body {
     color: rgb(255 255 255 / var(--tw-text-opacity, 1));
   }
 }
+
