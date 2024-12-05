@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BusquedaSimpleController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/existencias', [BusquedaSimpleController::class, 'index'])->name('detalle_material.index');
+Route::get('/buscar-titulo', [BusquedaSimpleController::class, 'buscarPorTitulo'])->name('buscar.titulo');
+Route::get('/buscar-autor', [BusquedaSimpleController::class, 'buscarPorAutor'])->name('buscar.autor');
+Route::get('/buscar-materia', [BusquedaSimpleController::class, 'buscarPorMateria'])->name('buscar.materia');
+
+
+
