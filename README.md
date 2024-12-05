@@ -1,5 +1,13 @@
 # Proyecto: Nueva versión del sistema WERKEN
 Este proyecto tiene como objetivo actualizar el sistema de bibliotecas en línea de la Universidad del Bío-Bío, conocido como WERKEN, con el propósito de mejorar la búsqueda de recursos académicos y optimizar la experiencia de usuario. Esta actualización proporcionará una plataforma más accesible y eficiente, facilitando el acceso y gestión de información académica para apoyar el aprendizaje y la investigación en la comunidad universitaria.
+## Tecnologías y Versiones Utilizadas
+Este proyecto utiliza las siguientes tecnologías y herramientas:
+- **Docker**: 27.3.1
+- **PHP**: 7.4.1
+- **Composer**: 2.8.1
+- **Laravel**: 8.83.28
+- **SQL Server**: Microsoft SQL Server 2017 versión 14.0.3445.2
+- **Apache**: 2.4.38 
 ## Requisitos
 Para ejecutar este proyecto, necesitas tener instalado en tu sistema:
 - **Docker**: Sigue las instrucciones a continuación para instalarlo en tu sistema operativo.

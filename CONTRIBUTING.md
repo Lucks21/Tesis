@@ -36,11 +36,7 @@ Sigue los estándares de estilo **PSR-12** para PHP. Además:
 
 Para configurar el entorno de desarrollo, sigue estos pasos:
 
-1. Asegúrate de tener instalados:
-   - Laravel (PHP 7.4).
-   - Composer.
-   - Apache.
-   - SQL Server.
+1. Consulta el archivo [README.md](./README.md) para conocer las versiones de las herramientas necesarias para configurar tu entorno.
 
 2. Clona el repositorio e instala las dependencias:
    ```bash
