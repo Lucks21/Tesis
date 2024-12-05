@@ -44,20 +44,30 @@ class BusquedaSimpleController extends Controller
         $request->validate([
             'autor' => 'required|string|max:255',
         ]);
-
+    
         $autor = $request->input('autor');
-
+    
         $resultados = Autor::where('nombre_busqueda', 'LIKE', "%{$autor}%")
-            ->get();
-
+            ->with(['titulos'])
+            ->get()
+            ->groupBy('nombre_busqueda')
+            ->map(function ($group) {
+                return [
+                    'autor' => $group->first()->nombre_busqueda,
+                    'titulos' => $group->flatMap->titulos,
+                ];
+            })
+            ->values();
+    
         if ($resultados->isEmpty()) {
             return response()->json([
                 'message' => 'No se encontraron resultados para el autor proporcionado.',
             ], 404);
         }
-
+    
         return response()->json($resultados);
     }
+    
 
     public function buscarPorMateria(Request $request)
     {
@@ -68,7 +78,16 @@ class BusquedaSimpleController extends Controller
         $materia = $request->input('materia');
 
         $resultados = Materia::where('nombre_busqueda', 'LIKE', "%{$materia}%")
-            ->get();
+            ->with(['titulos'])
+            ->get()
+            ->groupBy('nombre_busqueda')
+            ->map(function ($group) {
+                return [
+                    'materia' => $group->first()->nombre_busqueda,
+                    'titulos' => $group->flatMap->titulos,
+                ];
+            })
+            ->values();
 
         if ($resultados->isEmpty()) {
             return response()->json([
@@ -88,7 +107,16 @@ class BusquedaSimpleController extends Controller
         $editorial = $request->input('editorial');
     
         $resultados = Editorial::where('nombre_busqueda', 'LIKE', "%{$editorial}%")
-            ->get();
+            ->with(['titulos'])
+            ->get()
+            ->groupBy('nombre_busqueda')
+            ->map(function ($group) {
+                return [
+                    'editorial' => $group->first()->nombre_busqueda,
+                    'titulos' => $group->flatMap->titulos,
+                ];
+            })
+            ->values();
     
         if ($resultados->isEmpty()) {
             return response()->json([
@@ -98,6 +126,7 @@ class BusquedaSimpleController extends Controller
     
         return response()->json($resultados);
     }
+    
 
     public function buscarPorSerie(Request $request)
     {
@@ -108,7 +137,16 @@ class BusquedaSimpleController extends Controller
         $serie = $request->input('serie');
     
         $resultados = Serie::where('nombre_busqueda', 'LIKE', "%{$serie}%")
-            ->get();
+            ->with(['titulos'])
+            ->get()
+            ->groupBy('nombre_busqueda')
+            ->map(function ($group) {
+                return [
+                    'serie' => $group->first()->nombre_busqueda,
+                    'titulos' => $group->flatMap->titulos,
+                ];
+            })
+            ->values();
     
         if ($resultados->isEmpty()) {
             return response()->json([
@@ -118,5 +156,6 @@ class BusquedaSimpleController extends Controller
     
         return response()->json($resultados);
     }
+    
         
 }

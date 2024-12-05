@@ -14,4 +14,10 @@ class Autor extends Model
         'nro_control',
         'nombre_busqueda',
     ];
+    public function titulos()
+    {
+        return $this->hasMany(Titulo::class, 'nro_control', 'nro_control');
+    }
+    
 }
+
