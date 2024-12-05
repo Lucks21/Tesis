@@ -22,6 +22,5 @@ Route::get('/existencias', [BusquedaSimpleController::class, 'index'])->name('de
 Route::get('/buscar-titulo', [BusquedaSimpleController::class, 'buscarPorTitulo'])->name('buscar.titulo');
 Route::get('/buscar-autor', [BusquedaSimpleController::class, 'buscarPorAutor'])->name('buscar.autor');
 Route::get('/buscar-materia', [BusquedaSimpleController::class, 'buscarPorMateria'])->name('buscar.materia');
-
-
-
+Route::get('/buscar-editorial', [BusquedaSimpleController::class, 'buscarPorEditorial'])->name('buscar.editorial');
+Route::get('/buscar-serie', [BusquedaSimpleController::class, 'buscarPorSerie'])->name('buscar.serie');
