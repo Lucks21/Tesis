@@ -10,4 +10,8 @@ class PrincipalController extends Controller
     {
         return view('PrincipalView');
     }
+    public function showDashboard()
+    {
+        return view('dashboard');
+    }
 }

@@ -8,11 +8,13 @@ use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
-    public function showLoginForm()
+    // Mostrar el formulario de inicio de sesión
+    public function showLogin()
     {
-        return view('login');
+        return view('loginView');
     }
 
+    // Procesar el inicio de sesión
     public function login(Request $request)
     {
         // Validar el formulario de inicio de sesión
@@ -28,21 +30,23 @@ class AuthController extends Controller
         // Verificar credenciales en la base de datos
         $user = DB::table('usuario')
                     ->where('rut_usuario', $rut_usuario)
-                    ->where('rut', $password) 
+                    ->where('rut', $password)
                     ->first();
 
         if ($user) {
             // Si las credenciales son correctas, iniciar sesión
             Session::put('rut_usuario', $user->rut_usuario);
-            return response()->json(['success' => true]); // Respuesta JSON para éxito
+            return redirect()->route('dashboard'); 
         } else {
-            return response()->json(['success' => false, 'message' => 'RUT o contraseña incorrectos.']);
+            // Si las credenciales son incorrectas, redirigir de vuelta con error
+            return back()->withErrors(['login_error' => 'RUT o contraseña incorrectos.'])->withInput();
         }
     }
 
+    // Cerrar sesión
     public function logout(Request $request)
     {
         Session::flush();
-        return redirect('/principal');
+        return redirect()->route('login'); // Redirige al formulario de inicio de sesión
     }
 }
