@@ -31,7 +31,7 @@ git clone <URL_DEL_REPOSITORIO>
 ```
 - Ingresa al directorio del proyecto:
 ```bash
-cd .\NOMBRE_DEL_DIRECTORIO\werken\
+cd <NOMBRE_DEL_DIRECTORIO>
 ```
 2. **Crear el archivo .env**:
 - Crea una copia del archivo de configuración .env a partir de .env.example
@@ -48,7 +48,7 @@ DB_DATABASE=nombre_bd      # Nombre de tu base de datos
 DB_USERNAME=usuario        # Usuario de la base de datos
 DB_PASSWORD=contraseña     # Contraseña de la base de datos
 ```
-4. **Verificar el Dockerfile**:
+2. **Verificar el Dockerfile**:
 - Asegúrate de que el archivo `Dockerfile` está en el directorio raíz del proyecto. Este archivo contiene todas las instrucciones necesarias para construir la imagen Docker.
 ## Construcción de la Imagen Docker
 1. **Construir la imagen Docker**:
@@ -90,4 +90,58 @@ docker rmi mi_imagen_php
 - Cambia el puerto al ejecuta el contenedor:
 ```bash
 docker run -d -p 9090:80 --name mi_contenedor mi_imagen
+```
+## Instalacion manual
+1. ***PHP 7.4.1**
+```bash
+sudo apt update
+sudo apt install -y php7.4 php7.4-cli php7.4-mbstring php7.4-xml php7.4-zip php7.4-curl php7.4-mysql php7.4-gd php7.4-intl php7.4-bcmath
+```
+2. **Composer 2.8.1**
+```bash
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --version=2.8.1
+sudo mv composer.phar /usr/local/bin/composer
+```
+3. **Laravel 8.83.28**
+```bash
+composer install
+```
+- Generar clave de la aplicacion:
+```bash
+php artisan key:generate
+```
+4. **SQL Server 2017**
+```bash
+sudo apt update
+sudo apt install -y mssql-server
+```
+- Instalar las herramientas de línea de comandos de SQL Server:
+```bash
+sudo apt install -y mssql-tools unixodbc-dev
+echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+source ~/.bashrc
+```
+5. **Apache 2.4.38**
+```bash
+sudo apt update
+sudo apt install -y apache2=2.4.38-3ubuntu2
+```
+6. **Node.js 20.18.0 y npm 10.8.2**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+- Actualizar npm a 10.8.2:
+```bash
+npm install -g npm@10.8.2
+```
+7. **Iniciar el proyecto**
+- Arrancar el servidor de Laravel:
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+- Acceder a la Aplicación:
+```bash
+http://<IP_DEL_SERVIDOR>:8000
 ```
