@@ -7,15 +7,18 @@ Este proyecto utiliza las siguientes tecnologías y herramientas:
 - **Composer**: 2.8.1
 - **Laravel**: 8.83.28
 - **SQL Server**: Microsoft SQL Server 2017 versión 14.0.3445.2
-- **Apache**: 2.4.38 
+- **Apache**: 2.4.38
+- **Node.js**: 20.18.0
+- **Npm**: 10.8.2
 ## Requisitos
 Para ejecutar este proyecto, necesitas tener instalado en tu sistema:
 - **Docker**: Sigue las instrucciones a continuación para instalarlo en tu sistema operativo.
 - **Acceso a Internet**: Para descargar Docker Desktop y otros recursos.
 ## Instalación de Docker
 1. **Descargar Docker Desktop**: Descargar la version de `Docker Desktop` que corresponda a tu sistema operativo: [Docker Desktop para Windows](https://docs.docker.com/desktop/install/windows-install/), [Docker Desktop para Linux](https://docs.docker.com/desktop/install/linux/) o [Docker Desktop para Mac](https://docs.docker.com/desktop/install/mac-install/).
-2. **Instalar Docker Desktop**: Sigue los pasos que correspondan para tu sistema operativo.
-3. **Verificar la instalación**: Para verificar que Docker Desktop esta correctamente instalado, abre una terminal y ejecuta el comando 
+2. **Node.js**: sigue los pasos que correspondan para tu sistema operativo [Instalar Node.js](https://nodejs.org/).
+3. **Instalar Docker Desktop**: Sigue los pasos que correspondan para tu sistema operativo.
+4. **Verificar la instalación**: Para verificar que Docker Desktop esta correctamente instalado, abre una terminal y ejecuta el comando 
 ```bash
 docker --version
 ```
@@ -29,6 +32,21 @@ git clone <URL_DEL_REPOSITORIO>
 - Ingresa al directorio del proyecto:
 ```bash
 cd <NOMBRE_DEL_DIRECTORIO>
+```
+2. **Crear el archivo .env**:
+- Crea una copia del archivo de configuración .env a partir de .env.example
+```bash
+cp .env.example .env
+```
+3. **Configurar el archivo .env**:
+- Edita el archivo .env con los datos correctos de la base de datos y otros ajustes
+```dotenv
+DB_CONNECTION=sqlsrv
+DB_HOST=127.0.0.1          # O el host donde está tu base de datos
+DB_PORT=1433               # Puerto por defecto de SQL Server
+DB_DATABASE=nombre_bd      # Nombre de tu base de datos
+DB_USERNAME=usuario        # Usuario de la base de datos
+DB_PASSWORD=contraseña     # Contraseña de la base de datos
 ```
 2. **Verificar el Dockerfile**:
 - Asegúrate de que el archivo `Dockerfile` está en el directorio raíz del proyecto. Este archivo contiene todas las instrucciones necesarias para construir la imagen Docker.
@@ -64,4 +82,12 @@ docker rm mi_contenedor_php
 3. **Eliminar la Imagen**:
 ```bash
 docker rmi mi_imagen_php
+```
+## Problemas comunes y soluciones:
+1. **Docker no encuentra el Dockerfile**:
+- Asegúrate de estar en el directorio raíz del proyecto al ejecutar el docker build.
+2. **Puerto en uso**:
+- Cambia el puerto al ejecuta el contenedor:
+```bash
+docker run -d -p 9090:80 --name mi_contenedor mi_imagen
 ```
