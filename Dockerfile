@@ -1,5 +1,5 @@
 # Imagen base de PHP con Apache en Debian Bullseye
-FROM php:7.4.1-apache-buster
+FROM php:7.4.33-apache-bullseye
 
 # Instalar dependencias del sistema con versiones específicas
 RUN apt update && apt install -y \
@@ -9,8 +9,6 @@ RUN apt update && apt install -y \
     gnupg \
     unixodbc \
     unixodbc-dev \
-    nodejs=20.18.0~dfsg-1~deb10u1 \
-    npm=10.8.2~dfsg-1~deb10u1
 
 # Configurar e instalar el soporte ODBC en PHP para SQL Server
 RUN docker-php-ext-configure pdo_odbc --with-pdo-odbc=unixODBC,/usr \
