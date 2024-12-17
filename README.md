@@ -48,7 +48,7 @@ DB_DATABASE=nombre_bd      # Nombre de tu base de datos
 DB_USERNAME=usuario        # Usuario de la base de datos
 DB_PASSWORD=contraseña     # Contraseña de la base de datos
 ```
-2. **Verificar el Dockerfile**:
+4. **Verificar el Dockerfile**:
 - Asegúrate de que el archivo `Dockerfile` está en el directorio raíz del proyecto. Este archivo contiene todas las instrucciones necesarias para construir la imagen Docker.
 ## Construcción de la Imagen Docker
 1. **Construir la imagen Docker**:
