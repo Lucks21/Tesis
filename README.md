@@ -31,7 +31,7 @@ git clone <URL_DEL_REPOSITORIO>
 ```
 - Ingresa al directorio del proyecto:
 ```bash
-cd <NOMBRE_DEL_DIRECTORIO>
+cd .\NOMBRE_DEL_DIRECTORIO\werken\
 ```
 2. **Crear el archivo .env**:
 - Crea una copia del archivo de configuración .env a partir de .env.example
