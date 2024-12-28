@@ -1,7 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BusquedaSimpleController;
-
+use App\Http\Controllers\BusquedaAvanzadaController;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\AuthController;
 
@@ -18,3 +18,5 @@ Route::get('/buscar-autor', [BusquedaSimpleController::class, 'buscarPorAutor'])
 Route::get('/buscar-materia', [BusquedaSimpleController::class, 'buscarPorMateria'])->name('buscar.materia');
 Route::get('/buscar-editorial', [BusquedaSimpleController::class, 'buscarPorEditorial'])->name('buscar.editorial');
 Route::get('/buscar-serie', [BusquedaSimpleController::class, 'buscarPorSerie'])->name('buscar.serie');
+
+Route::get('/busqueda-avanzada', [BusquedaAvanzadaController::class, 'buscar'])->name('busqueda-avanzada');
