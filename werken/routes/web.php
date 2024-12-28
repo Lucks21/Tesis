@@ -19,4 +19,5 @@ Route::get('/buscar-materia', [BusquedaSimpleController::class, 'buscarPorMateri
 Route::get('/buscar-editorial', [BusquedaSimpleController::class, 'buscarPorEditorial'])->name('buscar.editorial');
 Route::get('/buscar-serie', [BusquedaSimpleController::class, 'buscarPorSerie'])->name('buscar.serie');
 
-Route::get('/busqueda-avanzada', [BusquedaAvanzadaController::class, 'buscar'])->name('busqueda-avanzada');
+Route::get('/busqueda-avanzada', function () {return view('BusquedaAvanzada');})->name('busqueda-avanzada');
+Route::get('/busqueda-avanzada/resultados', [BusquedaAvanzadaController::class, 'buscar'])->name('busqueda-avanzada-resultados');

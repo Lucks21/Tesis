@@ -14,24 +14,18 @@ class BusquedaAvanzadaController extends Controller
             'autor' => 'nullable|string|max:255',
             'titulo' => 'nullable|string|max:255',
         ]);
-
-        //obtencion
         $autor = $request->input('autor');
         $titulo = $request->input('titulo');
 
-        //consulta
-        $query = DetalleMaterial::query();
-
-        if ($autor) {
-            $query->where('DSM_AUTOR_EDITOR', 'LIKE', "%$autor%");
-        }
-
-        if ($titulo) {
-            $query->where('DSM_TITULO', 'LIKE', "%$titulo%");
-        }
-
-        // Ordenamiento
-        $resultados = $query->select(
+        //obtencion
+        $resultados = DetalleMaterial::query()
+        ->when($autor, function ($query, $autor) {
+            return $query->where('DSM_AUTOR_EDITOR', 'LIKE', "%$autor%");
+        })
+        ->when($titulo, function ($query, $titulo) {
+            return $query->where('DSM_TITULO', 'LIKE', "%$titulo%");
+        })
+        ->select(
             'DSM_TITULO AS Titulo',
             'DSM_AUTOR_EDITOR AS Autor',
             'DSM_EDITORIAL AS Editorial',
@@ -39,16 +33,10 @@ class BusquedaAvanzadaController extends Controller
             'DSM_ISBN_ISSN AS ISBN_ISSN'
         )
         ->orderBy('DSM_TITULO', 'ASC')
-        ->get();
+        ->paginate(25);
 
-        //resultados como JSON
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para los criterios proporcionados.',
-            ], 404);
-        }
-
-        return response()->json($resultados);
+        //resultados 
+        return view('BusquedaAvanzadaResultados', compact('resultados', 'autor', 'titulo'));
     }
 }
 
