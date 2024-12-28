@@ -27,6 +27,9 @@
                 </a>
             </div>
         </div>
+        
+        <!-- Incluir la funcionalidad de búsqueda -->
+        @include('BusquedaView')
     </div>
 
 </body>

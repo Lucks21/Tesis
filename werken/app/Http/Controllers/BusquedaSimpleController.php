@@ -15,7 +15,7 @@ class BusquedaSimpleController extends Controller
 {
     public function index()
     {
-        $registros = DetalleMaterial::limit(30)->get();
+        $registros = DetalleMaterial::limit(30)->paginate(10);;
 
         return response()->json($registros);
     }
@@ -26,9 +26,14 @@ class BusquedaSimpleController extends Controller
         ]);
     
         $titulo = $request->input('titulo');
+        $palabras = explode(' ', $titulo);
     
-        $resultados = Titulo::where('nombre_busqueda', 'LIKE', "%{$titulo}%")
-            ->get();
+        $resultados = Titulo::where(function ($query) use ($palabras) {
+            foreach ($palabras as $palabra) {
+                $query->orWhere('nombre_busqueda', 'LIKE', "%{$palabra}%");
+            }
+        })->paginate(10);
+    
     
         if ($resultados->isEmpty()) {
             return response()->json([
@@ -46,18 +51,15 @@ class BusquedaSimpleController extends Controller
         ]);
     
         $autor = $request->input('autor');
+
+        $palabras = explode(' ', $autor);
     
-        $resultados = Autor::where('nombre_busqueda', 'LIKE', "%{$autor}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'autor' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
+        $resultados = Autor::where(function ($query) use ($palabras) {
+            foreach ($palabras as $palabra) {
+                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
+            }
+        })->with('titulos')->paginate(10);
+            
     
         if ($resultados->isEmpty()) {
             return response()->json([
@@ -76,19 +78,15 @@ class BusquedaSimpleController extends Controller
         ]);
 
         $materia = $request->input('materia');
+        $palabras = explode(' ', $materia);
 
-        $resultados = Materia::where('nombre_busqueda', 'LIKE', "%{$materia}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'materia' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
-
+        $resultados = Materia::where(function ($query) use ($palabras) {
+            foreach ($palabras as $palabra) {
+                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
+            }
+        })->with('titulos')->paginate(10);
+        
+        
         if ($resultados->isEmpty()) {
             return response()->json([
                 'message' => 'No se encontraron resultados para la materia proporcionada.',
@@ -105,18 +103,13 @@ class BusquedaSimpleController extends Controller
         ]);
     
         $editorial = $request->input('editorial');
+        $palabras = explode(' ', $editorial);
     
-        $resultados = Editorial::where('nombre_busqueda', 'LIKE', "%{$editorial}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'editorial' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
+        $resultados = Serie::where(function ($query) use ($palabras) {
+            foreach ($palabras as $palabra) {
+                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
+            }
+        })->with('titulos')->paginate(10);
     
         if ($resultados->isEmpty()) {
             return response()->json([
@@ -135,18 +128,13 @@ class BusquedaSimpleController extends Controller
         ]);
     
         $serie = $request->input('serie');
+        $palabras = explode(' ', $serie);
     
-        $resultados = Serie::where('nombre_busqueda', 'LIKE', "%{$serie}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'serie' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
+        $resultados = Serie::where(function ($query) use ($palabras) {
+            foreach ($palabras as $palabra) {
+                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
+            }
+        })->with('titulos')->paginate(10);
     
         if ($resultados->isEmpty()) {
             return response()->json([
