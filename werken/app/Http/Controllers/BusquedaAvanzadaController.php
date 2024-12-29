@@ -40,12 +40,17 @@ class BusquedaAvanzadaController extends Controller
 
         // Consulta con paginación
         $resultados = $modelo::where('nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
+            ->whereHas('titulos', function ($query) use ($titulo) {
+                if ($titulo) {
+                    $query->where('nombre_busqueda', 'LIKE', "%{$titulo}%");
+                }
+            })
             ->with(['titulos' => function ($query) use ($titulo) {
                 if ($titulo) {
                     $query->where('nombre_busqueda', 'LIKE', "%{$titulo}%");
                 }
             }])
-            ->paginate(10); // Paginación de 10 resultados por página
+            ->paginate(10);
 
         if ($resultados->isEmpty()) {
             return response()->json([
