@@ -17,41 +17,53 @@ class BusquedaAvanzadaController extends Controller
             'criterio' => 'required|string|in:autor,materia,serie,editorial',
             'valor_criterio' => 'nullable|string|max:255',
             'titulo' => 'nullable|string|max:255',
-            'orden' => 'nullable|string|in:asc,desc', // Validar el orden ascendente o descendente
+            'orden' => 'nullable|string|in:ascendente,descendente',
         ]);
     
         $criterio = $request->input('criterio');
         $valorCriterio = $request->input('valor_criterio');
+        $orden = $request->input('orden', 'ascendente');
         $titulo = $request->input('titulo');
-        $orden = $request->input('orden', 'asc'); // Orden predeterminado: ascendente
     
-        // Construir la consulta base
-        $query = DetalleMaterial::query()
-            ->select(
-                'DSM_TITULO AS Titulo',
-                'DSM_AUTOR_EDITOR AS Autor',
-                'DSM_EDITORIAL AS Editorial',
-                'DSM_PUBLICACION AS Año_Publicacion'
-            );
+        if ($criterio === 'autor') {
+            $query = DetalleMaterial::query()
+                ->select('DSM_AUTOR_EDITOR as autor')
+                ->distinct();
     
-        // Aplicar filtros
-        if ($valorCriterio) {
-            $query->where('DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%");
+            // Si hay un valor de criterio, filtrar
+            if (!empty($valorCriterio)) {
+                $query->where('DSM_AUTOR_EDITOR', 'LIKE', '%' . $valorCriterio . '%');
+            }
+    
+            // Ordenar resultados
+            $query->orderBy('DSM_AUTOR_EDITOR', $orden === 'ascendente' ? 'asc' : 'desc');
+    
+            $resultados = $query->paginate(10);
+    
+            return view('BusquedaAvanzadaResultados', [
+                'resultados' => $resultados,
+                'criterio' => $criterio,
+                'valorCriterio' => $valorCriterio,
+                'titulo' => $titulo,
+                'orden' => $orden,
+            ]);
         }
     
-        if ($titulo) {
-            $query->where('DSM_TITULO', 'LIKE', "%{$titulo}%");
-        }
-    
-        // Aplicar el orden en el título
-        $query->orderBy('DSM_TITULO', $orden);
-    
-        // Paginación
-        $resultados = $query->paginate(10);
-    
-        return view('BusquedaAvanzadaResultados', compact(
-            'resultados', 'criterio', 'valorCriterio', 'titulo', 'orden'
-        ));
+        // Si no es autor, manejar otros casos como materia, serie, editorial
+        return back()->withErrors(['message' => 'Criterio no válido o no implementado.']);
     }
+    
+
+    public function mostrarTitulosPorAutor($autor)
+    {
+        // Decodificar el nombre del autor si fue codificado en el enlace
+        $autor = urldecode($autor);
+    
+        // Obtener los títulos relacionados con el autor
+        $titulos = DetalleMaterial::where('DSM_AUTOR_EDITOR', $autor)->pluck('DSM_TITULO');
+    
+        return view('TitulosPorAutor', compact('autor', 'titulos'));
+    }
+    
     
 }
