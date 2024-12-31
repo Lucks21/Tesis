@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Títulos de {{ $autor }}</title>
+    <title>Títulos por Autor</title>
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 </head>
-<body>
-    <div class="container mx-auto">
-        <h1 class="text-2xl font-bold mb-4">Títulos de {{ $autor }}</h1>
+<body class="bg-gray-100 p-6">
+<div class="container mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Títulos de {{ $autor }}</h1>
 
-        @if($titulos->isEmpty())
-            <p class="text-red-500">No se encontraron títulos para este autor.</p>
-        @else
-            <ul class="list-disc pl-6">
-                @foreach ($titulos as $titulo)
-                    <li>{{ $titulo }}</li>
-                @endforeach
-            </ul>
-        @endif
-        <a href="{{ route('busqueda-avanzada') }}" 
-        class="mt-4 inline-block text-blue-500 hover:underline">Volver al formulario</a>
-    </div>
+    @if(isset($titulo) && $titulo)
+        <p>Mostrando resultados que contienen: <strong>{{ $titulo }}</strong></p>
+    @endif
+
+    @if($titulos->isEmpty())
+        <p class="text-red-500">No se encontraron títulos para el autor con los filtros aplicados.</p>
+    @else
+        <ul class="list-disc list-inside">
+            @foreach($titulos as $titulo)
+                <li>{{ $titulo->DSM_TITULO }}</li>
+            @endforeach
+        </ul>
+    @endif
+
+    <a href="{{ route('busqueda-avanzada') }}" class="mt-4 inline-block text-blue-500 hover:underline">Volver al formulario</a>
+</div>
 </body>
 </html>
