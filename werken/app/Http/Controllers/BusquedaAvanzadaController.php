@@ -17,47 +17,41 @@ class BusquedaAvanzadaController extends Controller
             'criterio' => 'required|string|in:autor,materia,serie,editorial',
             'valor_criterio' => 'nullable|string|max:255',
             'titulo' => 'nullable|string|max:255',
+            'orden' => 'nullable|string|in:asc,desc', // Validar el orden ascendente o descendente
         ]);
-
+    
         $criterio = $request->input('criterio');
         $valorCriterio = $request->input('valor_criterio');
         $titulo = $request->input('titulo');
-
-        $modelos = [
-            'autor' => Autor::class,
-            'materia' => Materia::class,
-            'serie' => Serie::class,
-            'editorial' => Editorial::class,
-        ];
-
-        if (!isset($modelos[$criterio])) {
-            return response()->json([
-                'message' => 'El criterio de búsqueda no es válido.',
-            ], 400);
+        $orden = $request->input('orden', 'asc'); // Orden predeterminado: ascendente
+    
+        // Construir la consulta base
+        $query = DetalleMaterial::query()
+            ->select(
+                'DSM_TITULO AS Titulo',
+                'DSM_AUTOR_EDITOR AS Autor',
+                'DSM_EDITORIAL AS Editorial',
+                'DSM_PUBLICACION AS Año_Publicacion'
+            );
+    
+        // Aplicar filtros
+        if ($valorCriterio) {
+            $query->where('DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%");
         }
-
-        $modelo = $modelos[$criterio];
-
-        // Consulta con paginación
-        $resultados = $modelo::where('nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-            ->whereHas('titulos', function ($query) use ($titulo) {
-                if ($titulo) {
-                    $query->where('nombre_busqueda', 'LIKE', "%{$titulo}%");
-                }
-            })
-            ->with(['titulos' => function ($query) use ($titulo) {
-                if ($titulo) {
-                    $query->where('nombre_busqueda', 'LIKE', "%{$titulo}%");
-                }
-            }])
-            ->paginate(10);
-
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para los criterios proporcionados.',
-            ], 404);
+    
+        if ($titulo) {
+            $query->where('DSM_TITULO', 'LIKE', "%{$titulo}%");
         }
-
-        return view('BusquedaAvanzadaResultados', compact('resultados', 'criterio', 'valorCriterio', 'titulo'));
+    
+        // Aplicar el orden en el título
+        $query->orderBy('DSM_TITULO', $orden);
+    
+        // Paginación
+        $resultados = $query->paginate(10);
+    
+        return view('BusquedaAvanzadaResultados', compact(
+            'resultados', 'criterio', 'valorCriterio', 'titulo', 'orden'
+        ));
     }
+    
 }
