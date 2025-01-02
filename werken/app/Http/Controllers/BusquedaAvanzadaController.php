@@ -14,24 +14,28 @@ class BusquedaAvanzadaController extends Controller
         $valorCriterio = $request->input('valor_criterio');
         $titulo = $request->input('titulo');
         $orden = $request->input('orden', 'asc');
-
-        $autoresQuery = DB::table('DETALLE_MATERIAL')
-            ->select('DSM_AUTOR_EDITOR as autor')
-            ->distinct();
-
+    
+        $query = DB::table('DETALLE_MATERIAL')->distinct();
+    
         if ($criterio === 'autor' && $valorCriterio) {
-            $autoresQuery->where('DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%");
+            $query->select('DSM_AUTOR_EDITOR as autor')
+                  ->where('DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%")
+                  ->orderBy('DSM_AUTOR_EDITOR', $orden);
+        } elseif ($criterio === 'editorial' && $valorCriterio) {
+            $query->select('DSM_EDITORIAL as editorial')
+                  ->where('DSM_EDITORIAL', 'LIKE', "%{$valorCriterio}%")
+                  ->orderBy('DSM_EDITORIAL', $orden);
         }
-
+    
         if ($titulo) {
-            $autoresQuery->where('DSM_TITULO', 'LIKE', "%{$titulo}%");
+            $query->where('DSM_TITULO', 'LIKE', "%{$titulo}%");
         }
-
-        $autoresQuery->orderBy('DSM_AUTOR_EDITOR', $orden);
-        $autores = $autoresQuery->get();
-
-        return view('BusquedaAvanzadaResultados', compact('autores', 'criterio', 'valorCriterio', 'titulo', 'orden'));
+    
+        $resultados = $query->get();
+    
+        return view('BusquedaAvanzadaResultados', compact('resultados', 'criterio', 'valorCriterio', 'titulo', 'orden'));
     }
+    
 
     public function mostrarTitulosPorAutor($autor, Request $request)
     {
@@ -48,5 +52,21 @@ class BusquedaAvanzadaController extends Controller
         $titulos = $query->get();
 
         return view('TitulosPorAutor', compact('autor', 'titulos', 'titulo'));
+    }
+    public function mostrarTitulosPorEditorial($editorial, Request $request)
+    {
+        $titulo = $request->input('titulo');
+
+        $query = DetalleMaterial::query()
+            ->select('DSM_TITULO')
+            ->where('DSM_EDITORIAL', '=', urldecode($editorial));
+
+        if ($titulo) {
+            $query->where('DSM_TITULO', 'LIKE', '%' . $titulo . '%');
+        }
+
+        $titulos = $query->get();
+
+        return view('TitulosPorEditorial', compact('editorial', 'titulos', 'titulo'));
     }
 }
