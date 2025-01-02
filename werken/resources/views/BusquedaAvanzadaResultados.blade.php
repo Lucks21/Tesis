@@ -54,6 +54,13 @@
                             {{ $resultado->materia }}
                         </a>
                     </li>
+                @elseif(request('criterio') === 'serie')
+                    <li>
+                        <a href="{{ route('mostrar-titulos-por-serie', ['serie' => urlencode($resultado->serie), 'titulo' => request('titulo')]) }}"
+                           class="text-blue-500 hover:underline">
+                            {{ $resultado->serie }}
+                        </a>
+                    </li>
                 @endif
             @endforeach
         </ul>
