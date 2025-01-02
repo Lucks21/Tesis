@@ -47,6 +47,13 @@
                             {{ $resultado->editorial }}
                         </a>
                     </li>
+                @elseif(request('criterio') === 'materia')
+                    <li>
+                        <a href="{{ route('mostrar-titulos-por-materia', ['materia' => urlencode($resultado->materia), 'titulo' => request('titulo')]) }}"
+                           class="text-blue-500 hover:underline">
+                            {{ $resultado->materia }}
+                        </a>
+                    </li>
                 @endif
             @endforeach
         </ul>
