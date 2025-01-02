@@ -44,106 +44,53 @@ class BusquedaSimpleController extends Controller
         return response()->json($resultados);
     }
     
-    public function buscarPorAutor(Request $request)
+    public function buscar(Request $request)
     {
         $request->validate([
-            'autor' => 'required|string|max:255',
+            'criterio' => 'required|string|in:autor,editorial,serie,materia',
+            'busqueda' => 'required|string|max:255',
         ]);
     
-        $autor = $request->input('autor');
-
-        $palabras = explode(' ', $autor);
+        $criterio = $request->input('criterio');
+        $busqueda = $request->input('busqueda');
+        $palabras = explode(' ', $busqueda);
     
-        $resultados = Autor::where(function ($query) use ($palabras) {
+        $modelos = [
+            'autor' => Autor::class,
+            'editorial' => Editorial::class,
+            'serie' => Serie::class,
+            'materia' => Materia::class,
+        ];
+    
+        $modelo = $modelos[$criterio];
+    
+        $resultados = $modelo::where(function ($query) use ($palabras) {
             foreach ($palabras as $palabra) {
                 $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
-        })->with('titulos')->paginate(10);
-            
+        })->with('titulos')->get();
     
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para el autor proporcionado.',
-            ], 404);
-        }
+        $agrupados = $resultados->groupBy('nombre_busqueda')->map(function ($group) {
+            return [
+                'nombre' => $group->first()->nombre_busqueda,
+                'titulos' => $group->flatMap->titulos->map(function ($titulo) {
+                    return $titulo->nombre_busqueda;
+                }),
+            ];
+        })->values();
     
-        return response()->json($resultados);
-    }
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        $total = $agrupados->count();
+        $paginados = $agrupados->slice(($pagina - 1) * $porPagina, $porPagina)->values();
     
-
-    public function buscarPorMateria(Request $request)
-    {
-        $request->validate([
-            'materia' => 'required|string|max:255',
+        return response()->json([
+            'current_page' => $pagina,
+            'per_page' => $porPagina,
+            'total' => $total,
+            'last_page' => ceil($total / $porPagina),
+            'data' => $paginados,
         ]);
-
-        $materia = $request->input('materia');
-        $palabras = explode(' ', $materia);
-
-        $resultados = Materia::where(function ($query) use ($palabras) {
-            foreach ($palabras as $palabra) {
-                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
-            }
-        })->with('titulos')->paginate(10);
         
-        
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para la materia proporcionada.',
-            ], 404);
-        }
-
-        return response()->json($resultados);
     }
-
-    public function buscarPorEditorial(Request $request)
-    {
-        $request->validate([
-            'editorial' => 'required|string|max:255',
-        ]);
-    
-        $editorial = $request->input('editorial');
-        $palabras = explode(' ', $editorial);
-    
-        $resultados = Serie::where(function ($query) use ($palabras) {
-            foreach ($palabras as $palabra) {
-                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
-            }
-        })->with('titulos')->paginate(10);
-    
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para la editorial proporcionada.',
-            ], 404);
-        }
-    
-        return response()->json($resultados);
-    }
-    
-
-    public function buscarPorSerie(Request $request)
-    {
-        $request->validate([
-            'serie' => 'required|string|max:255',
-        ]);
-    
-        $serie = $request->input('serie');
-        $palabras = explode(' ', $serie);
-    
-        $resultados = Serie::where(function ($query) use ($palabras) {
-            foreach ($palabras as $palabra) {
-                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
-            }
-        })->with('titulos')->paginate(10);
-    
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para la serie proporcionada.',
-            ], 404);
-        }
-    
-        return response()->json($resultados);
-    }
-    
-        
 }

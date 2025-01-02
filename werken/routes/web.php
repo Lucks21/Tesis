@@ -16,8 +16,4 @@ Route::get('/busqueda', function () {
 
 Route::get('/dashboard', [PrincipalController::class, 'showDashboard'])->name('dashboard');
 Route::get('/existencias', [BusquedaSimpleController::class, 'index'])->name('detalle_material.index');
-Route::get('/buscar-titulo', [BusquedaSimpleController::class, 'buscarPorTitulo'])->name('buscar.titulo');
-Route::get('/buscar-autor', [BusquedaSimpleController::class, 'buscarPorAutor'])->name('buscar.autor');
-Route::get('/buscar-materia', [BusquedaSimpleController::class, 'buscarPorMateria'])->name('buscar.materia');
-Route::get('/buscar-editorial', [BusquedaSimpleController::class, 'buscarPorEditorial'])->name('buscar.editorial');
-Route::get('/buscar-serie', [BusquedaSimpleController::class, 'buscarPorSerie'])->name('buscar.serie');
+Route::get('/buscar', [BusquedaSimpleController::class, 'buscar']);
