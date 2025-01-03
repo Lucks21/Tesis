@@ -16,6 +16,7 @@
     <div class="flex">
         <!-- Filtro lateral -->
         <div class="w-1/4 bg-white shadow-md p-4 mr-4">
+            <!-- Filtro por Autor -->
             <h2 class="text-xl font-bold mb-4">Filtrar por Autor</h2>
             <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
                 <!-- Mantener los parámetros de búsqueda -->
@@ -23,6 +24,7 @@
                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                <input type="hidden" name="editorial" value="{{ request('editorial') }}">
 
                 @foreach ($autores as $autor)
                     <div>
@@ -36,8 +38,33 @@
 
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
             </form>
-        </div>
 
+            <hr class="my-4">
+
+<!-- Filtro por Editorial -->
+<div class="w-1/4 bg-white shadow-md p-4 mr-4">
+    <h2 class="text-xl font-bold mb-4">Filtrar por Editorial</h2>
+    <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
+        <!-- Mantener los parámetros de búsqueda -->
+        <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+        <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+        <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+        <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+        <input type="hidden" name="autor" value="{{ request('autor') }}">
+
+        @foreach ($editoriales as $editorial)
+            <div>
+                <label>
+                    <input type="radio" name="editorial" value="{{ $editorial }}" 
+                           {{ request('editorial') === $editorial ? 'checked' : '' }}>
+                    {{ $editorial }}
+                </label>
+            </div>
+        @endforeach
+
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+    </form>
+</div>
         <!-- Resultados -->
         <div class="w-3/4">
             <!-- Formulario para cambiar el orden de los resultados -->
@@ -46,6 +73,7 @@
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
                 <input type="hidden" name="autor" value="{{ request('autor') }}">
+                <input type="hidden" name="editorial" value="{{ request('editorial') }}">
 
                 <label for="orden" class="font-bold">Ordenar:</label>
                 <select name="orden" id="orden" class="border border-gray-300 rounded-md p-2">
