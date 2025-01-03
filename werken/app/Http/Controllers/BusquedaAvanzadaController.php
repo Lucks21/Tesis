@@ -16,6 +16,7 @@ class BusquedaAvanzadaController extends Controller
         $orden = $request->input('orden', 'asc');
         $autorFiltro = $request->input('autor');
         $editorialFiltro = $request->input('editorial');
+        $campusFiltro = $request->input('campus');
     
         // Consulta
         $query = DB::table('V_TITULO as vt')
@@ -39,7 +40,6 @@ class BusquedaAvanzadaController extends Controller
                 ")
             )
             ->distinct();
-        
     
         // Aplicar filtros según el criterio seleccionado
         if ($criterio === 'autor' && $valorCriterio) {
@@ -57,41 +57,63 @@ class BusquedaAvanzadaController extends Controller
                   ->where('V_SERIE.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
                   ->orderBy('V_SERIE.nombre_busqueda', $orden);
         }
-
-    // Filtro por título si se proporciona
-    if ($titulo) {
-        $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
+    
+        // Filtro por título si se proporciona
+        if ($titulo) {
+            $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
+        }
+    
+        // Filtro por autor seleccionado
+        if ($autorFiltro) {
+            $query->where('va.nombre_busqueda', '=', $autorFiltro);
+        }
+    
+        // Filtro por editorial seleccionada
+        if ($editorialFiltro) {
+            $query->where('ve.nombre_busqueda', '=', $editorialFiltro);
+        }
+    
+        // Filtro por campus seleccionado
+        if ($campusFiltro) {
+            $query->where('tc.nombre_tb_campus', '=', $campusFiltro);
+        }
+    
+        // Ordenar por relevancia primero y luego por título
+        $query->orderBy('relevancia', 'desc')
+              ->orderBy('vt.nombre_busqueda', $orden);
+    
+        // Obtener todos los resultados sin paginar para calcular filtros
+        $allResults = $query->get();
+    
+        // Obtener lista de autores únicos de todos los resultados
+        $autores = $allResults->pluck('autor')->unique()->sort();
+    
+        // Obtener lista de editoriales únicas de todos los resultados
+        $editoriales = $allResults->pluck('editorial')->unique()->sort();
+    
+        // Obtener lista de campus únicos de todos los resultados
+        $campuses = $allResults->pluck('biblioteca')->unique()->sort();
+    
+        // Aplicar paginación
+        $resultados = $query->paginate(10);
+    
+        // Retornar vista con resultados y filtros
+        return view('BusquedaAvanzadaResultados', compact(
+            'resultados', 
+            'criterio', 
+            'valorCriterio', 
+            'titulo', 
+            'orden', 
+            'autores', 
+            'autorFiltro', 
+            'editoriales', 
+            'editorialFiltro', 
+            'campuses', 
+            'campusFiltro'
+        ));
     }
-
-    // Filtro por autor seleccionado
-    if ($autorFiltro) {
-        $query->where('va.nombre_busqueda', '=', $autorFiltro);
-    }
-
-    // Filtro por editorial seleccionada
-    if ($editorialFiltro) {
-        $query->where('ve.nombre_busqueda', '=', $editorialFiltro);
-    }
-
-    // Ordenar por relevancia primero y luego por título
-    $query->orderBy('relevancia', 'desc')
-          ->orderBy('vt.nombre_busqueda', $orden);
-
-    // Obtener todos los resultados sin paginar para calcular filtros
-    $allResults = $query->get();
-
-    // Obtener lista de autores únicos de todos los resultados
-    $autores = $allResults->pluck('autor')->unique();
-
-    // Obtener lista de editoriales únicas de todos los resultados
-    $editoriales = $allResults->pluck('editorial')->unique();
-
-    // Aplicar paginación
-    $resultados = $query->paginate(10);
-
-    // Retornar vista con resultados y filtros
-    return view('BusquedaAvanzadaResultados', compact('resultados', 'criterio', 'valorCriterio', 'titulo', 'orden', 'autores', 'autorFiltro', 'editoriales', 'editorialFiltro'));
-}    
+    
+    
     public function mostrarTitulosPorAutor($autor, Request $request)
     {
         $titulo = $request->input('titulo');

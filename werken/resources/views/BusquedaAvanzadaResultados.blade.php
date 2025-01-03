@@ -9,71 +9,84 @@
 <body class="bg-gray-100 p-6">
 <div class="container mx-auto">
     <h1 class="text-2xl font-bold mb-4">Resultados de la Búsqueda</h1>
-
     <p>Resultados para "{{ request('criterio') }}" que contienen "{{ request('valor_criterio') }}" y título que contienen "{{ request('titulo') }}".</p>
 
-    <!-- Contenedor principal -->
     <div class="flex">
         <!-- Filtro lateral -->
         <div class="w-1/4 bg-white shadow-md p-4 mr-4">
-            <!-- Filtro por Autor -->
+            <!-- Filtrar por Autor -->
             <h2 class="text-xl font-bold mb-4">Filtrar por Autor</h2>
             <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
-                <!-- Mantener los parámetros de búsqueda -->
                 <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
                 <input type="hidden" name="editorial" value="{{ request('editorial') }}">
+                <input type="hidden" name="campus" value="{{ request('campus') }}">
 
                 @foreach ($autores as $autor)
                     <div>
                         <label>
-                            <input type="radio" name="autor" value="{{ $autor }}" 
-                                   {{ request('autor') === $autor ? 'checked' : '' }}>
+                            <input type="radio" name="autor" value="{{ $autor }}" {{ request('autor') === $autor ? 'checked' : '' }}>
                             {{ $autor }}
                         </label>
                     </div>
                 @endforeach
-
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
             </form>
 
-            <hr class="my-4">
+            <!-- Filtrar por Editorial -->
+            <h2 class="text-xl font-bold mb-4 mt-6">Filtrar por Editorial</h2>
+            <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
+                <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                <input type="hidden" name="autor" value="{{ request('autor') }}">
+                <input type="hidden" name="campus" value="{{ request('campus') }}">
 
-<!-- Filtro por Editorial -->
-<div class="w-1/4 bg-white shadow-md p-4 mr-4">
-    <h2 class="text-xl font-bold mb-4">Filtrar por Editorial</h2>
-    <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
-        <!-- Mantener los parámetros de búsqueda -->
-        <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-        <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-        <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-        <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-        <input type="hidden" name="autor" value="{{ request('autor') }}">
+                @foreach ($editoriales as $editorial)
+                    <div>
+                        <label>
+                            <input type="radio" name="editorial" value="{{ $editorial }}" {{ request('editorial') === $editorial ? 'checked' : '' }}>
+                            {{ $editorial }}
+                        </label>
+                    </div>
+                @endforeach
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+            </form>
 
-        @foreach ($editoriales as $editorial)
-            <div>
-                <label>
-                    <input type="radio" name="editorial" value="{{ $editorial }}" 
-                           {{ request('editorial') === $editorial ? 'checked' : '' }}>
-                    {{ $editorial }}
-                </label>
-            </div>
-        @endforeach
+            <!-- Filtrar por Campus -->
+            <h2 class="text-xl font-bold mb-4 mt-6">Filtrar por Campus</h2>
+            <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
+                <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                <input type="hidden" name="autor" value="{{ request('autor') }}">
+                <input type="hidden" name="editorial" value="{{ request('editorial') }}">
 
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
-    </form>
-</div>
+                @foreach ($campuses as $campus)
+                    <div>
+                        <label>
+                            <input type="radio" name="campus" value="{{ $campus }}" {{ request('campus') === $campus ? 'checked' : '' }}>
+                            {{ $campus }}
+                        </label>
+                    </div>
+                @endforeach
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+            </form>
+        </div>
+
         <!-- Resultados -->
         <div class="w-3/4">
-            <!-- Formulario para cambiar el orden de los resultados -->
             <form action="{{ route('busqueda-avanzada-resultados') }}" method="GET" class="mb-4">
                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
                 <input type="hidden" name="autor" value="{{ request('autor') }}">
                 <input type="hidden" name="editorial" value="{{ request('editorial') }}">
+                <input type="hidden" name="campus" value="{{ request('campus') }}">
 
                 <label for="orden" class="font-bold">Ordenar:</label>
                 <select name="orden" id="orden" class="border border-gray-300 rounded-md p-2">
@@ -83,7 +96,6 @@
                 <button type="submit" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded-md">Aplicar</button>
             </form>
 
-            <!-- Mostrar resultados -->
             @if($resultados->isEmpty())
                 <p class="text-red-500">No se encontraron resultados.</p>
             @else
@@ -107,8 +119,6 @@
                         @endforeach
                     </tbody>
                 </table>
-
-                <!-- Controles de paginación -->
                 <div class="mt-4">
                     {{ $resultados->appends(request()->query())->links() }}
                 </div>
@@ -116,7 +126,6 @@
         </div>
     </div>
 
-    <!-- Enlace para volver al formulario -->
     <a href="{{ route('busqueda-avanzada') }}" class="mt-4 inline-block text-blue-500 hover:underline">Volver al formulario</a>
 </div>
 </body>
