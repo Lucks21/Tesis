@@ -15,37 +15,62 @@ class BusquedaAvanzadaController extends Controller
         $titulo = $request->input('titulo');
         $orden = $request->input('orden', 'asc');
 
-        $query = DB::table('DETALLE_MATERIAL')
+        // Construcción base de la consulta
+        $query = DB::table('V_TITULO as vt')
+            ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
+            ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
+            ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
+            ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
+            ->select(
+                'vt.nombre_busqueda as titulo',
+                'va.nombre_busqueda as autor',
+                've.nombre_busqueda as editorial',
+                'tc.nombre_tb_campus as biblioteca',
+                DB::raw("
+                    (
+                        (CASE WHEN vt.nombre_busqueda = '{$titulo}' THEN 5 ELSE 0 END) + 
+                        (CASE WHEN vt.nombre_busqueda LIKE '%{$titulo}%' THEN 3 ELSE 0 END) + 
+                        (CASE WHEN va.nombre_busqueda = '{$valorCriterio}' THEN 4 ELSE 0 END) + 
+                        (CASE WHEN va.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 2 ELSE 0 END)
+                    ) as relevancia
+                ")
+            )
             ->distinct();
 
+        // Aplicar filtros según el criterio seleccionado
         if ($criterio === 'autor' && $valorCriterio) {
-            $query->select('DSM_AUTOR_EDITOR as autor')
-                  ->where('DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%")
-                  ->orderBy('DSM_AUTOR_EDITOR', $orden);
+            $query->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
+                  ->orderBy('va.nombre_busqueda', $orden);
         } elseif ($criterio === 'editorial' && $valorCriterio) {
-            $query->select('DSM_EDITORIAL as editorial')
-                  ->where('DSM_EDITORIAL', 'LIKE', "%{$valorCriterio}%")
-                  ->orderBy('DSM_EDITORIAL', $orden);
+            $query->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
+                  ->orderBy('ve.nombre_busqueda', $orden);
         } elseif ($criterio === 'materia' && $valorCriterio) {
-            $query->join('V_MATERIA', 'DETALLE_MATERIAL.som_numero', '=', 'V_MATERIA.nro_control')
-                  ->select('V_MATERIA.nombre_busqueda as materia')
+            $query->join('V_MATERIA', 'vt.nro_control', '=', 'V_MATERIA.nro_control')
                   ->where('V_MATERIA.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
                   ->orderBy('V_MATERIA.nombre_busqueda', $orden);
         } elseif ($criterio === 'serie' && $valorCriterio) {
-            $query->join('V_SERIE', 'DETALLE_MATERIAL.som_numero', '=', 'V_SERIE.nro_control')
-                  ->select('V_SERIE.nombre_busqueda as serie')
+            $query->join('V_SERIE', 'vt.nro_control', '=', 'V_SERIE.nro_control')
                   ->where('V_SERIE.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
                   ->orderBy('V_SERIE.nombre_busqueda', $orden);
         }
 
+        // Filtro por título si se proporciona
         if ($titulo) {
-            $query->where('DSM_TITULO', 'LIKE', "%{$titulo}%");
+            $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
         }
 
-        $resultados = $query->get();
+        // Ordenar por relevancia primero y luego por título
+        $query->orderBy('relevancia', 'desc')
+              ->orderBy('vt.nombre_busqueda', $orden);
 
+        // Paginación
+        $resultados = $query->paginate(10);
+
+        // Retornar vista con resultados
         return view('BusquedaAvanzadaResultados', compact('resultados', 'criterio', 'valorCriterio', 'titulo', 'orden'));
     }
+    
+    
     public function mostrarTitulosPorAutor($autor, Request $request)
     {
         $titulo = $request->input('titulo');

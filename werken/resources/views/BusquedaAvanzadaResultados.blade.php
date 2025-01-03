@@ -11,14 +11,14 @@
 <div class="container mx-auto">
     <h1 class="text-2xl font-bold mb-4">Resultados de la Búsqueda</h1>
 
-    <p>Resultados para {{ request('criterio') }} que contienen "{{ request('valor_criterio') }}" y título que contienen "{{ request('titulo') }}".</p>
+    <p>Resultados para "{{ request('criterio') }}" que contienen "{{ request('valor_criterio') }}" y título que contienen "{{ request('titulo') }}".</p>
 
+    <!-- Formulario para cambiar el orden de los resultados -->
     <form action="{{ route('busqueda-avanzada-resultados') }}" method="GET" class="mb-4">
         <input type="hidden" name="criterio" value="{{ request('criterio') }}">
         <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
         <input type="hidden" name="titulo" value="{{ request('titulo') }}">
 
-        <!-- Ordenar resultados -->
         <label for="orden" class="font-bold">Ordenar:</label>
         <select name="orden" id="orden" class="border border-gray-300 rounded-md p-2">
             <option value="asc" {{ request('orden') == 'asc' ? 'selected' : '' }}>Ascendente</option>
@@ -27,45 +27,38 @@
         <button type="submit" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded-md">Aplicar</button>
     </form>
 
+    <!-- Mostrar resultados -->
     @if($resultados->isEmpty())
         <p class="text-red-500">No se encontraron resultados.</p>
     @else
-        <p class="font-bold mb-2">Resultados encontrados:</p>
-        <ul class="list-disc list-inside">
-            @foreach($resultados as $resultado)
-                @if(request('criterio') === 'autor')
-                    <li>
-                        <a href="{{ route('mostrar-titulos-por-autor', ['autor' => urlencode($resultado->autor), 'titulo' => request('titulo')]) }}"
-                           class="text-blue-500 hover:underline">
-                            {{ $resultado->autor }}
-                        </a>
-                    </li>
-                @elseif(request('criterio') === 'editorial')
-                    <li>
-                        <a href="{{ route('mostrar-titulos-por-editorial', ['editorial' => urlencode($resultado->editorial), 'titulo' => request('titulo')]) }}"
-                           class="text-blue-500 hover:underline">
-                            {{ $resultado->editorial }}
-                        </a>
-                    </li>
-                @elseif(request('criterio') === 'materia')
-                    <li>
-                        <a href="{{ route('mostrar-titulos-por-materia', ['materia' => urlencode($resultado->materia), 'titulo' => request('titulo')]) }}"
-                           class="text-blue-500 hover:underline">
-                            {{ $resultado->materia }}
-                        </a>
-                    </li>
-                @elseif(request('criterio') === 'serie')
-                    <li>
-                        <a href="{{ route('mostrar-titulos-por-serie', ['serie' => urlencode($resultado->serie), 'titulo' => request('titulo')]) }}"
-                           class="text-blue-500 hover:underline">
-                            {{ $resultado->serie }}
-                        </a>
-                    </li>
-                @endif
-            @endforeach
-        </ul>
+        <table class="table-auto w-full border-collapse border border-gray-400">
+            <thead>
+                <tr>
+                    <th class="border border-gray-400 px-4 py-2">Título</th>
+                    <th class="border border-gray-400 px-4 py-2">Autor</th>
+                    <th class="border border-gray-400 px-4 py-2">Editorial</th>
+                    <th class="border border-gray-400 px-4 py-2">Biblioteca</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($resultados as $resultado)
+                    <tr>
+                        <td class="border border-gray-400 px-4 py-2">{{ $resultado->titulo }}</td>
+                        <td class="border border-gray-400 px-4 py-2">{{ $resultado->autor }}</td>
+                        <td class="border border-gray-400 px-4 py-2">{{ $resultado->editorial }}</td>
+                        <td class="border border-gray-400 px-4 py-2">{{ $resultado->biblioteca }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <!-- Controles de paginación -->
+        <div class="mt-4">
+            {{ $resultados->appends(request()->query())->links() }}
+        </div>
     @endif
 
+    <!-- Enlace para volver al formulario -->
     <a href="{{ route('busqueda-avanzada') }}" class="mt-4 inline-block text-blue-500 hover:underline">Volver al formulario</a>
 </div>
 
