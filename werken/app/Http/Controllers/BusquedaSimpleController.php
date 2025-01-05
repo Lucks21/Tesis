@@ -50,47 +50,30 @@ class BusquedaSimpleController extends Controller
             'criterio' => 'required|string|in:autor,editorial,serie,materia',
             'busqueda' => 'required|string|max:255',
         ]);
-    
+
         $criterio = $request->input('criterio');
         $busqueda = $request->input('busqueda');
         $palabras = explode(' ', $busqueda);
-    
+
         $modelos = [
             'autor' => Autor::class,
             'editorial' => Editorial::class,
             'serie' => Serie::class,
             'materia' => Materia::class,
         ];
-    
+
         $modelo = $modelos[$criterio];
-    
+
         $resultados = $modelo::where(function ($query) use ($palabras) {
             foreach ($palabras as $palabra) {
                 $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
-        })->with('titulos')->get();
-    
-        $agrupados = $resultados->groupBy('nombre_busqueda')->map(function ($group) {
-            return [
-                'nombre' => $group->first()->nombre_busqueda,
-                'titulos' => $group->flatMap->titulos->map(function ($titulo) {
-                    return $titulo->nombre_busqueda;
-                }),
-            ];
-        })->values();
-    
-        $pagina = $request->input('page', 1);
-        $porPagina = 10;
-        $total = $agrupados->count();
-        $paginados = $agrupados->slice(($pagina - 1) * $porPagina, $porPagina)->values();
-    
-        return response()->json([
-            'current_page' => $pagina,
-            'per_page' => $porPagina,
-            'total' => $total,
-            'last_page' => ceil($total / $porPagina),
-            'data' => $paginados,
+        })->with('titulos')->paginate(10)->withQueryString();
+
+        return view('ResultadosViewBS', [
+            'resultados' => $resultados,
+            'busqueda' => $busqueda,
+            'criterio' => $criterio,
         ]);
-        
     }
 }
