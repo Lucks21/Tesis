@@ -8,9 +8,7 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Contenedor principal -->
     <form action="{{ route('busqueda-avanzada-resultados') }}" method="GET" class="space-y-4">
-    <!-- Dropdown para seleccionar el criterio -->
     <div>
         <label for="criterio" class="block font-bold">Buscar por:</label>
         <select id="criterio" name="criterio" class="border-gray-300 rounded-md w-full p-2">
@@ -21,13 +19,11 @@
         </select>
     </div>
 
-    <!-- Campo para ingresar el valor del criterio seleccionado -->
     <div>
         <label for="valor_criterio" class="block font-bold">Nombre del criterio:</label>
         <input type="text" id="valor_criterio" name="valor_criterio" value="{{ request('valor_criterio') }}" class="border-gray-300 rounded-md w-full p-2">
     </div>
 
-    <!-- Campo para buscar por título -->
     <div>
         <label for="titulo" class="block font-bold">Título:</label>
         <input type="text" id="titulo" name="titulo" value="{{ request('titulo') }}" class="border-gray-300 rounded-md w-full p-2">

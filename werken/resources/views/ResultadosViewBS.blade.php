@@ -37,7 +37,6 @@
             <ul class="pl-5">
                 @foreach($resultados as $resultado)
                     <li>
-                        <!-- Mostrar el número de forma personalizada -->
                         <span class="font-bold">{{ $loop->iteration }}.</span>
                         <a href="{{ route('recursos.asociados', ['criterio' => $criterio, 'valor' => $resultado->nombre_busqueda]) }}" 
                         class="text-blue-500 underline">

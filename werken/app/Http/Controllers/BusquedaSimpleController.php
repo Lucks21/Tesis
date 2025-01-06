@@ -60,14 +60,12 @@ class BusquedaSimpleController extends Controller
     
         $modelo = $modelos[$criterio];
     
-        // Obtener resultados y agrupar por nombre único
         $resultadosSinPaginar = $modelo::where(function ($query) use ($palabras) {
             foreach ($palabras as $palabra) {
                 $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
         })->select('nombre_busqueda')->distinct()->get();
     
-        // Paginar manualmente los resultados agrupados
         $pagina = $request->input('page', 1);
         $porPagina = 10;
         $resultadosPaginados = $resultadosSinPaginar->slice(($pagina - 1) * $porPagina, $porPagina);

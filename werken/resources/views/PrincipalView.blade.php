@@ -11,23 +11,17 @@
 </head>
 <body class="center-screen bg-gray-100">
 
-    <!-- Contenedor principal centrado -->
     <div class="main-container">
         <h1 class="text-3xl font-bold mb-4">Bienvenidos a WERKEN</h1>
 
-        <!-- Barra de navegación -->
         <div class="navbar bg-blue-800 p-4 rounded">
-            <a href="#busqueda-simple" class="navbar-link text-white px-4">Búsqueda Simple</a>
             <a href="{{ route('busqueda-avanzada') }}" class="navbar-link text-white px-4">Búsqueda Avanzada</a>
-            <!-- Ícono de usuario con enlace al dashboard -->
             <div class="relative ml-4">
                 <a href="{{ route('login') }}" class="flex items-center space-x-1 cursor-pointer text-white">
                     <i class="fas fa-user"></i>
                 </a>
             </div>
         </div>
-        
-        <!-- Incluir la funcionalidad de búsqueda -->
         @include('BusquedaView')
     </div>
 
