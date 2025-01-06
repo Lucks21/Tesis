@@ -30,26 +30,22 @@
 
             <button type="submit" class="bg-blue-800 text-white px-4 py-2 rounded">Buscar</button>
         </form>
-        <!-- Resultados de la búsqueda -->
+
         @if($resultados->isEmpty())
             <p class="text-red-500">No se encontraron resultados.</p>
         @else
-            <ul class="list-disc pl-5">
+            <ul class="pl-5">
                 @foreach($resultados as $resultado)
                     <li>
-                        <a href="{{ route('recursos.asociados', ['criterio' => $criterio, 'valor' => $resultado['nombre']]) }}" 
+                        <!-- Mostrar el número de forma personalizada -->
+                        <span class="font-bold">{{ $loop->iteration }}.</span>
+                        <a href="{{ route('recursos.asociados', ['criterio' => $criterio, 'valor' => $resultado->nombre_busqueda]) }}" 
                         class="text-blue-500 underline">
-                            {{ $resultado['nombre'] }}
+                        {{ $resultado->nombre_busqueda }}
                         </a>
-                        <ul class="pl-5">
-                            @foreach($resultado['titulos'] as $titulo)
-                                <li>{{ $titulo }}</li>
-                            @endforeach
-                        </ul>
                     </li>
                 @endforeach
             </ul>
-            <!-- Paginación -->
             <div class="mt-4">
                 {{ $resultados->links() }}
             </div>

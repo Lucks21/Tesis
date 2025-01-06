@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resultados de la Búsqueda</title>
+    <title>Recursos Asociados</title>
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
-        <h1 class="text-2xl font-bold mb-4">Resultados de la Búsqueda</h1>
+        <h1 class="text-2xl font-bold mb-4">Recursos Asociados</h1>
 
         <!-- Formulario de Búsqueda -->
         <form method="GET" id="form-busqueda" class="mb-6">
@@ -35,11 +35,16 @@
         <p>Resultados para el criterio "{{ ucfirst($criterio) }}": "{{ $valor }}"</p>
 
         @if($recursos->isEmpty())
-            <p class="text-red-500">No se encontraron resultados.</p>
+            <p class="text-red-500">No se encontraron recursos asociados.</p>
         @else
-            <ul class="list-disc pl-5">
+            <ul class="list-decimal pl-5">
                 @foreach($recursos as $recurso)
-                    <li>{{ $recurso->nombre_busqueda }}</li>
+                    <li>
+                        <span class="font-bold">
+                            {{ (($recursos->currentPage() - 1) * $recursos->perPage()) + $loop->iteration }}.
+                        </span>
+                        {{ $recurso->nombre_busqueda }}
+                    </li>
                 @endforeach
             </ul>
 

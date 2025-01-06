@@ -36,7 +36,7 @@ class BusquedaSimpleController extends Controller
         ]);
     }
     
-        public function buscar(Request $request)
+    public function buscar(Request $request)
     {
         $request->validate([
             'criterio' => 'required|string|in:autor,editorial,serie,materia',
@@ -54,31 +54,28 @@ class BusquedaSimpleController extends Controller
             'materia' => Materia::class,
         ];
     
+        if (!array_key_exists($criterio, $modelos)) {
+            abort(404, 'Criterio no válido.');
+        }
+    
         $modelo = $modelos[$criterio];
     
-        $resultadosSinAgrupar = $modelo::where(function ($query) use ($palabras) {
+        // Obtener resultados y agrupar por nombre único
+        $resultadosSinPaginar = $modelo::where(function ($query) use ($palabras) {
             foreach ($palabras as $palabra) {
                 $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
-        })->with('titulos')->get();
+        })->select('nombre_busqueda')->distinct()->get();
     
-        $resultadosAgrupados = $resultadosSinAgrupar->groupBy('nombre_busqueda')->map(function ($group) {
-            return [
-                'nombre' => $group->first()->nombre_busqueda,
-                'titulos' => $group->flatMap->titulos->map(function ($titulo) {
-                    return $titulo->nombre_busqueda;
-                }),
-            ];
-        })->values();
-    
+        // Paginar manualmente los resultados agrupados
         $pagina = $request->input('page', 1);
         $porPagina = 10;
-        $resultadosPaginados = $resultadosAgrupados->slice(($pagina - 1) * $porPagina, $porPagina);
+        $resultadosPaginados = $resultadosSinPaginar->slice(($pagina - 1) * $porPagina, $porPagina);
     
         return view('ResultadosViewBS', [
             'resultados' => new \Illuminate\Pagination\LengthAwarePaginator(
                 $resultadosPaginados,
-                $resultadosAgrupados->count(),
+                $resultadosSinPaginar->count(),
                 $porPagina,
                 $pagina,
                 ['path' => $request->url(), 'query' => $request->query()]
@@ -87,7 +84,8 @@ class BusquedaSimpleController extends Controller
             'criterio' => $criterio,
         ]);
     }
-    public function recursosAsociados($criterio, $valor)
+    
+        public function recursosAsociados($criterio, $valor)
     {
         $modelos = [
             'autor' => Autor::class,
