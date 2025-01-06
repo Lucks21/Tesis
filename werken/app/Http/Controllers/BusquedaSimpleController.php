@@ -13,149 +13,115 @@ use App\Models\Titulo;
 
 class BusquedaSimpleController extends Controller
 {
-    public function index()
-    {
-        $registros = DetalleMaterial::limit(30)->get();
-
-        return response()->json($registros);
-    }
     public function buscarPorTitulo(Request $request)
     {
         $request->validate([
-            'titulo' => 'required|string|max:255',
+            'busqueda' => 'required|string|max:255',
         ]);
     
-        $titulo = $request->input('titulo');
+        $titulo = $request->input('busqueda');
+        $palabras = explode(' ', $titulo);
     
-        $resultados = Titulo::where('nombre_busqueda', 'LIKE', "%{$titulo}%")
-            ->get();
+        $resultados = Titulo::where(function ($query) use ($palabras) {
+            foreach ($palabras as $palabra) {
+                $query->orWhere('nombre_busqueda', 'LIKE', "%{$palabra}%");
+            }
+        })->paginate(10)->withQueryString();
     
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para el título proporcionado.',
-            ], 404);
-        }
-    
-        return response()->json($resultados);
+        return view('RecursosAsociadosView', [
+            'criterio' => 'titulo',
+            'valor' => $titulo,
+            'recursos' => $resultados,
+            'noResultados' => $resultados->isEmpty(),
+        ]);
     }
     
-    public function buscarPorAutor(Request $request)
+    public function buscar(Request $request)
     {
         $request->validate([
-            'autor' => 'required|string|max:255',
+            'criterio' => 'required|string|in:autor,editorial,serie,materia',
+            'busqueda' => 'required|string|max:255',
         ]);
     
-        $autor = $request->input('autor');
+        $criterio = $request->input('criterio');
+        $busqueda = $request->input('busqueda');
+        $palabras = explode(' ', $busqueda);
     
-        $resultados = Autor::where('nombre_busqueda', 'LIKE', "%{$autor}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'autor' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
+        $modelos = [
+            'autor' => Autor::class,
+            'editorial' => Editorial::class,
+            'serie' => Serie::class,
+            'materia' => Materia::class,
+        ];
     
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para el autor proporcionado.',
-            ], 404);
+        if (!array_key_exists($criterio, $modelos)) {
+            abort(404, 'Criterio no válido.');
         }
     
-        return response()->json($resultados);
+        $modelo = $modelos[$criterio];
+    
+        // Obtener resultados y agrupar por nombre único
+        $resultadosSinPaginar = $modelo::where(function ($query) use ($palabras) {
+            foreach ($palabras as $palabra) {
+                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
+            }
+        })->select('nombre_busqueda')->distinct()->get();
+    
+        // Paginar manualmente los resultados agrupados
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        $resultadosPaginados = $resultadosSinPaginar->slice(($pagina - 1) * $porPagina, $porPagina);
+    
+        return view('ResultadosViewBS', [
+            'resultados' => new \Illuminate\Pagination\LengthAwarePaginator(
+                $resultadosPaginados,
+                $resultadosSinPaginar->count(),
+                $porPagina,
+                $pagina,
+                ['path' => $request->url(), 'query' => $request->query()]
+            ),
+            'busqueda' => $busqueda,
+            'criterio' => $criterio,
+        ]);
     }
     
-
-    public function buscarPorMateria(Request $request)
+        public function recursosAsociados($criterio, $valor)
     {
-        $request->validate([
-            'materia' => 'required|string|max:255',
-        ]);
-
-        $materia = $request->input('materia');
-
-        $resultados = Materia::where('nombre_busqueda', 'LIKE', "%{$materia}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'materia' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
-
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para la materia proporcionada.',
-            ], 404);
-        }
-
-        return response()->json($resultados);
-    }
-
-    public function buscarPorEditorial(Request $request)
-    {
-        $request->validate([
-            'editorial' => 'required|string|max:255',
-        ]);
+        $modelos = [
+            'autor' => Autor::class,
+            'editorial' => Editorial::class,
+            'serie' => Serie::class,
+            'materia' => Materia::class,
+        ];
     
-        $editorial = $request->input('editorial');
-    
-        $resultados = Editorial::where('nombre_busqueda', 'LIKE', "%{$editorial}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'editorial' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
-    
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para la editorial proporcionada.',
-            ], 404);
+        if (!array_key_exists($criterio, $modelos)) {
+            abort(404, 'Criterio no válido.');
         }
     
-        return response()->json($resultados);
-    }
+        $modelo = $modelos[$criterio];
     
-
-    public function buscarPorSerie(Request $request)
-    {
-        $request->validate([
-            'serie' => 'required|string|max:255',
-        ]);
+        $recursos = $modelo::where('nombre_busqueda', $valor)->with('titulos')->get();
     
-        $serie = $request->input('serie');
-    
-        $resultados = Serie::where('nombre_busqueda', 'LIKE', "%{$serie}%")
-            ->with(['titulos'])
-            ->get()
-            ->groupBy('nombre_busqueda')
-            ->map(function ($group) {
-                return [
-                    'serie' => $group->first()->nombre_busqueda,
-                    'titulos' => $group->flatMap->titulos,
-                ];
-            })
-            ->values();
-    
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para la serie proporcionada.',
-            ], 404);
+        if ($recursos->isEmpty()) {
+            abort(404, 'No se encontraron recursos asociados.');
         }
     
-        return response()->json($resultados);
-    }
+        $titulos = $recursos->flatMap->titulos;
     
-        
+        $pagina = request()->input('page', 1);
+        $porPagina = 10;
+        $paginados = $titulos->forPage($pagina, $porPagina);
+    
+        return view('RecursosAsociadosView', [
+            'criterio' => ucfirst($criterio),
+            'valor' => $valor,
+            'recursos' => new \Illuminate\Pagination\LengthAwarePaginator(
+                $paginados,
+                $titulos->count(),
+                $porPagina,
+                $pagina,
+                ['path' => request()->url(), 'query' => request()->query()]
+            ),
+        ]);
+    }    
 }
