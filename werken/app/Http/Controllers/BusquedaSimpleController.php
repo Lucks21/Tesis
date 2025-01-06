@@ -16,29 +16,27 @@ class BusquedaSimpleController extends Controller
     public function buscarPorTitulo(Request $request)
     {
         $request->validate([
-            'titulo' => 'required|string|max:255',
+            'busqueda' => 'required|string|max:255',
         ]);
     
-        $titulo = $request->input('titulo');
+        $titulo = $request->input('busqueda');
         $palabras = explode(' ', $titulo);
     
         $resultados = Titulo::where(function ($query) use ($palabras) {
             foreach ($palabras as $palabra) {
                 $query->orWhere('nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
-        })->paginate(10);
+        })->paginate(10)->withQueryString();
     
-    
-        if ($resultados->isEmpty()) {
-            return response()->json([
-                'message' => 'No se encontraron resultados para el título proporcionado.',
-            ], 404);
-        }
-    
-        return response()->json($resultados);
+        return view('RecursosAsociadosView', [
+            'criterio' => 'titulo',
+            'valor' => $titulo,
+            'recursos' => $resultados,
+            'noResultados' => $resultados->isEmpty(),
+        ]);
     }
     
-    public function buscar(Request $request)
+        public function buscar(Request $request)
     {
         $request->validate([
             'criterio' => 'required|string|in:autor,editorial,serie,materia',

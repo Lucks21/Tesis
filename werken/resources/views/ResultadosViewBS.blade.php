@@ -11,23 +11,25 @@
         <h1 class="text-2xl font-bold mb-4">Resultados de la Búsqueda</h1>
 
         <!-- Formulario de Búsqueda -->
-        <form id="form-busqueda" method="GET" action="{{ route('resultados') }}" class="mb-6">
+        <form method="GET" id="form-busqueda" class="mb-6">
             <div class="mb-4">
                 <label for="criterio" class="block text-sm font-medium text-gray-700">Seleccione un criterio:</label>
-                <select id="criterio" name="criterio" class="form-select mt-1 block w-full">
-                    <option value="autor" {{ $criterio === 'autor' ? 'selected' : '' }}>Autor</option>
-                    <option value="editorial" {{ $criterio === 'editorial' ? 'selected' : '' }}>Editorial</option>
-                    <option value="serie" {{ $criterio === 'serie' ? 'selected' : '' }}>Serie</option>
-                    <option value="materia" {{ $criterio === 'materia' ? 'selected' : '' }}>Materia</option>
+                <select id="criterio" name="criterio" class="form-select mt-1 block w-full" onchange="updateFormAction()">
+                    <option value="autor" {{ request('criterio') === 'autor' ? 'selected' : '' }}>Autor</option>
+                    <option value="editorial" {{ request('criterio') === 'editorial' ? 'selected' : '' }}>Editorial</option>
+                    <option value="serie" {{ request('criterio') === 'serie' ? 'selected' : '' }}>Serie</option>
+                    <option value="materia" {{ request('criterio') === 'materia' ? 'selected' : '' }}>Materia</option>
+                    <option value="titulo" {{ request('criterio') === 'titulo' ? 'selected' : '' }}>Título</option>
                 </select>
             </div>
+
             <div class="mb-4">
                 <label for="busqueda" class="block text-sm font-medium text-gray-700">Ingrese el término:</label>
-                <input type="text" id="busqueda" name="busqueda" class="form-input mt-1 block w-full" value="{{ $busqueda }}" required>
+                <input type="text" id="busqueda" name="busqueda" class="form-input mt-1 block w-full" value="{{ request('busqueda') }}" required>
             </div>
+
             <button type="submit" class="bg-blue-800 text-white px-4 py-2 rounded">Buscar</button>
         </form>
-
         <!-- Resultados de la búsqueda -->
         @if($resultados->isEmpty())
             <p class="text-red-500">No se encontraron resultados.</p>
@@ -47,7 +49,7 @@
                     </li>
                 @endforeach
             </ul>
-            <!-- Navegación de Paginación -->
+            <!-- Paginación -->
             <div class="mt-4">
                 {{ $resultados->links() }}
             </div>
@@ -59,3 +61,17 @@
     </div>
 </body>
 </html>
+
+<script>
+    function updateFormAction() {
+        const criterio = document.getElementById('criterio').value;
+        const form = document.getElementById('form-busqueda');
+
+        if (criterio === 'titulo') {
+            form.action = "{{ route('buscar.titulo') }}";
+        } else {
+            form.action = "{{ route('resultados') }}";
+        }
+    }
+    document.addEventListener('DOMContentLoaded', updateFormAction);
+</script>
