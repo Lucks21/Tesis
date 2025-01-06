@@ -17,20 +17,22 @@
             <ul class="list-disc pl-5">
                 @foreach($resultados as $resultado)
                     <li>
-                        <strong>{{ $resultado->nombre_busqueda }}</strong>
+                        <strong>{{ $resultado['nombre'] }}</strong>
                         <ul class="pl-5">
-                            @foreach($resultado->titulos as $titulo)
-                                <li>{{ $titulo->nombre_busqueda }}</li>
+                            @foreach($resultado['titulos'] as $titulo)
+                                <li>{{ $titulo }}</li>
                             @endforeach
                         </ul>
                     </li>
                 @endforeach
             </ul>
 
+            <!-- Navegación de Paginación -->
             <div class="mt-4">
                 {{ $resultados->links() }}
             </div>
         @endif
+
 
         <div class="mt-4">
             <a href="/" class="text-blue-500 underline">Volver a la página principal</a>

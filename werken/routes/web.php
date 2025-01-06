@@ -15,6 +15,5 @@ Route::get('/busqueda', function () {
 })->name('busqueda');
 
 Route::get('/dashboard', [PrincipalController::class, 'showDashboard'])->name('dashboard');
-Route::get('/existencias', [BusquedaSimpleController::class, 'index'])->name('detalle_material.index');
 Route::get('/buscar', [BusquedaSimpleController::class, 'buscar']);
 Route::get('/resultados', [BusquedaSimpleController::class, 'buscar'])->name('resultados');

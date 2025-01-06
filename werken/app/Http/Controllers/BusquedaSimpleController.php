@@ -13,12 +13,6 @@ use App\Models\Titulo;
 
 class BusquedaSimpleController extends Controller
 {
-    public function index()
-    {
-        $registros = DetalleMaterial::limit(30)->paginate(10);;
-
-        return response()->json($registros);
-    }
     public function buscarPorTitulo(Request $request)
     {
         $request->validate([
@@ -50,30 +44,53 @@ class BusquedaSimpleController extends Controller
             'criterio' => 'required|string|in:autor,editorial,serie,materia',
             'busqueda' => 'required|string|max:255',
         ]);
-
+    
         $criterio = $request->input('criterio');
         $busqueda = $request->input('busqueda');
         $palabras = explode(' ', $busqueda);
-
+    
         $modelos = [
             'autor' => Autor::class,
             'editorial' => Editorial::class,
             'serie' => Serie::class,
             'materia' => Materia::class,
         ];
-
+    
         $modelo = $modelos[$criterio];
-
-        $resultados = $modelo::where(function ($query) use ($palabras) {
+    
+        // Obtener todos los resultados relacionados
+        $resultadosSinAgrupar = $modelo::where(function ($query) use ($palabras) {
             foreach ($palabras as $palabra) {
                 $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
-        })->with('titulos')->paginate(10)->withQueryString();
-
+        })->with('titulos')->get();
+    
+        // Agrupar resultados por nombre del criterio
+        $resultadosAgrupados = $resultadosSinAgrupar->groupBy('nombre_busqueda')->map(function ($group) {
+            return [
+                'nombre' => $group->first()->nombre_busqueda,
+                'titulos' => $group->flatMap->titulos->map(function ($titulo) {
+                    return $titulo->nombre_busqueda;
+                }),
+            ];
+        })->values();
+    
+        // Implementar la paginación después de agrupar
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        $resultadosPaginados = $resultadosAgrupados->slice(($pagina - 1) * $porPagina, $porPagina);
+    
         return view('ResultadosViewBS', [
-            'resultados' => $resultados,
+            'resultados' => new \Illuminate\Pagination\LengthAwarePaginator(
+                $resultadosPaginados, // Datos paginados
+                $resultadosAgrupados->count(), // Total de resultados agrupados
+                $porPagina, // Resultados por página
+                $pagina, // Página actual
+                ['path' => $request->url(), 'query' => $request->query()] // Parámetros de consulta para los enlaces
+            ),
             'busqueda' => $busqueda,
             'criterio' => $criterio,
         ]);
     }
+    
 }
