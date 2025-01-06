@@ -58,14 +58,12 @@ class BusquedaSimpleController extends Controller
     
         $modelo = $modelos[$criterio];
     
-        // Obtener todos los resultados relacionados
         $resultadosSinAgrupar = $modelo::where(function ($query) use ($palabras) {
             foreach ($palabras as $palabra) {
                 $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
         })->with('titulos')->get();
     
-        // Agrupar resultados por nombre del criterio
         $resultadosAgrupados = $resultadosSinAgrupar->groupBy('nombre_busqueda')->map(function ($group) {
             return [
                 'nombre' => $group->first()->nombre_busqueda,
@@ -75,22 +73,59 @@ class BusquedaSimpleController extends Controller
             ];
         })->values();
     
-        // Implementar la paginación después de agrupar
         $pagina = $request->input('page', 1);
         $porPagina = 10;
         $resultadosPaginados = $resultadosAgrupados->slice(($pagina - 1) * $porPagina, $porPagina);
     
         return view('ResultadosViewBS', [
             'resultados' => new \Illuminate\Pagination\LengthAwarePaginator(
-                $resultadosPaginados, // Datos paginados
-                $resultadosAgrupados->count(), // Total de resultados agrupados
-                $porPagina, // Resultados por página
-                $pagina, // Página actual
-                ['path' => $request->url(), 'query' => $request->query()] // Parámetros de consulta para los enlaces
+                $resultadosPaginados,
+                $resultadosAgrupados->count(),
+                $porPagina,
+                $pagina,
+                ['path' => $request->url(), 'query' => $request->query()]
             ),
             'busqueda' => $busqueda,
             'criterio' => $criterio,
         ]);
     }
+    public function recursosAsociados($criterio, $valor)
+    {
+        $modelos = [
+            'autor' => Autor::class,
+            'editorial' => Editorial::class,
+            'serie' => Serie::class,
+            'materia' => Materia::class,
+        ];
     
+        if (!array_key_exists($criterio, $modelos)) {
+            abort(404, 'Criterio no válido.');
+        }
+    
+        $modelo = $modelos[$criterio];
+    
+        $recursos = $modelo::where('nombre_busqueda', $valor)->with('titulos')->get();
+    
+        if ($recursos->isEmpty()) {
+            abort(404, 'No se encontraron recursos asociados.');
+        }
+    
+        $titulos = $recursos->flatMap->titulos;
+    
+        $pagina = request()->input('page', 1);
+        $porPagina = 10;
+        $paginados = $titulos->forPage($pagina, $porPagina);
+    
+        return view('RecursosAsociadosView', [
+            'criterio' => ucfirst($criterio),
+            'valor' => $valor,
+            'recursos' => new \Illuminate\Pagination\LengthAwarePaginator(
+                $paginados,
+                $titulos->count(),
+                $porPagina,
+                $pagina,
+                ['path' => request()->url(), 'query' => request()->query()]
+            ),
+        ]);
+    }    
 }

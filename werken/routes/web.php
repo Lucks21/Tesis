@@ -17,3 +17,5 @@ Route::get('/busqueda', function () {
 Route::get('/dashboard', [PrincipalController::class, 'showDashboard'])->name('dashboard');
 Route::get('/buscar', [BusquedaSimpleController::class, 'buscar']);
 Route::get('/resultados', [BusquedaSimpleController::class, 'buscar'])->name('resultados');
+Route::get('/recursos-asociados/{criterio}/{valor}', [BusquedaSimpleController::class, 'recursosAsociados'])
+     ->name('recursos.asociados');
