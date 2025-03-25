@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\DetalleMaterial;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class BusquedaAvanzadaController extends Controller
 {
@@ -17,8 +19,11 @@ class BusquedaAvanzadaController extends Controller
         $autorFiltro = $request->input('autor');
         $editorialFiltro = $request->input('editorial');
         $campusFiltro = $request->input('campus');
-    
-        // Consulta
+
+        // Parámetros para la consulta segura
+        $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"];
+
+        // Construir consulta base
         $query = DB::table('V_TITULO as vt')
             ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
             ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
@@ -32,88 +37,104 @@ class BusquedaAvanzadaController extends Controller
                 'tc.nombre_tb_campus as biblioteca',
                 DB::raw("
                     (
-                        (CASE WHEN vt.nombre_busqueda = '{$titulo}' THEN 5 ELSE 0 END) + 
-                        (CASE WHEN vt.nombre_busqueda LIKE '%{$titulo}%' THEN 3 ELSE 0 END) + 
-                        (CASE WHEN va.nombre_busqueda = '{$valorCriterio}' THEN 4 ELSE 0 END) + 
-                        (CASE WHEN va.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 2 ELSE 0 END)
+                        (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) + 
+                        (CASE WHEN vt.nombre_busqueda LIKE ? THEN 3 ELSE 0 END) + 
+                        (CASE WHEN va.nombre_busqueda = ? THEN 4 ELSE 0 END) + 
+                        (CASE WHEN va.nombre_busqueda LIKE ? THEN 2 ELSE 0 END)
                     ) as relevancia
                 ")
             )
             ->distinct();
-    
-        // Aplicar filtros según el criterio seleccionado
-        if ($criterio === 'autor' && $valorCriterio) {
-            $query->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                  ->orderBy('va.nombre_busqueda', $orden);
-        } elseif ($criterio === 'editorial' && $valorCriterio) {
-            $query->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                  ->orderBy('ve.nombre_busqueda', $orden);
-        } elseif ($criterio === 'materia' && $valorCriterio) {
-            $query->join('V_MATERIA', 'vt.nro_control', '=', 'V_MATERIA.nro_control')
-                  ->where('V_MATERIA.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                  ->orderBy('V_MATERIA.nombre_busqueda', $orden);
-        } elseif ($criterio === 'serie' && $valorCriterio) {
-            $query->join('V_SERIE', 'vt.nro_control', '=', 'V_SERIE.nro_control')
-                  ->where('V_SERIE.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                  ->orderBy('V_SERIE.nombre_busqueda', $orden);
+
+        // Filtros dinámicos por criterio
+        switch ($criterio) {
+            case 'autor':
+                if ($valorCriterio) {
+                    $query->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
+                          ->orderBy('va.nombre_busqueda', $orden);
+                }
+                break;
+            case 'editorial':
+                if ($valorCriterio) {
+                    $query->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
+                          ->orderBy('ve.nombre_busqueda', $orden);
+                }
+                break;
+            case 'materia':
+                if ($valorCriterio) {
+                    $query->join('V_MATERIA', 'vt.nro_control', '=', 'V_MATERIA.nro_control')
+                          ->where('V_MATERIA.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
+                          ->orderBy('V_MATERIA.nombre_busqueda', $orden);
+                }
+                break;
+            case 'serie':
+                if ($valorCriterio) {
+                    $query->join('V_SERIE', 'vt.nro_control', '=', 'V_SERIE.nro_control')
+                          ->where('V_SERIE.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
+                          ->orderBy('V_SERIE.nombre_busqueda', $orden);
+                }
+                break;
         }
-    
-        // Filtro por título si se proporciona
+
+        // Filtros adicionales
         if ($titulo) {
             $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
         }
-    
-        // Filtro por autor seleccionado
+
         if ($autorFiltro) {
             $query->where('va.nombre_busqueda', '=', $autorFiltro);
         }
-    
-        // Filtro por editorial seleccionada
+
         if ($editorialFiltro) {
             $query->where('ve.nombre_busqueda', '=', $editorialFiltro);
         }
-    
-        // Filtro por campus seleccionado
+
         if ($campusFiltro) {
             $query->where('tc.nombre_tb_campus', '=', $campusFiltro);
         }
-    
-        // Ordenar por relevancia primero y luego por título
+
+        // Orden por relevancia y luego por título
         $query->orderBy('relevancia', 'desc')
               ->orderBy('vt.nombre_busqueda', $orden);
-    
-        // Obtener todos los resultados sin paginar para calcular filtros
-        $allResults = $query->get();
-    
-        // Obtener lista de autores únicos de todos los resultados
-        $autores = $allResults->pluck('autor')->unique()->sort();
-    
-        // Obtener lista de editoriales únicas de todos los resultados
-        $editoriales = $allResults->pluck('editorial')->unique()->sort();
-    
-        // Obtener lista de campus únicos de todos los resultados
-        $campuses = $allResults->pluck('biblioteca')->unique()->sort();
-    
-        // Aplicar paginación
-        $resultados = $query->paginate(10);
-    
-        // Retornar vista con resultados y filtros
+
+        // Clonar consulta para extraer todos los resultados para filtros
+        $allResults = (clone $query)->addBinding($bindings, 'select')->get();
+
+        // Función auxiliar para paginar una colección
+        $paginateCollection = function (Collection $items, int $perPage, string $pageName): LengthAwarePaginator {
+            $currentPage = request()->input($pageName, 1);
+            $items = $items->values();
+            $currentItems = $items->slice(($currentPage - 1) * $perPage, $perPage);
+            return new LengthAwarePaginator($currentItems, $items->count(), $perPage, $currentPage, [
+                'pageName' => $pageName,
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]);
+        };
+
+        // Extraer y paginar filtros únicos
+        $autores = $paginateCollection($allResults->pluck('autor')->filter()->unique()->sort(), 10, 'page_autores');
+        $editoriales = $paginateCollection($allResults->pluck('editorial')->filter()->unique()->sort(), 10, 'page_editoriales');
+        $campuses = $paginateCollection($allResults->pluck('biblioteca')->filter()->unique()->sort(), 10, 'page_campuses');
+
+        // Aplicar paginación a los resultados
+        $resultados = $query->addBinding($bindings, 'select')->paginate(10);
+
         return view('BusquedaAvanzadaResultados', compact(
-            'resultados', 
-            'criterio', 
-            'valorCriterio', 
-            'titulo', 
-            'orden', 
-            'autores', 
-            'autorFiltro', 
-            'editoriales', 
-            'editorialFiltro', 
-            'campuses', 
+            'resultados',
+            'criterio',
+            'valorCriterio',
+            'titulo',
+            'orden',
+            'autores',
+            'autorFiltro',
+            'editoriales',
+            'editorialFiltro',
+            'campuses',
             'campusFiltro'
         ));
     }
-    
-    
+
     public function mostrarTitulosPorAutor($autor, Request $request)
     {
         $titulo = $request->input('titulo');
@@ -151,18 +172,18 @@ class BusquedaAvanzadaController extends Controller
     public function mostrarTitulosPorMateria($materia, Request $request)
     {
         $titulo = $request->input('titulo');
-    
+
         $query = DB::table('DETALLE_MATERIAL')
             ->join('V_MATERIA', 'DETALLE_MATERIAL.som_numero', '=', 'V_MATERIA.nro_control')
             ->select('DETALLE_MATERIAL.DSM_TITULO')
             ->where('V_MATERIA.nombre_busqueda', '=', urldecode($materia));
-    
+
         if ($titulo) {
             $query->where('DETALLE_MATERIAL.DSM_TITULO', 'LIKE', '%' . $titulo . '%');
         }
-    
+
         $titulos = $query->get();
-    
+
         return view('TitulosPorMateria', compact('materia', 'titulos', 'titulo'));
     }
 

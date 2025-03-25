@@ -32,8 +32,12 @@
                         </label>
                     </div>
                 @endforeach
+
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
             </form>
+            <div class="mt-2">
+                {{ $autores->appends(request()->except('page_autores'))->links() }}
+            </div>
 
             <!-- Filtrar por Editorial -->
             <h2 class="text-xl font-bold mb-4 mt-6">Filtrar por Editorial</h2>
@@ -53,8 +57,12 @@
                         </label>
                     </div>
                 @endforeach
+
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
             </form>
+            <div class="mt-2">
+                {{ $editoriales->appends(request()->except('page_editoriales'))->links() }}
+            </div>
 
             <!-- Filtrar por Campus -->
             <h2 class="text-xl font-bold mb-4 mt-6">Filtrar por Campus</h2>
@@ -74,8 +82,12 @@
                         </label>
                     </div>
                 @endforeach
+
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
             </form>
+            <div class="mt-2">
+                {{ $campuses->appends(request()->except('page_campuses'))->links() }}
+            </div>
         </div>
 
         <!-- Resultados -->
