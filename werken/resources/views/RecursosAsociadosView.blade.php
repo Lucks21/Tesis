@@ -55,7 +55,7 @@
         @endif
 
         <div class="mt-4">
-            <a href="{{ url()->previous() }}" class="text-blue-500 underline">Volver</a>
+            <a href="/" class="text-blue-500 underline">Volver a la página principal</a>
         </div>
     </div>
 </body>
