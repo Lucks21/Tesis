@@ -20,10 +20,8 @@ class BusquedaAvanzadaController extends Controller
         $editorialFiltro = $request->input('editorial');
         $campusFiltro = $request->input('campus');
 
-        // Parámetros para relevancia
-        $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"];
+        $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"]; // para relevancia
 
-        // Consulta base
         $query = DB::table('V_TITULO as vt')
             ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
             ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
@@ -35,18 +33,15 @@ class BusquedaAvanzadaController extends Controller
                 'va.nombre_busqueda as autor',
                 've.nombre_busqueda as editorial',
                 'tc.nombre_tb_campus as biblioteca',
-                DB::raw("
-                    (
-                        (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) + 
-                        (CASE WHEN vt.nombre_busqueda LIKE ? THEN 3 ELSE 0 END) + 
-                        (CASE WHEN va.nombre_busqueda = ? THEN 4 ELSE 0 END) + 
-                        (CASE WHEN va.nombre_busqueda LIKE ? THEN 2 ELSE 0 END)
-                    ) as relevancia
-                ")
+                DB::raw("(
+                    (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) +
+                    (CASE WHEN vt.nombre_busqueda LIKE ? THEN 3 ELSE 0 END) +
+                    (CASE WHEN va.nombre_busqueda = ? THEN 4 ELSE 0 END) +
+                    (CASE WHEN va.nombre_busqueda LIKE ? THEN 2 ELSE 0 END)
+                ) as relevancia")
             )
             ->distinct();
 
-        // Filtro por criterio principal
         switch ($criterio) {
             case 'autor':
                 if ($valorCriterio) {
@@ -76,7 +71,6 @@ class BusquedaAvanzadaController extends Controller
                 break;
         }
 
-        // Filtros adicionales
         if ($titulo) {
             $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
         }
@@ -93,14 +87,11 @@ class BusquedaAvanzadaController extends Controller
             $query->where('tc.nombre_tb_campus', '=', $campusFiltro);
         }
 
-        // Orden final
         $query->orderBy('relevancia', 'desc')
               ->orderBy('vt.nombre_busqueda', $orden);
 
-        // Clonar resultados para filtros
         $allResults = (clone $query)->addBinding($bindings, 'select')->get();
 
-        // Función para paginar colecciones
         $paginateCollection = function (Collection $items, int $perPage, string $pageName): LengthAwarePaginator {
             $currentPage = request()->input($pageName, 1);
             $items = $items->filter()->unique()->sort()->values();
@@ -112,12 +103,10 @@ class BusquedaAvanzadaController extends Controller
             ]);
         };
 
-        // Filtros basados en resultados actuales
         $autores = $paginateCollection($allResults->pluck('autor'), 10, 'page_autores');
         $editoriales = $paginateCollection($allResults->pluck('editorial'), 10, 'page_editoriales');
         $campuses = $paginateCollection($allResults->pluck('biblioteca'), 10, 'page_campuses');
 
-        // Resultados paginados finales
         $resultados = $query->addBinding($bindings, 'select')->paginate(10);
 
         return view('BusquedaAvanzadaResultados', compact(

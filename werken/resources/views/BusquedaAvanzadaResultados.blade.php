@@ -33,7 +33,15 @@
                     </div>
                 @endforeach
 
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+                <div class="flex flex-col gap-2 mt-4">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
+                    @if(request()->filled('autor'))
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('autor', 'page_autores'))) }}"
+                           class="bg-red-600 text-white px-4 py-2 rounded-md w-full text-center hover:bg-red-700">
+                            Quitar Filtro
+                        </a>
+                    @endif
+                </div>
             </form>
             <div class="mt-2">
                 {{ $autores->appends(request()->except('page_autores'))->links() }}
@@ -58,7 +66,15 @@
                     </div>
                 @endforeach
 
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+                <div class="flex flex-col gap-2 mt-4">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
+                    @if(request()->filled('editorial'))
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('editorial', 'page_editoriales'))) }}"
+                           class="bg-red-600 text-white px-4 py-2 rounded-md w-full text-center hover:bg-red-700">
+                            Quitar Filtro
+                        </a>
+                    @endif
+                </div>
             </form>
             <div class="mt-2">
                 {{ $editoriales->appends(request()->except('page_editoriales'))->links() }}
@@ -83,7 +99,15 @@
                     </div>
                 @endforeach
 
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+                <div class="flex flex-col gap-2 mt-4">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
+                    @if(request()->filled('campus'))
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('campus', 'page_campuses'))) }}"
+                           class="bg-red-600 text-white px-4 py-2 rounded-md w-full text-center hover:bg-red-700">
+                            Quitar Filtro
+                        </a>
+                    @endif
+                </div>
             </form>
             <div class="mt-2">
                 {{ $campuses->appends(request()->except('page_campuses'))->links() }}
