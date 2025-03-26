@@ -20,10 +20,10 @@ class BusquedaAvanzadaController extends Controller
         $editorialFiltro = $request->input('editorial');
         $campusFiltro = $request->input('campus');
 
-        // Parámetros para la consulta segura
+        // Parámetros para relevancia
         $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"];
 
-        // Construir consulta base
+        // Consulta base
         $query = DB::table('V_TITULO as vt')
             ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
             ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
@@ -46,7 +46,7 @@ class BusquedaAvanzadaController extends Controller
             )
             ->distinct();
 
-        // Filtros dinámicos por criterio
+        // Filtro por criterio principal
         switch ($criterio) {
             case 'autor':
                 if ($valorCriterio) {
@@ -93,17 +93,17 @@ class BusquedaAvanzadaController extends Controller
             $query->where('tc.nombre_tb_campus', '=', $campusFiltro);
         }
 
-        // Orden por relevancia y luego por título
+        // Orden final
         $query->orderBy('relevancia', 'desc')
               ->orderBy('vt.nombre_busqueda', $orden);
 
-        // Clonar consulta para extraer todos los resultados para filtros
+        // Clonar resultados para filtros
         $allResults = (clone $query)->addBinding($bindings, 'select')->get();
 
-        // Función auxiliar para paginar una colección
+        // Función para paginar colecciones
         $paginateCollection = function (Collection $items, int $perPage, string $pageName): LengthAwarePaginator {
             $currentPage = request()->input($pageName, 1);
-            $items = $items->values();
+            $items = $items->filter()->unique()->sort()->values();
             $currentItems = $items->slice(($currentPage - 1) * $perPage, $perPage);
             return new LengthAwarePaginator($currentItems, $items->count(), $perPage, $currentPage, [
                 'pageName' => $pageName,
@@ -112,12 +112,12 @@ class BusquedaAvanzadaController extends Controller
             ]);
         };
 
-        // Extraer y paginar filtros únicos
-        $autores = $paginateCollection($allResults->pluck('autor')->filter()->unique()->sort(), 10, 'page_autores');
-        $editoriales = $paginateCollection($allResults->pluck('editorial')->filter()->unique()->sort(), 10, 'page_editoriales');
-        $campuses = $paginateCollection($allResults->pluck('biblioteca')->filter()->unique()->sort(), 10, 'page_campuses');
+        // Filtros basados en resultados actuales
+        $autores = $paginateCollection($allResults->pluck('autor'), 10, 'page_autores');
+        $editoriales = $paginateCollection($allResults->pluck('editorial'), 10, 'page_editoriales');
+        $campuses = $paginateCollection($allResults->pluck('biblioteca'), 10, 'page_campuses');
 
-        // Aplicar paginación a los resultados
+        // Resultados paginados finales
         $resultados = $query->addBinding($bindings, 'select')->paginate(10);
 
         return view('BusquedaAvanzadaResultados', compact(
