@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resultados de la Búsqueda</title>
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <style>
+        .quitar-filtro {
+            background-color: #dc2626;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            display: block;
+            width: 100%;
+            margin-top: 0.5rem;
+            text-decoration: none;
+        }
+        .quitar-filtro:hover {
+            background-color: #b91c1c;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 p-6">
 <div class="container mx-auto">
@@ -36,8 +52,7 @@
                 <div class="flex flex-col gap-2 mt-4">
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
                     @if(request()->filled('autor'))
-                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('autor', 'page_autores'))) }}"
-                           class="bg-red-600 text-white px-4 py-2 rounded-md w-full text-center hover:bg-red-700">
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('autor', 'page_autores'))) }}" class="quitar-filtro">
                             Quitar Filtro
                         </a>
                     @endif
@@ -69,8 +84,7 @@
                 <div class="flex flex-col gap-2 mt-4">
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
                     @if(request()->filled('editorial'))
-                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('editorial', 'page_editoriales'))) }}"
-                           class="bg-red-600 text-white px-4 py-2 rounded-md w-full text-center hover:bg-red-700">
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('editorial', 'page_editoriales'))) }}" class="quitar-filtro">
                             Quitar Filtro
                         </a>
                     @endif
@@ -102,8 +116,7 @@
                 <div class="flex flex-col gap-2 mt-4">
                     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
                     @if(request()->filled('campus'))
-                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('campus', 'page_campuses'))) }}"
-                           class="bg-red-600 text-white px-4 py-2 rounded-md w-full text-center hover:bg-red-700">
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('campus', 'page_campuses'))) }}" class="quitar-filtro">
                             Quitar Filtro
                         </a>
                     @endif

@@ -20,7 +20,7 @@ class BusquedaAvanzadaController extends Controller
         $editorialFiltro = $request->input('editorial');
         $campusFiltro = $request->input('campus');
 
-        $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"]; // para relevancia
+        $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"];
 
         $query = DB::table('V_TITULO as vt')
             ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
