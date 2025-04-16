@@ -16,9 +16,10 @@ class BusquedaAvanzadaController extends Controller
         $valorCriterio = $request->input('valor_criterio');
         $titulo = $request->input('titulo');
         $orden = $request->input('orden', 'asc');
-        $autorFiltro = $request->input('autor');
-        $editorialFiltro = $request->input('editorial');
-        $campusFiltro = $request->input('campus');
+
+        $autorFiltro = $request->input('autor', []);
+        $editorialFiltro = $request->input('editorial', []);
+        $campusFiltro = $request->input('campus', []);
 
         $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"];
 
@@ -75,16 +76,16 @@ class BusquedaAvanzadaController extends Controller
             $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
         }
 
-        if ($autorFiltro) {
-            $query->where('va.nombre_busqueda', '=', $autorFiltro);
+        if (!empty($autorFiltro)) {
+            $query->whereIn('va.nombre_busqueda', (array) $autorFiltro);
         }
 
-        if ($editorialFiltro) {
-            $query->where('ve.nombre_busqueda', '=', $editorialFiltro);
+        if (!empty($editorialFiltro)) {
+            $query->whereIn('ve.nombre_busqueda', (array) $editorialFiltro);
         }
 
-        if ($campusFiltro) {
-            $query->where('tc.nombre_tb_campus', '=', $campusFiltro);
+        if (!empty($campusFiltro)) {
+            $query->whereIn('tc.nombre_tb_campus', (array) $campusFiltro);
         }
 
         $query->orderBy('relevancia', 'desc')
@@ -116,11 +117,8 @@ class BusquedaAvanzadaController extends Controller
             'titulo',
             'orden',
             'autores',
-            'autorFiltro',
             'editoriales',
-            'editorialFiltro',
-            'campuses',
-            'campusFiltro'
+            'campuses'
         ));
     }
 
