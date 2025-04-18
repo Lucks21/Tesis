@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resultados de la Búsqueda</title>
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <style>
+        .quitar-filtro {
+            background-color: #dc2626;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            display: block;
+            width: 100%;
+            margin-top: 0.5rem;
+            text-decoration: none;
+        }
+        .quitar-filtro:hover {
+            background-color: #b91c1c;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 p-6">
 <div class="container mx-auto">
@@ -13,68 +29,95 @@
 
     <div class="flex">
         <!-- Filtro lateral -->
-        <div class="w-1/4 bg-white shadow-md p-4 mr-4">
+        <div class="w-1/4 bg-white shadow-md p-4 mr-4 space-y-8">
             <!-- Filtrar por Autor -->
-            <h2 class="text-xl font-bold mb-4">Filtrar por Autor</h2>
             <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
+                <h2 class="text-xl font-bold mb-2">Filtrar por Autor</h2>
                 <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                <input type="hidden" name="editorial" value="{{ request('editorial') }}">
-                <input type="hidden" name="campus" value="{{ request('campus') }}">
+                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
 
                 @foreach ($autores as $autor)
                     <div>
                         <label>
-                            <input type="radio" name="autor" value="{{ $autor }}" {{ request('autor') === $autor ? 'checked' : '' }}>
+                            <input type="checkbox" name="autor[]" value="{{ $autor }}" {{ is_array(request('autor')) && in_array($autor, request('autor')) ? 'checked' : '' }}>
                             {{ $autor }}
                         </label>
                     </div>
                 @endforeach
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+
+                <div class="flex flex-col gap-2 mt-2">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
+                    @if(request()->filled('autor'))
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('autor', 'page_autores'))) }}"
+                           class="quitar-filtro">
+                            Quitar Filtro
+                        </a>
+                    @endif
+                </div>
             </form>
 
             <!-- Filtrar por Editorial -->
-            <h2 class="text-xl font-bold mb-4 mt-6">Filtrar por Editorial</h2>
             <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
+                <h2 class="text-xl font-bold mb-2 mt-6">Filtrar por Editorial</h2>
                 <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                <input type="hidden" name="autor" value="{{ request('autor') }}">
-                <input type="hidden" name="campus" value="{{ request('campus') }}">
+                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
 
                 @foreach ($editoriales as $editorial)
                     <div>
                         <label>
-                            <input type="radio" name="editorial" value="{{ $editorial }}" {{ request('editorial') === $editorial ? 'checked' : '' }}>
+                            <input type="checkbox" name="editorial[]" value="{{ $editorial }}" {{ is_array(request('editorial')) && in_array($editorial, request('editorial')) ? 'checked' : '' }}>
                             {{ $editorial }}
                         </label>
                     </div>
                 @endforeach
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+
+                <div class="flex flex-col gap-2 mt-2">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
+                    @if(request()->filled('editorial'))
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('editorial', 'page_editoriales'))) }}"
+                           class="quitar-filtro">
+                            Quitar Filtro
+                        </a>
+                    @endif
+                </div>
             </form>
 
             <!-- Filtrar por Campus -->
-            <h2 class="text-xl font-bold mb-4 mt-6">Filtrar por Campus</h2>
             <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}">
+                <h2 class="text-xl font-bold mb-2 mt-6">Filtrar por Campus</h2>
                 <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                <input type="hidden" name="autor" value="{{ request('autor') }}">
-                <input type="hidden" name="editorial" value="{{ request('editorial') }}">
+                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
 
                 @foreach ($campuses as $campus)
                     <div>
                         <label>
-                            <input type="radio" name="campus" value="{{ $campus }}" {{ request('campus') === $campus ? 'checked' : '' }}>
+                            <input type="checkbox" name="campus[]" value="{{ $campus }}" {{ is_array(request('campus')) && in_array($campus, request('campus')) ? 'checked' : '' }}>
                             {{ $campus }}
                         </label>
                     </div>
                 @endforeach
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md mt-4">Aplicar Filtro</button>
+
+                <div class="flex flex-col gap-2 mt-2">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md w-full">Aplicar Filtro</button>
+                    @if(request()->filled('campus'))
+                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('campus', 'page_campuses'))) }}"
+                           class="quitar-filtro">
+                            Quitar Filtro
+                        </a>
+                    @endif
+                </div>
             </form>
         </div>
 
@@ -84,9 +127,9 @@
                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                <input type="hidden" name="autor" value="{{ request('autor') }}">
-                <input type="hidden" name="editorial" value="{{ request('editorial') }}">
-                <input type="hidden" name="campus" value="{{ request('campus') }}">
+                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
 
                 <label for="orden" class="font-bold">Ordenar:</label>
                 <select name="orden" id="orden" class="border border-gray-300 rounded-md p-2">
