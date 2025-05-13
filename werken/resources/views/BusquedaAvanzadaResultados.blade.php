@@ -288,6 +288,9 @@
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white">
                                                 <i class="fas fa-university mr-2"></i>Biblioteca
                                             </th>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                                <i class="fas fa-file-export mr-2"></i>Exportar
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
@@ -297,6 +300,12 @@
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->autor }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->editorial }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->biblioteca }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                                    <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 
+                                                       class="filter-button inline-flex items-center py-1 px-3 text-sm">
+                                                        <i class="fas fa-file-export mr-2"></i>RIS
+                                                    </a>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>

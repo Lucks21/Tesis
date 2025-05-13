@@ -4,6 +4,7 @@ use App\Http\Controllers\BusquedaSimpleController;
 use App\Http\Controllers\BusquedaAvanzadaController;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ExportacionController;
 
 
 Route::get('/', [PrincipalController::class, 'index']);
@@ -26,3 +27,4 @@ Route::get('busqueda-avanzada/titulos/{autor}', [BusquedaAvanzadaController::cla
 Route::get('busqueda-avanzada/titulos-editorial/{editorial}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorEditorial'])->name('mostrar-titulos-por-editorial');
 Route::get('busqueda-avanzada/titulos-materia/{materia}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorMateria'])->name('mostrar-titulos-por-materia');
 Route::get('busqueda-avanzada/titulos-serie/{serie}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorSerie'])->name('mostrar-titulos-por-serie');
+Route::get('/export-ris/{nroControl}', [ExportacionController::class, 'exportRIS'])->name('export.ris');
