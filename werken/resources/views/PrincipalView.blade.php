@@ -128,6 +128,17 @@
                     <p>Descubre un mundo de conocimiento y cultura en nuestro nuevo sitio web. Aquí, encontrarás toda la información que necesitas sobre nuestras bibliotecas, colecciones, servicios y eventos. Nos hemos renovado para ofrecerte una experiencia en línea más intuitiva, dinámica y enriquecedora.</p>
                 </div>
 
+                <div class="flex justify-center space-x-4 mb-8">
+                    <a href="{{ route('busqueda') }}" class="search-button flex items-center">
+                        <i class="fas fa-search mr-2"></i>
+                        Búsqueda Simple
+                    </a>
+                    <a href="{{ route('busqueda-avanzada') }}" class="search-button flex items-center">
+                        <i class="fas fa-filter mr-2"></i>
+                        Búsqueda Avanzada
+                    </a>
+                </div>
+
                 <div class="search-box">
                     <form action="{{ route('busqueda') }}" method="GET" class="flex space-x-4">
                         <input type="text" 
