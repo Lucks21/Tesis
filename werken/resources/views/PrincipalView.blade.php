@@ -101,18 +101,26 @@
         </div>
     </header>
 
-    <!-- Navegación principal -->
-    <nav class="bg-white shadow">
+    <!-- Navegación principal -->    <nav class="bg-white shadow">
         <div class="container mx-auto px-4">
-            <div class="flex space-x-6">
-                <a href="#" class="nav-link">Inicio</a>
-                <a href="#" class="nav-link">Quiénes somos</a>
-                <a href="#" class="nav-link">Recursos</a>
-                <a href="#" class="nav-link">Servicios</a>
-                <a href="#" class="nav-link">Bibliotecas</a>
-                <a href="#" class="nav-link">Galería</a>
-                <a href="#" class="nav-link">Noticias</a>
-                <a href="#" class="nav-link">Contacto</a>
+            <div class="flex justify-between items-center">
+                <div class="flex space-x-6">
+                    <a href="#" class="nav-link">Inicio</a>
+                    <a href="#" class="nav-link">Quiénes somos</a>
+                    <a href="#" class="nav-link">Recursos</a>
+                    <a href="#" class="nav-link">Servicios</a>
+                    <a href="#" class="nav-link">Bibliotecas</a>
+                    <a href="#" class="nav-link">Galería</a>
+                    <a href="#" class="nav-link">Noticias</a>
+                    <a href="#" class="nav-link">Contacto</a>
+                </div>                <div class="flex space-x-4">
+                    <a href="{{ route('busqueda') }}" class="search-button flex items-center">
+                        <i class="fas fa-search mr-2"></i>Búsqueda Simple
+                    </a>
+                    <a href="{{ route('busqueda-avanzada') }}" class="search-button flex items-center">
+                        <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
@@ -126,7 +134,7 @@
                 <div class="welcome-text">
                     <h2 class="text-2xl font-semibold text-blue-900 mb-4">¡Bienvenid@s!</h2>
                     <p>Descubre un mundo de conocimiento y cultura en nuestro nuevo sitio web. Aquí, encontrarás toda la información que necesitas sobre nuestras bibliotecas, colecciones, servicios y eventos. Nos hemos renovado para ofrecerte una experiencia en línea más intuitiva, dinámica y enriquecedora.</p>
-                </div>
+                </div>>
 
                 <div class="search-box">
                     <form action="{{ route('busqueda') }}" method="GET" class="flex space-x-4">

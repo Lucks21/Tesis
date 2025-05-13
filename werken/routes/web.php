@@ -12,7 +12,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/busqueda', function () {
-    return view('busqueda');
+    return view('BusquedaView');
 })->name('busqueda');
 
 Route::get('/dashboard', [PrincipalController::class, 'showDashboard'])->name('dashboard');
