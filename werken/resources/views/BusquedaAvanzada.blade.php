@@ -70,6 +70,15 @@
         .form-button:hover {
             background-color: #002b5c;
         }
+                .search-button {
+            background-color: #003876;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -105,15 +114,24 @@
     <!-- Navegación principal -->
     <nav class="bg-white shadow">
         <div class="container mx-auto px-4">
-            <div class="flex space-x-6">
-                <a href="/" class="nav-link">Inicio</a>
-                <a href="#" class="nav-link">Quiénes somos</a>
-                <a href="#" class="nav-link">Recursos</a>
-                <a href="#" class="nav-link">Servicios</a>
-                <a href="#" class="nav-link">Bibliotecas</a>
-                <a href="#" class="nav-link">Galería</a>
-                <a href="#" class="nav-link">Noticias</a>
-                <a href="#" class="nav-link">Contacto</a>
+            <div class="flex justify-between items-center">
+                <div class="flex space-x-6">
+                    <a href="/" class="nav-link">Inicio</a>
+                    <a href="#" class="nav-link">Quiénes somos</a>
+                    <a href="#" class="nav-link">Recursos</a>
+                    <a href="#" class="nav-link">Servicios</a>
+                    <a href="#" class="nav-link">Bibliotecas</a>
+                    <a href="#" class="nav-link">Galería</a>
+                    <a href="#" class="nav-link">Noticias</a>
+                    <a href="#" class="nav-link">Contacto</a>
+                </div>                <div class="flex space-x-4">
+                    <a href="{{ route('busqueda') }}" class="search-button flex items-center">
+                        <i class="fas fa-search mr-2"></i>Búsqueda Simple
+                    </a>
+                    <a href="{{ route('busqueda-avanzada') }}" class="search-button flex items-center">
+                        <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
