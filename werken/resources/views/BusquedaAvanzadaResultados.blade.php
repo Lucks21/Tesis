@@ -1,16 +1,65 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
+<head>    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resultados de Búsqueda - Sistema de Bibliotecas UBB</title>
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Black_Condensed.otf') }}') format('opentype');
+            font-weight: 900;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Bold_Condensed.otf') }}') format('opentype');
+            font-weight: bold;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Regular_Condensed.otf') }}') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Light_Condensed.otf') }}') format('opentype');
+            font-weight: 300;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* Preload critical fonts */
+        head {
+            link[rel=preload][as=font] {
+                href: url('{{ asset('fonts/Tipo-UBB-Regular_Condensed.otf') }}');
+                type: 'font/otf';
+                crossorigin: 'anonymous';
+            }
+        }
+
+        /* Base styles */
+        body {
+            margin: 0;
+            font-family: 'Tipo-UBB', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Institutional bar */
         .institutional-bar {
             background-color: #003876;
             color: white;
             font-size: 0.875rem;
+            padding: 0.5rem 0;
         }
         .institutional-bar a {
             color: white;
@@ -20,13 +69,62 @@
         .institutional-bar a:hover {
             text-decoration: underline;
         }
+        
+        /* Main header */
         .main-header {
             background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            height: 64px;
+            padding: 1rem;
+        }
+
+        .direccion-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .direccion-img {
+            height: 100%;
+            width: auto;
+            max-height: 64px;
+            object-fit: contain;
+        }
+
+        /* Navigation */
+        .nav-container {
+            background-color: white;
             border-bottom: 1px solid #e5e7eb;
+        }
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
         }
         .nav-link {
             color: #4B5563;
             text-decoration: none;
+            padding: 1rem;
+            transition: color 0.2s;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: normal;
+        }
             padding: 1rem;
             transition: color 0.2s;
         }
@@ -56,43 +154,85 @@
         }
         .form-checkbox:checked {
             background-color: #003876;
+        }        .search-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
         }
-        .filter-button {
+
+        .search-button, .filter-button {
             background-color: #003876;
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             transition: background-color 0.2s;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: bold;
+            min-width: 160px;
+            text-align: center;
         }
-        .filter-button:hover {
+
+        .search-button i, .filter-button i {
+            margin-right: 0.5rem;
+        }
+
+        .search-button:hover, .filter-button:hover {
             background-color: #002b5c;
         }
         .remove-filter {
             background-color: #dc2626;
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
             transition: background-color 0.2s;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: bold;
         }
         .remove-filter:hover {
             background-color: #b91c1c;
         }
-                .search-button {
-            background-color: #003876;
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+        
+        /* Main content styles */
+        .results-container h1 {
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: 900;
+        }
+        
+        .form-checkbox {
+            accent-color: #003876;
+        }
+        
+        .filter-section h2 {
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: bold;
+        }
+
+        .logos-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            gap: 2rem;
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Barra institucional -->
+<body class="bg-gray-50">    <!-- Barra institucional -->
     <div class="institutional-bar">
         <div class="container mx-auto px-4">
-            <div class="flex justify-end space-x-4 py-1">
+            <div class="flex justify-center space-x-8">
                 <a href="#">Web UBB</a>
                 <a href="#">Intranet</a>
                 <a href="#">Correo Institucional</a>
@@ -100,44 +240,40 @@
                 <a href="#">Moodle UBB</a>
             </div>
         </div>
-    </div>
-
-    <!-- Cabecera principal -->
+    </div>    <!-- Cabecera principal -->
     <header class="main-header">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-8">
-                    <img src="{{ asset('img/logo-sistema-bibliotecas.png') }}" alt="Sistema de Bibliotecas" class="h-16">
-                    <img src="{{ asset('img/logo-direccion-bibliotecas.png') }}" alt="Dirección de Bibliotecas" class="h-16">
-                </div>
-                <div class="flex items-center">
-                    <img src="{{ asset('img/logo-ciencia-abierta.png') }}" alt="Ciencia Abierta" class="h-16">
-                    <img src="{{ asset('img/logo-ubb.png') }}" alt="Universidad del Bío-Bío" class="h-16 ml-8">
+        <div class="logos-container">
+            <div class="logo-group">
+                <img src="{{ asset('img/logo-sistema-bibliotecas.png') }}" alt="Sistema de Bibliotecas" class="h-16">
+                <div class="direccion-wrapper">
+                    <img src="{{ asset('img/logo_direccion_bibliotecas.png') }}" alt="Dirección de Bibliotecas" class="direccion-img">
                 </div>
             </div>
+            <div class="logo-group">
+                <img src="{{ asset('img/logo-ciencia-abierta.png') }}" alt="Ciencia Abierta" class="h-16">
+                <img src="{{ asset('img/logo-ubb.png') }}" alt="Universidad del Bío-Bío" class="h-16">
+            </div>
         </div>
-    </header>
-
-    <!-- Navegación principal -->    <nav class="bg-white shadow">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center">
-                <div class="flex space-x-6">
-                    <a href="/" class="nav-link">Inicio</a>
-                    <a href="#" class="nav-link">Quiénes somos</a>
-                    <a href="#" class="nav-link">Recursos</a>
-                    <a href="#" class="nav-link">Servicios</a>
-                    <a href="#" class="nav-link">Bibliotecas</a>
-                    <a href="#" class="nav-link">Galería</a>
-                    <a href="#" class="nav-link">Noticias</a>
-                    <a href="#" class="nav-link">Contacto</a>
-                </div>                <div class="flex space-x-4">
-                    <a href="{{ route('busqueda') }}" class="search-button flex items-center">
-                        <i class="fas fa-search mr-2"></i>Búsqueda Simple
-                    </a>
-                    <a href="{{ route('busqueda-avanzada') }}" class="search-button flex items-center">
-                        <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
-                    </a>
-                </div>
+    </header>    <!-- Navegación principal -->
+    <nav class="nav-container">
+        <div class="nav-content">
+            <div class="nav-links">
+                <a href="{{ url('/') }}" class="nav-link">Inicio</a>
+                <a href="#" class="nav-link">Quiénes somos</a>
+                <a href="#" class="nav-link">Recursos</a>
+                <a href="#" class="nav-link">Servicios</a>
+                <a href="#" class="nav-link">Bibliotecas</a>
+                <a href="#" class="nav-link">Galería</a>
+                <a href="#" class="nav-link">Noticias</a>
+                <a href="#" class="nav-link">Contacto</a>
+            </div>
+            <div class="search-actions">
+                <a href="{{ route('busqueda') }}" class="search-button">
+                    <i class="fas fa-search mr-2"></i>Búsqueda Simple
+                </a>
+                <a href="{{ route('busqueda-avanzada') }}" class="search-button">
+                    <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
+                </a>
             </div>
         </div>
     </nav>
