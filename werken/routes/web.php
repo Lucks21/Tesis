@@ -21,7 +21,9 @@ Route::get('/resultados', [BusquedaSimpleController::class, 'buscar'])->name('re
 Route::get('/recursos-asociados/{criterio}/{valor}', [BusquedaSimpleController::class, 'recursosAsociados'])
      ->name('recursos.asociados');
 
-Route::get('/busqueda-avanzada', function () {return view('BusquedaAvanzada');})->name('busqueda-avanzada');
+Route::get('/busqueda-avanzada', function () {
+    return view('BusquedaAvanzada');
+})->name('busqueda-avanzada');
 Route::get('/busqueda-avanzada/resultados', [BusquedaAvanzadaController::class, 'buscar'])->name('busqueda-avanzada-resultados');
 Route::get('busqueda-avanzada/titulos/{autor}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorAutor'])->name('mostrar-titulos-por-autor');
 Route::get('busqueda-avanzada/titulos-editorial/{editorial}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorEditorial'])->name('mostrar-titulos-por-editorial');

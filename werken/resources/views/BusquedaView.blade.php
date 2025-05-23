@@ -2,15 +2,48 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Búsqueda Simple - Sistema de Bibliotecas UBB</title>
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Black_Condensed.otf') }}') format('opentype');
+            font-weight: 900;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Bold_Condensed.otf') }}') format('opentype');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Regular_Condensed.otf') }}') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Tipo-UBB';
+            src: url('{{ asset('fonts/Tipo-UBB-Light_Condensed.otf') }}') format('opentype');
+            font-weight: 300;
+            font-style: normal;
+        }
+        /* Base styles */
+        body {
+            margin: 0;
+            font-family: 'Tipo-UBB', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.5;
+        }
+        /* Institutional bar */
         .institutional-bar {
             background-color: #003876;
             color: white;
             font-size: 0.875rem;
+            padding: 0.5rem 0;
         }
         .institutional-bar a {
             color: white;
@@ -19,12 +52,61 @@
         }
         .institutional-bar a:hover {
             text-decoration: underline;
-        }
+        }        /* Main header */
         .main-header {
             background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+            text-align: center;
+        }
+        .logos-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            gap: 2rem;
+        }
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        .direccion-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .direccion-img {
+            height: 64px;
+            width: auto;
+            object-fit: contain;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        /* Navigation */
+        .nav-container {
+            background-color: white;
             border-bottom: 1px solid #e5e7eb;
         }
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
         .nav-link {
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: normal;
             color: #4B5563;
             text-decoration: none;
             padding: 1rem;
@@ -33,42 +115,72 @@
         .nav-link:hover {
             color: #003876;
         }
+        /* Search buttons */
+        .search-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        .search-button {
+            background-color: #003876;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        .search-button:hover {
+            background-color: #002b5c;
+        }
+        /* Main content */
+        .main-content {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .page-title {
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: 900;
+            font-size: 2.5rem;
+            color: #1a202c;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .search-form {
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: bold;
+        }
+        
         .form-input, .form-select {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.375rem;
+            border: 2px solid #003876;
+            border-radius: 4px;
             font-size: 1rem;
-            background-color: white;
-        }
-        .form-button {
-            background-color: #003876;
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .form-button:hover {
-            background-color: #002b5c;
-        }
-                .search-button {
-            background-color: #003876;
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: normal;
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Barra institucional -->
+<body>    <!-- Barra institucional -->
     <div class="institutional-bar">
         <div class="container mx-auto px-4">
-            <div class="flex justify-end space-x-4 py-1">
+            <div class="flex justify-center space-x-8">
                 <a href="#">Web UBB</a>
                 <a href="#">Intranet</a>
                 <a href="#">Correo Institucional</a>
@@ -80,81 +192,73 @@
 
     <!-- Cabecera principal -->
     <header class="main-header">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-8">
-                    <img src="{{ asset('img/logo-sistema-bibliotecas.png') }}" alt="Sistema de Bibliotecas" class="h-16">
-                    <img src="{{ asset('img/logo-direccion-bibliotecas.png') }}" alt="Dirección de Bibliotecas" class="h-16">
+        <div class="logos-container">
+            <div class="logo-group">
+                <img src="{{ asset('img/logo-sistema-bibliotecas.png') }}" alt="Sistema de Bibliotecas" class="h-16">
+                <div class="direccion-wrapper">
+                    <img src="{{ asset('img/logo_direccion_bibliotecas.png') }}" alt="Dirección de Bibliotecas" class="direccion-img">
                 </div>
-                <div class="flex items-center">
-                    <img src="{{ asset('img/logo-ciencia-abierta.png') }}" alt="Ciencia Abierta" class="h-16">
-                    <img src="{{ asset('img/logo-ubb.png') }}" alt="Universidad del Bío-Bío" class="h-16 ml-8">
-                </div>
+            </div>
+            <div class="logo-group">
+                <img src="{{ asset('img/logo-ciencia-abierta.png') }}" alt="Ciencia Abierta" class="h-16">
+                <img src="{{ asset('img/logo-ubb.png') }}" alt="Universidad del Bío-Bío" class="h-16">
             </div>
         </div>
     </header>
 
-    <!-- Navegación principal -->    <nav class="bg-white shadow">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center">
-                <div class="flex space-x-6">
-                    <a href="/" class="nav-link">Inicio</a>
-                    <a href="#" class="nav-link">Quiénes somos</a>
-                    <a href="#" class="nav-link">Recursos</a>
-                    <a href="#" class="nav-link">Servicios</a>
-                    <a href="#" class="nav-link">Bibliotecas</a>
-                    <a href="#" class="nav-link">Galería</a>
-                    <a href="#" class="nav-link">Noticias</a>
-                    <a href="#" class="nav-link">Contacto</a>
-                </div>                <div class="flex space-x-4">
-                    <a href="{{ route('busqueda') }}" class="search-button flex items-center">
-                        <i class="fas fa-search mr-2"></i>Búsqueda Simple
-                    </a>
-                    <a href="{{ route('busqueda-avanzada') }}" class="search-button flex items-center">
-                        <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
-                    </a>
-                </div>
+    <!-- Navegación principal -->
+    <nav class="nav-container">
+        <div class="nav-content">            <div class="nav-links">
+                <a href="{{ url('/') }}" class="nav-link">Inicio</a>
+                <a href="#" class="nav-link">Quiénes somos</a>
+                <a href="#" class="nav-link">Recursos</a>
+                <a href="#" class="nav-link">Servicios</a>
+                <a href="#" class="nav-link">Bibliotecas</a>
+                <a href="#" class="nav-link">Galería</a>
+                <a href="#" class="nav-link">Noticias</a>
+                <a href="#" class="nav-link">Contacto</a>
+            </div>
+            <div class="search-actions">
+                <a href="{{ route('busqueda') }}" class="search-button">
+                    <i class="fas fa-search mr-2"></i>Búsqueda Simple
+                </a>
+                <a href="{{ route('busqueda-avanzada') }}" class="search-button">
+                    <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
+                </a>
             </div>
         </div>
     </nav>
 
     <!-- Contenido principal -->
-    <main class="container mx-auto px-4 py-8">
-        <div class="max-w-3xl mx-auto">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Búsqueda Simple</h1>
-            
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <form method="GET" action="{{ route('resultados') }}" id="form-busqueda" class="space-y-6">
-                    <div class="space-y-4">
-                        <label for="criterio" class="block text-lg font-semibold text-gray-700">
-                            <i class="fas fa-filter mr-2"></i>Buscar por:
-                        </label>
-                        <select id="criterio" name="criterio" class="form-select" onchange="updateFormAction()">
-                            <option value="autor" {{ request('criterio') === 'autor' ? 'selected' : '' }}>Autor</option>
-                            <option value="editorial" {{ request('criterio') === 'editorial' ? 'selected' : '' }}>Editorial</option>
-                            <option value="serie" {{ request('criterio') === 'serie' ? 'selected' : '' }}>Serie</option>
-                            <option value="materia" {{ request('criterio') === 'materia' ? 'selected' : '' }}>Materia</option>
-                            <option value="titulo" {{ request('criterio') === 'titulo' ? 'selected' : '' }}>Título</option>
+    <main>
+        <div class="main-content">
+            <h1 class="page-title">Búsqueda Simple</h1>
+            <div class="search-form">
+                <form action="{{ route('busqueda') }}" method="GET">
+                    <div class="form-group">
+                        <label for="searchType" class="form-label">Buscar por:</label>
+                        <select name="searchType" id="searchType" class="form-select">
+                            <option value="autor">Autor</option>
+                            <option value="titulo">Título</option>
+                            <option value="materia">Materia</option>
+                            <option value="editorial">Editorial</option>
                         </select>
                     </div>
-
-                    <div class="space-y-4">
-                        <label for="busqueda" class="block text-lg font-semibold text-gray-700">
-                            <i class="fas fa-search mr-2"></i>Término de búsqueda:
-                        </label>
-                        <input type="text" id="busqueda" name="busqueda" 
-                               class="form-input"
+                    <div class="form-group">
+                        <label for="searchTerm" class="form-label">Término de búsqueda:</label>
+                        <input type="text" 
+                               id="searchTerm"
+                               name="query" 
+                               class="form-input" 
                                placeholder="Ingrese el término a buscar..."
-                               value="{{ request('busqueda') }}" required>
-                    </div>
-
-                    <div class="flex justify-center space-x-4 pt-6">
-                        <button type="submit" class="form-button">
-                            <i class="fas fa-search mr-2"></i>Buscar
-                        </button>
-                        <a href="/" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-200">
+                               value="{{ request('query') }}">
+                    </div>                    <div class="flex justify-between">
+                        <a href="{{ url('/') }}" class="search-button">
                             <i class="fas fa-home mr-2"></i>Volver
                         </a>
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search mr-2"></i>Buscar
+                        </button>
                     </div>
                 </form>
             </div>
@@ -162,17 +266,3 @@
     </main>
 </body>
 </html>
-
-<script>
-    function updateFormAction() {
-        const criterio = document.getElementById('criterio').value;
-        const form = document.getElementById('form-busqueda');
-
-        if (criterio === 'titulo') {
-            form.action = "{{ route('buscar.titulo') }}";
-        } else {
-            form.action = "{{ route('resultados') }}";
-        }
-    }
-    document.addEventListener('DOMContentLoaded', updateFormAction);
-</script>
