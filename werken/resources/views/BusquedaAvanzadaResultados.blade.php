@@ -448,8 +448,13 @@
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($resultados as $resultado)
-                                            <tr class="table-row">
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->titulo }}</td>
+                                            <tr class="table-row">                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                                    <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
+                                                       class="text-blue-600 hover:text-blue-800 hover:underline flex items-center">
+                                                        <i class="fas fa-book mr-2"></i>
+                                                        {{ $resultado->titulo }}
+                                                    </a>
+                                                </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->autor }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->editorial }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->biblioteca }}</td>
