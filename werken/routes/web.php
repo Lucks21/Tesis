@@ -6,16 +6,22 @@ use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportacionController;
 
-
+// Public routes
 Route::get('/', [PrincipalController::class, 'index']);
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
+Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
+
+// Protected routes
+Route::middleware(['check.session'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/dashboard', [PrincipalController::class, 'showDashboard'])->name('dashboard');
+});
+
+// Public search routes
 Route::get('/busqueda', function () {
     return view('BusquedaView');
 })->name('busqueda');
 
-Route::get('/dashboard', [PrincipalController::class, 'showDashboard'])->name('dashboard');
 Route::get('/buscar-titulo', [BusquedaSimpleController::class, 'buscarPorTitulo'])->name('buscar.titulo');
 Route::get('/resultados', [BusquedaSimpleController::class, 'buscar'])->name('resultados');
 Route::get('/recursos-asociados/{criterio}/{valor}', [BusquedaSimpleController::class, 'recursosAsociados'])
@@ -24,6 +30,7 @@ Route::get('/recursos-asociados/{criterio}/{valor}', [BusquedaSimpleController::
 Route::get('/busqueda-avanzada', function () {
     return view('BusquedaAvanzada');
 })->name('busqueda-avanzada');
+
 Route::get('/busqueda-avanzada/resultados', [BusquedaAvanzadaController::class, 'buscar'])->name('busqueda-avanzada-resultados');
 Route::get('busqueda-avanzada/titulos/{autor}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorAutor'])->name('mostrar-titulos-por-autor');
 Route::get('busqueda-avanzada/titulos-editorial/{editorial}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorEditorial'])->name('mostrar-titulos-por-editorial');
