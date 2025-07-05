@@ -40,3 +40,8 @@ Route::get('busqueda-avanzada/titulos-editorial/{editorial}', [BusquedaAvanzadaC
 Route::get('busqueda-avanzada/titulos-materia/{materia}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorMateria'])->name('mostrar-titulos-por-materia');
 Route::get('busqueda-avanzada/titulos-serie/{serie}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorSerie'])->name('mostrar-titulos-por-serie');
 Route::get('/export-ris/{nroControl}', [ExportacionController::class, 'exportRIS'])->name('export.ris');
+
+// manejo de cache para la busqueda avanzada
+Route::get('/busqueda-avanzada/limpiar-cache', [BusquedaAvanzadaController::class, 'limpiarCacheSession'])->name('limpiar-cache-busqueda');
+Route::get('/busqueda-avanzada/estadisticas-cache', [BusquedaAvanzadaController::class, 'obtenerEstadisticasCache'])->name('estadisticas-cache-busqueda');
+Route::get('/busqueda-avanzada/test-cache', [BusquedaAvanzadaController::class, 'testSessionCache'])->name('test-cache-busqueda');
