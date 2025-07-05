@@ -54,53 +54,66 @@ class BusquedaAvanzadaController extends Controller
                 ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
                 ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
                 ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
-                ->select(
-                    'vt.nro_control',
-                    'vt.nombre_busqueda as titulo',
-                    'va.nombre_busqueda as autor',
-                    've.nombre_busqueda as editorial',
-                    'tc.nombre_tb_campus as biblioteca',
-                    DB::raw("(
-                        (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) +
-                        (CASE WHEN vt.nombre_busqueda LIKE ? THEN 3 ELSE 0 END) +
-                        (CASE WHEN va.nombre_busqueda = ? THEN 4 ELSE 0 END) +
-                        (CASE WHEN va.nombre_busqueda LIKE ? THEN 2 ELSE 0 END)
-                    ) as relevancia")
-                )
                 ->distinct();
 
             // Aplicar criterios de búsqueda solo si tienen valores
+            $orderByField = 'vt.nombre_busqueda'; // Campo por defecto para ordenar
+            
             switch ($criterio) {
                 case 'autor':
                     if (!empty($valorCriterio)) {
                         $query->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $query->orderBy('va.nombre_busqueda', $orden);
+                    $orderByField = 'va.nombre_busqueda';
                     break;
                 case 'editorial':
                     if (!empty($valorCriterio)) {
                         $query->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $query->orderBy('ve.nombre_busqueda', $orden);
+                    $orderByField = 've.nombre_busqueda';
                     break;
                 case 'materia':
+                    $query->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control');
                     if (!empty($valorCriterio)) {
-                        $query->join('V_MATERIA', 'vt.nro_control', '=', 'V_MATERIA.nro_control')
-                              ->where('V_MATERIA.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                        $query->where('vm.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $query->orderBy('V_MATERIA.nombre_busqueda', $orden);
+                    $orderByField = 'vm.nombre_busqueda';
                     break;
                 case 'serie':
+                    $query->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control');
                     if (!empty($valorCriterio)) {
-                        $query->join('V_SERIE', 'vt.nro_control', '=', 'V_SERIE.nro_control')
-                              ->where('V_SERIE.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                        $query->where('vs.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $query->orderBy('V_SERIE.nombre_busqueda', $orden);
+                    $orderByField = 'vs.nombre_busqueda';
                     break;
                 default:
-                    $query->orderBy('vt.nombre_busqueda', $orden);
+                    $orderByField = 'vt.nombre_busqueda';
                     break;
             }
+
+            // Ahora definimos el select después de todos los joins e incluimos el campo de ordenamiento
+            $selectFields = [
+                'vt.nro_control',
+                'vt.nombre_busqueda as titulo',
+                'va.nombre_busqueda as autor',
+                've.nombre_busqueda as editorial',
+                'tc.nombre_tb_campus as biblioteca',
+                DB::raw("(
+                    (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) +
+                    (CASE WHEN vt.nombre_busqueda LIKE ? THEN 3 ELSE 0 END) +
+                    (CASE WHEN va.nombre_busqueda = ? THEN 4 ELSE 0 END) +
+                    (CASE WHEN va.nombre_busqueda LIKE ? THEN 2 ELSE 0 END)
+                ) as relevancia")
+            ];
+
+            // Agregar campos específicos según el criterio para poder ordenar
+            if ($criterio === 'materia') {
+                $selectFields[] = 'vm.nombre_busqueda as materia_orden';
+            } elseif ($criterio === 'serie') {
+                $selectFields[] = 'vs.nombre_busqueda as serie_orden';
+            }
+
+            $query->select($selectFields);
 
             if (!empty($titulo)) {
                 $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
@@ -119,7 +132,7 @@ class BusquedaAvanzadaController extends Controller
             }
 
             $query->orderBy('relevancia', 'desc')
-                  ->orderBy('vt.nombre_busqueda', $orden);
+                  ->orderBy($orderByField, $orden);
 
             // Limitar la consulta para evitar timeout - aumentamos el límite para búsquedas amplias
             $allResults = (clone $query)->addBinding($bindings, 'select')->limit(5000)->get();
@@ -479,3 +492,4 @@ class BusquedaAvanzadaController extends Controller
             // Si falla la configuración, continuamos sin error
         }
     }
+}
