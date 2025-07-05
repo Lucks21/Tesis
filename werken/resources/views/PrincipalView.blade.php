@@ -190,25 +190,13 @@
 </head>
 <body>    <!-- Barra institucional -->
     <div class="institutional-bar">
-        <div class="container mx-auto px-4">            <div class="flex justify-between items-center">
-                <div class="flex space-x-8">
+        <div class="container mx-auto px-4">
+                <div class="flex justify-center space-x-8">
                     <a href="#">Web UBB</a>
                     <a href="#">Intranet</a>
                     <a href="#">Correo Institucional</a>
                     <a href="#">Adecca UBB</a>
                     <a href="#">Moodle UBB</a>
-                </div>
-                <div class="flex items-center">
-                    @if(session('rut_usuario'))
-                        <span class="text-white mr-4">Bienvenido {{ session('rut_usuario') }}</span>
-                        <form action="{{ route('logout') }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" class="text-white hover:underline">Cerrar sesión</button>
-                        </form>
-                    @else
-                        <a href="{{ route('login') }}" class="text-white hover:underline">Iniciar sesión</a>
-                    @endif
-                </div>
             </div>
         </div>
     </div>
@@ -248,6 +236,10 @@
                 </a>
                 <a href="{{ route('busqueda-avanzada') }}" class="search-button">
                     <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
+                </a>
+                <a href="{{ route('perfil') }}" class="search-button" title="Cuenta personal">
+                    <i class="fas fa-user-circle mr-2"></i>
+                    Perfil{{ session('rut_usuario') ? ' (' . session('rut_usuario') . ')' : '' }}
                 </a>
             </div>
         </div>

@@ -15,6 +15,9 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
 Route::middleware(['check.session'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [PrincipalController::class, 'showDashboard'])->name('dashboard');
+    Route::get('/perfil', function () {
+        return view('perfil');
+    })->name('perfil');
 });
 
 // Public search routes
