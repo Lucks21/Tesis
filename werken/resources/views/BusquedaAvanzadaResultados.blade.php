@@ -227,6 +227,38 @@
             padding: 0 1rem;
             gap: 2rem;
         }
+
+        /* Pagination styles */
+        .pagination-info {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            min-width: 280px;
+        }
+
+        .pagination-info p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .pagination-info .font-semibold {
+            color: #003876;
+        }
+
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .pagination-container {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">    <!-- Barra institucional -->
@@ -552,7 +584,30 @@
                             </div>
 
                             <div class="mt-6">
-                                {{ $resultados->appends(request()->query())->links() }}
+                                <div class="pagination-container">
+                                    <!-- Información de paginación -->
+                                    <div class="pagination-info">
+                                        <p class="text-sm text-gray-700">
+                                            <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                            Mostrando 
+                                            <span class="font-semibold">{{ $resultados->firstItem() ?: 0 }}</span> 
+                                            a 
+                                            <span class="font-semibold">{{ $resultados->lastItem() ?: 0 }}</span> 
+                                            de 
+                                            <span class="font-semibold">{{ $resultados->total() }}</span> 
+                                            resultados
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            <i class="fas fa-file-alt mr-1 text-blue-500"></i>
+                                            Página {{ $resultados->currentPage() }} de {{ $resultados->lastPage() }}
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Enlaces de paginación -->
+                                    <div class="flex items-center justify-center sm:justify-end">
+                                        {{ $resultados->appends(request()->query())->links() }}
+                                    </div>
+                                </div>
                             </div>
                         @endif
                     </div>
