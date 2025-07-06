@@ -187,22 +187,12 @@ class BusquedaAvanzadaController extends Controller
             session(['nav_pagina' => $pagina]);
         }
 
-        $paginateCollection = function (Collection $items, int $perPage, string $pageName): LengthAwarePaginator {
-            $currentPage = request()->input($pageName, 1);
-            $items = $items->filter()->unique()->sort()->values();
-            $currentItems = $items->slice(($currentPage - 1) * $perPage, $perPage);
-            return new LengthAwarePaginator($currentItems, $items->count(), $perPage, $currentPage, [
-                'pageName' => $pageName,
-                'path' => request()->url(),
-                'query' => request()->query(),
-            ]);
-        };
-
-        $autores = $paginateCollection($allResults->pluck('autor'), 10, 'page_autores');
-        $editoriales = $paginateCollection($allResults->pluck('editorial'), 10, 'page_editoriales');
-        $materias = $paginateCollection($allResults->pluck('materia'), 10, 'page_materias');
-        $series = $paginateCollection($allResults->pluck('serie'), 10, 'page_series');
-        $campuses = $paginateCollection($allResults->pluck('biblioteca'), 10, 'page_campuses');
+        // Obtener todos los valores únicos para los filtros (sin paginación)
+        $autores = $allResults->pluck('autor')->filter()->unique()->sort()->values();
+        $editoriales = $allResults->pluck('editorial')->filter()->unique()->sort()->values();
+        $materias = $allResults->pluck('materia')->filter()->unique()->sort()->values();
+        $series = $allResults->pluck('serie')->filter()->unique()->sort()->values();
+        $campuses = $allResults->pluck('biblioteca')->filter()->unique()->sort()->values();
 
         // Crear paginación para resultados principales
         $porPagina = 10;
