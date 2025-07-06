@@ -259,6 +259,71 @@
                 align-items: center;
             }
         }
+
+        /* Collapsible filter styles */
+        .collapsible-filter {
+            border: 1px solid rgba(0, 56, 118, 0.1);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+        }
+
+        .collapsible-header {
+            background: #003876;
+            color: white;
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+
+        .collapsible-header:hover {
+            background: #002b5c;
+        }
+
+        .collapsible-header h2 {
+            margin: 0;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+
+        .collapsible-toggle {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: white;
+        }
+
+        .collapsible-inner {
+            padding: 1rem;
+        }
+
+        /* When expanded */
+        .collapsible-filter.expanded .collapsible-content {
+            max-height: 500px;
+        }
+
+        .collapsible-filter.expanded .collapsible-toggle {
+            transform: rotate(180deg);
+        }
+
+        /* Active filter indicator */
+        .collapsible-filter.has-active-filter .collapsible-header {
+            background: #1d4ed8;
+        }
+
+        .collapsible-filter.has-active-filter .collapsible-header:hover {
+            background: #1e40af;
+        }
     </style>
 </head>
 <body class="bg-gray-50">    <!-- Barra institucional -->
@@ -327,178 +392,238 @@
                 <!-- Filtros laterales -->
                 <div class="lg:w-1/4 space-y-6">
                     <!-- Filtrar por Autor -->
-                    <div class="filter-section p-4">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-user-edit mr-2"></i>Filtrar por Autor
-                        </h2>
-                        <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
-                            <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-                            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                    <div class="collapsible-filter {{ request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
+                        <div class="collapsible-header">
+                            <h2>
+                                <i class="fas fa-user-edit mr-2"></i>Filtrar por Autor
+                                @if(request()->filled('autor'))
+                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {{ count((array) request('autor')) }} activo(s)
+                                    </span>
+                                @endif
+                            </h2>
+                            <i class="fas fa-chevron-down collapsible-toggle"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-inner">
+                                <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
-                            @foreach ($autores as $autor)
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="autor[]" id="autor_{{ $loop->index }}"
-                                           value="{{ $autor }}" {{ is_array(request('autor')) && in_array($autor, request('autor')) ? 'checked' : '' }}
-                                           class="form-checkbox rounded">
-                                    <label for="autor_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $autor }}</label>
-                                </div>
-                            @endforeach
-                            <button type="submit" class="filter-button w-full mt-2">
-                                <i class="fas fa-check mr-2"></i>Aplicar Filtro
-                            </button>
-                            @if(request()->filled('autor'))
-                                <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('autor', 'page_autores'))) }}"
-                                   class="remove-filter w-full text-center block mt-2">
-                                    <i class="fas fa-times mr-2"></i>Quitar Filtro
-                                </a>
-                            @endif
-                        </form>
+                                    @foreach ($autores as $autor)
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="autor[]" id="autor_{{ $loop->index }}"
+                                                   value="{{ $autor }}" {{ is_array(request('autor')) && in_array($autor, request('autor')) ? 'checked' : '' }}
+                                                   class="form-checkbox rounded">
+                                            <label for="autor_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $autor }}</label>
+                                        </div>
+                                    @endforeach
+                                    <button type="submit" class="filter-button w-full mt-2">
+                                        <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                    </button>
+                                    @if(request()->filled('autor'))
+                                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('autor', 'page_autores'))) }}"
+                                           class="remove-filter w-full text-center block mt-2">
+                                            <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                        </a>
+                                    @endif
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Filtrar por Editorial -->
-                    <div class="filter-section p-4">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-building mr-2"></i>Filtrar por Editorial
-                        </h2>
-                        <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
-                            <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-                            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                    <div class="collapsible-filter {{ request()->filled('editorial') ? 'has-active-filter expanded' : '' }}">
+                        <div class="collapsible-header">
+                            <h2>
+                                <i class="fas fa-building mr-2"></i>Filtrar por Editorial
+                                @if(request()->filled('editorial'))
+                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {{ count((array) request('editorial')) }} activo(s)
+                                    </span>
+                                @endif
+                            </h2>
+                            <i class="fas fa-chevron-down collapsible-toggle"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-inner">
+                                <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
-                            @foreach ($editoriales as $editorial)
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="editorial[]" id="editorial_{{ $loop->index }}"
-                                           value="{{ $editorial }}" {{ is_array(request('editorial')) && in_array($editorial, request('editorial')) ? 'checked' : '' }}
-                                           class="form-checkbox rounded">
-                                    <label for="editorial_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $editorial }}</label>
-                                </div>
-                            @endforeach
-                            <button type="submit" class="filter-button w-full mt-2">
-                                <i class="fas fa-check mr-2"></i>Aplicar Filtro
-                            </button>
-                            @if(request()->filled('editorial'))
-                                <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('editorial', 'page_editoriales'))) }}"
-                                   class="remove-filter w-full text-center block mt-2">
-                                    <i class="fas fa-times mr-2"></i>Quitar Filtro
-                                </a>
-                            @endif
-                        </form>
+                                    @foreach ($editoriales as $editorial)
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="editorial[]" id="editorial_{{ $loop->index }}"
+                                                   value="{{ $editorial }}" {{ is_array(request('editorial')) && in_array($editorial, request('editorial')) ? 'checked' : '' }}
+                                                   class="form-checkbox rounded">
+                                            <label for="editorial_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $editorial }}</label>
+                                        </div>
+                                    @endforeach
+                                    <button type="submit" class="filter-button w-full mt-2">
+                                        <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                    </button>
+                                    @if(request()->filled('editorial'))
+                                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('editorial', 'page_editoriales'))) }}"
+                                           class="remove-filter w-full text-center block mt-2">
+                                            <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                        </a>
+                                    @endif
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Filtrar por Campus -->
-                    <div class="filter-section p-4">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-university mr-2"></i>Filtrar por Campus
-                        </h2>
-                        <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
-                            <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-                            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                    <div class="collapsible-filter {{ request()->filled('campus') ? 'has-active-filter expanded' : '' }}">
+                        <div class="collapsible-header">
+                            <h2>
+                                <i class="fas fa-university mr-2"></i>Filtrar por Campus
+                                @if(request()->filled('campus'))
+                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {{ count((array) request('campus')) }} activo(s)
+                                    </span>
+                                @endif
+                            </h2>
+                            <i class="fas fa-chevron-down collapsible-toggle"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-inner">
+                                <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
-                            @foreach ($campuses as $campus)
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="campus[]" id="campus_{{ $loop->index }}"
-                                           value="{{ $campus }}" {{ is_array(request('campus')) && in_array($campus, request('campus')) ? 'checked' : '' }}
-                                           class="form-checkbox rounded">
-                                    <label for="campus_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $campus }}</label>
-                                </div>
-                            @endforeach
-                            <button type="submit" class="filter-button w-full mt-2">
-                                <i class="fas fa-check mr-2"></i>Aplicar Filtro
-                            </button>
-                            @if(request()->filled('campus'))
-                                <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('campus', 'page_campuses'))) }}"
-                                   class="remove-filter w-full text-center block mt-2">
-                                    <i class="fas fa-times mr-2"></i>Quitar Filtro
-                                </a>
-                            @endif
-                        </form>
+                                    @foreach ($campuses as $campus)
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="campus[]" id="campus_{{ $loop->index }}"
+                                                   value="{{ $campus }}" {{ is_array(request('campus')) && in_array($campus, request('campus')) ? 'checked' : '' }}
+                                                   class="form-checkbox rounded">
+                                            <label for="campus_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $campus }}</label>
+                                        </div>
+                                    @endforeach
+                                    <button type="submit" class="filter-button w-full mt-2">
+                                        <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                    </button>
+                                    @if(request()->filled('campus'))
+                                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('campus', 'page_campuses'))) }}"
+                                           class="remove-filter w-full text-center block mt-2">
+                                            <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                        </a>
+                                    @endif
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Filtrar por Materia -->
-                    <div class="filter-section p-4">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-book-open mr-2"></i>Filtrar por Materia
-                        </h2>
-                        <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
-                            <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-                            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                    <div class="collapsible-filter {{ request()->filled('materia') ? 'has-active-filter expanded' : '' }}">
+                        <div class="collapsible-header">
+                            <h2>
+                                <i class="fas fa-book-open mr-2"></i>Filtrar por Materia
+                                @if(request()->filled('materia'))
+                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {{ count((array) request('materia')) }} activo(s)
+                                    </span>
+                                @endif
+                            </h2>
+                            <i class="fas fa-chevron-down collapsible-toggle"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-inner">
+                                <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
-                            @foreach ($materias as $materia)
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="materia[]" id="materia_{{ $loop->index }}"
-                                           value="{{ $materia }}" {{ is_array(request('materia')) && in_array($materia, request('materia')) ? 'checked' : '' }}
-                                           class="form-checkbox rounded">
-                                    <label for="materia_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $materia }}</label>
-                                </div>
-                            @endforeach
-                            <button type="submit" class="filter-button w-full mt-2">
-                                <i class="fas fa-check mr-2"></i>Aplicar Filtro
-                            </button>
-                            @if(request()->filled('materia'))
-                                <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('materia', 'page_materias'))) }}"
-                                   class="remove-filter w-full text-center block mt-2">
-                                    <i class="fas fa-times mr-2"></i>Quitar Filtro
-                                </a>
-                            @endif
-                        </form>
+                                    @foreach ($materias as $materia)
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="materia[]" id="materia_{{ $loop->index }}"
+                                                   value="{{ $materia }}" {{ is_array(request('materia')) && in_array($materia, request('materia')) ? 'checked' : '' }}
+                                                   class="form-checkbox rounded">
+                                            <label for="materia_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $materia }}</label>
+                                        </div>
+                                    @endforeach
+                                    <button type="submit" class="filter-button w-full mt-2">
+                                        <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                    </button>
+                                    @if(request()->filled('materia'))
+                                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('materia', 'page_materias'))) }}"
+                                           class="remove-filter w-full text-center block mt-2">
+                                            <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                        </a>
+                                    @endif
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Filtrar por Serie -->
-                    <div class="filter-section p-4">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-list-ol mr-2"></i>Filtrar por Serie
-                        </h2>
-                        <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
-                            <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-                            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                    <div class="collapsible-filter {{ request()->filled('serie') ? 'has-active-filter expanded' : '' }}">
+                        <div class="collapsible-header">
+                            <h2>
+                                <i class="fas fa-list-ol mr-2"></i>Filtrar por Serie
+                                @if(request()->filled('serie'))
+                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {{ count((array) request('serie')) }} activo(s)
+                                    </span>
+                                @endif
+                            </h2>
+                            <i class="fas fa-chevron-down collapsible-toggle"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-inner">
+                                <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
 
-                            @foreach ($series as $serie)
-                                <div class="flex items-center">
-                                    <input type="checkbox" name="serie[]" id="serie_{{ $loop->index }}"
-                                           value="{{ $serie }}" {{ is_array(request('serie')) && in_array($serie, request('serie')) ? 'checked' : '' }}
-                                           class="form-checkbox rounded">
-                                    <label for="serie_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $serie }}</label>
-                                </div>
-                            @endforeach
-                            <button type="submit" class="filter-button w-full mt-2">
-                                <i class="fas fa-check mr-2"></i>Aplicar Filtro
-                            </button>
-                            @if(request()->filled('serie'))
-                                <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('serie', 'page_series'))) }}"
-                                   class="remove-filter w-full text-center block mt-2">
-                                    <i class="fas fa-times mr-2"></i>Quitar Filtro
-                                </a>
-                            @endif
-                        </form>
+                                    @foreach ($series as $serie)
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="serie[]" id="serie_{{ $loop->index }}"
+                                                   value="{{ $serie }}" {{ is_array(request('serie')) && in_array($serie, request('serie')) ? 'checked' : '' }}
+                                                   class="form-checkbox rounded">
+                                            <label for="serie_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $serie }}</label>
+                                        </div>
+                                    @endforeach
+                                    <button type="submit" class="filter-button w-full mt-2">
+                                        <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                    </button>
+                                    @if(request()->filled('serie'))
+                                        <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('serie', 'page_series'))) }}"
+                                           class="remove-filter w-full text-center block mt-2">
+                                            <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                        </a>
+                                    @endif
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -622,5 +747,17 @@
             </div>
         </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle collapsible filters
+            document.querySelectorAll('.collapsible-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const filter = this.closest('.collapsible-filter');
+                    filter.classList.toggle('expanded');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
