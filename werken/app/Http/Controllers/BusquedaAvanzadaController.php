@@ -115,6 +115,7 @@ class BusquedaAvanzadaController extends Controller
 
             $query->select($selectFields);
 
+            // Filtros adicionales
             if (!empty($titulo)) {
                 $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
             }
@@ -129,6 +130,28 @@ class BusquedaAvanzadaController extends Controller
 
             if (!empty($campusFiltro)) {
                 $query->whereIn('tc.nombre_tb_campus', (array) $campusFiltro);
+            }
+
+            // Excluir registros con campos principales vacíos para búsquedas amplias
+            if (empty($valorCriterio) && empty($titulo) && empty($autorFiltro) && empty($editorialFiltro) && empty($campusFiltro)) {
+                switch ($criterio) {
+                    case 'autor':
+                        $query->whereNotNull('va.nombre_busqueda')
+                              ->where('va.nombre_busqueda', '!=', '');
+                        break;
+                    case 'editorial':
+                        $query->whereNotNull('ve.nombre_busqueda')
+                              ->where('ve.nombre_busqueda', '!=', '');
+                        break;
+                    case 'materia':
+                        $query->whereNotNull('vm.nombre_busqueda')
+                              ->where('vm.nombre_busqueda', '!=', '');
+                        break;
+                    case 'serie':
+                        $query->whereNotNull('vs.nombre_busqueda')
+                              ->where('vs.nombre_busqueda', '!=', '');
+                        break;
+                }
             }
 
             $query->orderBy('relevancia', 'desc')
