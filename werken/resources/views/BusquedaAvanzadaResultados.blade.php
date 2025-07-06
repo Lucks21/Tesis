@@ -306,6 +306,8 @@
                             <input type="hidden" name="titulo" value="{{ request('titulo') }}">
                             <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
                             <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
                             @foreach ($autores as $autor)
                                 <div class="flex items-center">
@@ -339,6 +341,8 @@
                             <input type="hidden" name="titulo" value="{{ request('titulo') }}">
                             <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
                             <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
                             @foreach ($editoriales as $editorial)
                                 <div class="flex items-center">
@@ -372,6 +376,8 @@
                             <input type="hidden" name="titulo" value="{{ request('titulo') }}">
                             <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
                             <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
                             @foreach ($campuses as $campus)
                                 <div class="flex items-center">
@@ -392,6 +398,76 @@
                             @endif
                         </form>
                     </div>
+
+                    <!-- Filtrar por Materia -->
+                    <div class="filter-section p-4">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-book-open mr-2"></i>Filtrar por Materia
+                        </h2>
+                        <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                            <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+
+                            @foreach ($materias as $materia)
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="materia[]" id="materia_{{ $loop->index }}"
+                                           value="{{ $materia }}" {{ is_array(request('materia')) && in_array($materia, request('materia')) ? 'checked' : '' }}
+                                           class="form-checkbox rounded">
+                                    <label for="materia_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $materia }}</label>
+                                </div>
+                            @endforeach
+                            <button type="submit" class="filter-button w-full mt-2">
+                                <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                            </button>
+                            @if(request()->filled('materia'))
+                                <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('materia', 'page_materias'))) }}"
+                                   class="remove-filter w-full text-center block mt-2">
+                                    <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                </a>
+                            @endif
+                        </form>
+                    </div>
+
+                    <!-- Filtrar por Serie -->
+                    <div class="filter-section p-4">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-list-ol mr-2"></i>Filtrar por Serie
+                        </h2>
+                        <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                            <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+
+                            @foreach ($series as $serie)
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="serie[]" id="serie_{{ $loop->index }}"
+                                           value="{{ $serie }}" {{ is_array(request('serie')) && in_array($serie, request('serie')) ? 'checked' : '' }}
+                                           class="form-checkbox rounded">
+                                    <label for="serie_{{ $loop->index }}" class="ml-2 text-gray-700">{{ $serie }}</label>
+                                </div>
+                            @endforeach
+                            <button type="submit" class="filter-button w-full mt-2">
+                                <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                            </button>
+                            @if(request()->filled('serie'))
+                                <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('serie', 'page_series'))) }}"
+                                   class="remove-filter w-full text-center block mt-2">
+                                    <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                </a>
+                            @endif
+                        </form>
+                    </div>
                 </div>
 
                 <!-- Resultados -->
@@ -405,6 +481,8 @@
                                 <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
                                 <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
                                 <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
 
                                 <label for="orden" class="text-gray-700 font-semibold">
                                     <i class="fas fa-sort mr-2"></i>Ordenar:
@@ -439,6 +517,12 @@
                                                 <i class="fas fa-building mr-2"></i>Editorial
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                                <i class="fas fa-book-open mr-2"></i>Materia
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                                <i class="fas fa-list-ol mr-2"></i>Serie
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
                                                 <i class="fas fa-university mr-2"></i>Biblioteca
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white">
@@ -452,6 +536,8 @@
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->titulo }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->autor }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->editorial }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->materia }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->serie }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->biblioteca }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">
                                                     <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 

@@ -22,14 +22,16 @@ class BusquedaAvanzadaController extends Controller
         $autorFiltro = $request->input('autor', []);
         $editorialFiltro = $request->input('editorial', []);
         $campusFiltro = $request->input('campus', []);
-
-
+        $materiaFiltro = $request->input('materia', []);
+        $serieFiltro = $request->input('serie', []);
 
         // Procesar los parámetros de entrada para crear un texto procesado
         $filtros = [
             'autor' => $autorFiltro,
             'editorial' => $editorialFiltro,
             'campus' => $campusFiltro,
+            'materia' => $materiaFiltro,
+            'serie' => $serieFiltro,
             'orden' => $orden
         ];
         $texto_procesado = $titulo . '|' . $valorCriterio . '|' . serialize($filtros);
@@ -52,6 +54,8 @@ class BusquedaAvanzadaController extends Controller
             $query = DB::table('V_TITULO as vt')
                 ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
                 ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
+                ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
+                ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
                 ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
                 ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
                 ->distinct();
@@ -73,14 +77,12 @@ class BusquedaAvanzadaController extends Controller
                     $orderByField = 've.nombre_busqueda';
                     break;
                 case 'materia':
-                    $query->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control');
                     if (!empty($valorCriterio)) {
                         $query->where('vm.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
                     $orderByField = 'vm.nombre_busqueda';
                     break;
                 case 'serie':
-                    $query->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control');
                     if (!empty($valorCriterio)) {
                         $query->where('vs.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
@@ -97,6 +99,8 @@ class BusquedaAvanzadaController extends Controller
                 'vt.nombre_busqueda as titulo',
                 'va.nombre_busqueda as autor',
                 've.nombre_busqueda as editorial',
+                'vm.nombre_busqueda as materia',
+                'vs.nombre_busqueda as serie',
                 'tc.nombre_tb_campus as biblioteca',
                 DB::raw("(
                     (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) +
@@ -128,12 +132,20 @@ class BusquedaAvanzadaController extends Controller
                 $query->whereIn('ve.nombre_busqueda', (array) $editorialFiltro);
             }
 
+            if (!empty($materiaFiltro)) {
+                $query->whereIn('vm.nombre_busqueda', (array) $materiaFiltro);
+            }
+
+            if (!empty($serieFiltro)) {
+                $query->whereIn('vs.nombre_busqueda', (array) $serieFiltro);
+            }
+
             if (!empty($campusFiltro)) {
                 $query->whereIn('tc.nombre_tb_campus', (array) $campusFiltro);
             }
 
             // Excluir registros con campos principales vacíos para búsquedas amplias
-            if (empty($valorCriterio) && empty($titulo) && empty($autorFiltro) && empty($editorialFiltro) && empty($campusFiltro)) {
+            if (empty($valorCriterio) && empty($titulo) && empty($autorFiltro) && empty($editorialFiltro) && empty($materiaFiltro) && empty($serieFiltro) && empty($campusFiltro)) {
                 switch ($criterio) {
                     case 'autor':
                         $query->whereNotNull('va.nombre_busqueda')
@@ -188,6 +200,8 @@ class BusquedaAvanzadaController extends Controller
 
         $autores = $paginateCollection($allResults->pluck('autor'), 10, 'page_autores');
         $editoriales = $paginateCollection($allResults->pluck('editorial'), 10, 'page_editoriales');
+        $materias = $paginateCollection($allResults->pluck('materia'), 10, 'page_materias');
+        $series = $paginateCollection($allResults->pluck('serie'), 10, 'page_series');
         $campuses = $paginateCollection($allResults->pluck('biblioteca'), 10, 'page_campuses');
 
         // Crear paginación para resultados principales
@@ -214,6 +228,8 @@ class BusquedaAvanzadaController extends Controller
             'orden',
             'autores',
             'editoriales',
+            'materias',
+            'series',
             'campuses'
         ));
     }
