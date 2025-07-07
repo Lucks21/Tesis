@@ -191,12 +191,12 @@
 <body>    <!-- Barra institucional -->
     <div class="institutional-bar">
         <div class="container mx-auto px-4">
-            <div class="flex justify-center space-x-8">
-                <a href="#">Web UBB</a>
-                <a href="#">Intranet</a>
-                <a href="#">Correo Institucional</a>
-                <a href="#">Adecca UBB</a>
-                <a href="#">Moodle UBB</a>
+                <div class="flex justify-center space-x-8">
+                    <a href="#">Web UBB</a>
+                    <a href="#">Intranet</a>
+                    <a href="#">Correo Institucional</a>
+                    <a href="#">Adecca UBB</a>
+                    <a href="#">Moodle UBB</a>
             </div>
         </div>
     </div>
@@ -236,6 +236,10 @@
                 </a>
                 <a href="{{ route('busqueda-avanzada') }}" class="search-button">
                     <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
+                </a>
+                <a href="{{ route('perfil') }}" class="search-button" title="Cuenta personal">
+                    <i class="fas fa-user-circle mr-2"></i>
+                    Perfil{{ session('rut_usuario') ? ' (' . session('rut_usuario') . ')' : '' }}
                 </a>
             </div>
         </div>
