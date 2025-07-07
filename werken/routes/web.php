@@ -45,3 +45,6 @@ Route::get('/export-ris/{nroControl}', [ExportacionController::class, 'exportRIS
 Route::get('/busqueda-avanzada/limpiar-cache', [BusquedaAvanzadaController::class, 'limpiarCacheSession'])->name('limpiar-cache-busqueda');
 Route::get('/busqueda-avanzada/estadisticas-cache', [BusquedaAvanzadaController::class, 'obtenerEstadisticasCache'])->name('estadisticas-cache-busqueda');
 Route::get('/busqueda-avanzada/test-cache', [BusquedaAvanzadaController::class, 'testSessionCache'])->name('test-cache-busqueda');
+
+// Ruta temporal para debug de filtros (remover en producción)
+Route::get('/busqueda-avanzada/debug-filtros', [BusquedaAvanzadaController::class, 'debugFiltros'])->name('debug-filtros-busqueda');

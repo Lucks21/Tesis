@@ -985,6 +985,40 @@
             alert(stats);
         }
 
+        // Función para debug de filtros (temporal)
+        function debugFiltros() {
+            const params = new URLSearchParams(window.location.search);
+            const debugUrl = '{{ route("debug-filtros-busqueda") }}?' + params.toString();
+            
+            fetch(debugUrl)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Debug de filtros:', data);
+                    alert('Debug de filtros enviado a la consola. Presiona F12 para ver los detalles.');
+                })
+                .catch(error => {
+                    console.error('Error en debug:', error);
+                    alert('Error al hacer debug de filtros');
+                });
+        }
+
+        // Agregar botón de debug temporal (remover en producción)
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.search.includes('debug=true')) {
+                const debugButton = document.createElement('button');
+                debugButton.textContent = 'Debug Filtros';
+                debugButton.className = 'fixed top-4 right-4 bg-red-500 text-white p-2 rounded z-50';
+                debugButton.onclick = debugFiltros;
+                document.body.appendChild(debugButton);
+            }
+        });
+
+        // Función para mostrar u ocultar filtros en dispositivos móviles
+        function toggleMobileFilters() {
+            const filterSection = document.getElementById('mobile-filters');
+            filterSection.classList.toggle('hidden');
+         }
+
         // Agregar event listeners para mejorar la experiencia del usuario
         document.addEventListener('DOMContentLoaded', function() {
             // Enfocar automáticamente el campo de búsqueda cuando se abre un filtro

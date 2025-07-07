@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\DetalleMaterial;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -24,6 +25,22 @@ class BusquedaAvanzadaController extends Controller
         $campusFiltro = $request->input('campus', []);
         $materiaFiltro = $request->input('materia', []);
         $serieFiltro = $request->input('serie', []);
+
+        // Procesar los filtros para manejar tanto arrays como strings separadas por comas
+        $autorFiltro = $this->procesarFiltro($autorFiltro);
+        $editorialFiltro = $this->procesarFiltro($editorialFiltro);
+        $campusFiltro = $this->procesarFiltro($campusFiltro);
+        $materiaFiltro = $this->procesarFiltro($materiaFiltro);
+        $serieFiltro = $this->procesarFiltro($serieFiltro);
+
+        // Debug: logging temporal para verificar filtros (remover en producción)
+        Log::info('Filtros procesados:', [
+            'autor' => $autorFiltro,
+            'editorial' => $editorialFiltro,
+            'campus' => $campusFiltro,
+            'materia' => $materiaFiltro,
+            'serie' => $serieFiltro
+        ]);
 
         // Procesar los parámetros de entrada para crear un texto procesado
         $filtros = [
@@ -124,24 +141,24 @@ class BusquedaAvanzadaController extends Controller
                 $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
             }
 
-            if (!empty($autorFiltro)) {
-                $query->whereIn('va.nombre_busqueda', (array) $autorFiltro);
+            if (!empty($autorFiltro) && count($autorFiltro) > 0) {
+                $query->whereIn('va.nombre_busqueda', $autorFiltro);
             }
 
-            if (!empty($editorialFiltro)) {
-                $query->whereIn('ve.nombre_busqueda', (array) $editorialFiltro);
+            if (!empty($editorialFiltro) && count($editorialFiltro) > 0) {
+                $query->whereIn('ve.nombre_busqueda', $editorialFiltro);
             }
 
-            if (!empty($materiaFiltro)) {
-                $query->whereIn('vm.nombre_busqueda', (array) $materiaFiltro);
+            if (!empty($materiaFiltro) && count($materiaFiltro) > 0) {
+                $query->whereIn('vm.nombre_busqueda', $materiaFiltro);
             }
 
-            if (!empty($serieFiltro)) {
-                $query->whereIn('vs.nombre_busqueda', (array) $serieFiltro);
+            if (!empty($serieFiltro) && count($serieFiltro) > 0) {
+                $query->whereIn('vs.nombre_busqueda', $serieFiltro);
             }
 
-            if (!empty($campusFiltro)) {
-                $query->whereIn('tc.nombre_tb_campus', (array) $campusFiltro);
+            if (!empty($campusFiltro) && count($campusFiltro) > 0) {
+                $query->whereIn('tc.nombre_tb_campus', $campusFiltro);
             }
 
             // Excluir registros con campos principales vacíos para búsquedas amplias
@@ -169,8 +186,37 @@ class BusquedaAvanzadaController extends Controller
             $query->orderBy('relevancia', 'desc')
                   ->orderBy($orderByField, $orden);
 
+            // Debug: logging de la consulta SQL
+            Log::info('Consulta SQL generada:', [
+                'sql' => $query->toSql(),
+                'bindings' => array_merge($bindings, $query->getBindings()),
+                'criterio' => $criterio,
+                'valor_criterio' => $valorCriterio,
+                'titulo' => $titulo,
+                'filtros_activos' => [
+                    'autor' => $autorFiltro,
+                    'editorial' => $editorialFiltro,
+                    'campus' => $campusFiltro,
+                    'materia' => $materiaFiltro,
+                    'serie' => $serieFiltro
+                ]
+            ]);
+
             // Limitar la consulta para evitar timeout - aumentamos el límite para búsquedas amplias
             $allResults = (clone $query)->addBinding($bindings, 'select')->limit(5000)->get();
+
+            // Debug: logging de resultados
+            Log::info('Resultados de la consulta:', [
+                'total_resultados' => $allResults->count(),
+                'primeros_3_resultados' => $allResults->take(3)->toArray(),
+                'filtros_aplicados' => [
+                    'autor_count' => count($autorFiltro),
+                    'editorial_count' => count($editorialFiltro),
+                    'campus_count' => count($campusFiltro),
+                    'materia_count' => count($materiaFiltro),
+                    'serie_count' => count($serieFiltro)
+                ]
+            ]);
 
             // Almacenar en sesión tras nueva búsqueda
             session([
@@ -520,5 +566,79 @@ class BusquedaAvanzadaController extends Controller
         } catch (\Exception $e) {
             // Si falla la configuración, continuamos sin error
         }
+    }
+
+    /**
+     * Procesa un filtro que puede venir como array o string separado por comas
+     * @param mixed $filtro El filtro a procesar
+     * @return array Array con los valores del filtro
+     */
+    private function procesarFiltro($filtro)
+    {
+        if (empty($filtro)) {
+            return [];
+        }
+
+        if (is_array($filtro)) {
+            // Si ya es un array, filtrar valores vacíos y retornar
+            return array_filter($filtro, function($valor) {
+                return !empty(trim($valor));
+            });
+        }
+
+        if (is_string($filtro)) {
+            // Si es un string, dividir por comas y filtrar valores vacíos
+            $valores = explode(',', $filtro);
+            return array_filter(array_map('trim', $valores), function($valor) {
+                return !empty($valor);
+            });
+        }
+
+        return [];
+    }
+
+    /**
+     * Método de debug para verificar el estado de los filtros
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function debugFiltros(Request $request)
+    {
+        $autorFiltro = $request->input('autor', []);
+        $editorialFiltro = $request->input('editorial', []);
+        $campusFiltro = $request->input('campus', []);
+        $materiaFiltro = $request->input('materia', []);
+        $serieFiltro = $request->input('serie', []);
+
+        $autorProcesado = $this->procesarFiltro($autorFiltro);
+        $editorialProcesado = $this->procesarFiltro($editorialFiltro);
+        $campusProcesado = $this->procesarFiltro($campusFiltro);
+        $materiaProcesado = $this->procesarFiltro($materiaFiltro);
+        $serieProcesado = $this->procesarFiltro($serieFiltro);
+
+        return response()->json([
+            'filtros_originales' => [
+                'autor' => $autorFiltro,
+                'editorial' => $editorialFiltro,
+                'campus' => $campusFiltro,
+                'materia' => $materiaFiltro,
+                'serie' => $serieFiltro
+            ],
+            'filtros_procesados' => [
+                'autor' => $autorProcesado,
+                'editorial' => $editorialProcesado,
+                'campus' => $campusProcesado,
+                'materia' => $materiaProcesado,
+                'serie' => $serieProcesado
+            ],
+            'tipos_originales' => [
+                'autor' => gettype($autorFiltro),
+                'editorial' => gettype($editorialFiltro),
+                'campus' => gettype($campusFiltro),
+                'materia' => gettype($materiaFiltro),
+                'serie' => gettype($serieFiltro)
+            ],
+            'request_all' => $request->all()
+        ]);
     }
 }
