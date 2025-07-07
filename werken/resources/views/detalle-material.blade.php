@@ -37,11 +37,74 @@
             margin-bottom: 2rem;
         }
         
-        .actions-bar {
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
+        .resumen-header {
+            background-color: #003876;
+            color: white;
+            padding: 8px 16px;
+            font-weight: bold;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .resumen-content {
+            background-color: #e6e6fa;
+            padding: 16px;
+            border: 1px solid #003876;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .existencias-header {
+            background-color: #003876;
+            color: white;
+            padding: 8px 16px;
+            font-weight: bold;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .existencias-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #003876;
+        }
+        
+        .existencias-table th {
+            background-color: #003876;
+            color: white;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .existencias-table td {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .fila-par {
+            background-color: #9999ff;
+        }
+        
+        .fila-impar {
+            background-color: #6666cc;
+        }
+        
+        .btn-reservar {
+            background-color: #6666cc;
+            color: white;
+            padding: 2px 8px;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        
+        .btn-reservar:hover {
+            background-color: #5555bb;
+        }
+        
+        .texto-azul {
+            color: #0066cc;
         }
     </style>
 </head>
@@ -58,7 +121,7 @@
     <div class="actions-bar">
         <div class="container mx-auto px-6">
             <div class="flex justify-between items-center">
-                <a href="{{ url()->previous() }}" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                <a href="{{ route('busqueda-avanzada-resultados', ['titulo' => '']) }}" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
                     <i class="fas fa-arrow-left mr-2"></i>Volver a resultados
                 </a>
                 <a href="{{ route('export.ris', ['nroControl' => $detalleMaterial->nro_control]) }}" 
@@ -70,94 +133,130 @@
     </div>
 
     <div class="container mx-auto px-6">
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Información del Material</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">            <div class="grid md:grid-cols-2 gap-8">
-                <!-- Información básica -->
-                <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
-                    <h3 class="text-lg font-bold text-blue-800 border-b border-blue-200 pb-2 mb-4">
-                        <i class="fas fa-info-circle mr-2"></i>Información Básica
-                    </h3>
-                    
-                    <div class="space-y-4">
+        <!-- Resumen Bibliográfico -->
+        <div class="mb-6">
+            <div class="resumen-header">
+                Resumen Bibliográfico
+            </div>
+            
+            <div class="resumen-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
                         <div>
-                            <span class="font-semibold text-gray-700">Título:</span>
-                            <p class="mt-1">{{ $detalleMaterial->titulo }}</p>
-                        </div>
-
-                        <div>
-                            <span class="font-semibold text-gray-700">Autor/Editor:</span>
-                            <p class="mt-1">{{ $detalleMaterial->autor }}</p>
-                        </div>
-
-                        <div>
-                            <span class="font-semibold text-gray-700">Editorial:</span>
-                            <p class="mt-1">{{ $detalleMaterial->editorial }}</p>
-                        </div>
-
-                        <div>
-                            <span class="font-semibold text-gray-700">ISBN/ISSN:</span>
-                            <p class="mt-1">{{ $detalleMaterial->isbn_issn ?? 'No disponible' }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Información adicional -->
-                <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
-                    <h3 class="text-lg font-bold text-blue-800 border-b border-blue-200 pb-2 mb-4">
-                        <i class="fas fa-book mr-2"></i>Detalles Adicionales
-                    </h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <span class="font-semibold text-gray-700">Tipo de Material:</span>
-                            <p class="mt-1">{{ $detalleMaterial->tipo_material }}</p>
+                            <span class="font-semibold texto-azul">Nro. de Pedido :</span>
+                            <span class="ml-2">{{ $detalleMaterial->nro_pedido ?? 'No disponible' }}</span>
                         </div>
                         
                         <div>
-                            <span class="font-semibold text-gray-700">Biblioteca:</span>
-                            <p class="mt-1">{{ $detalleMaterial->biblioteca }}</p>
+                            <span class="font-semibold texto-azul">Autor :</span>
+                            <span class="ml-2">{{ $detalleMaterial->autor ?? 'No disponible' }}</span>
                         </div>
-
-                        @if($detalleMaterial->estado)
+                        
                         <div>
-                            <span class="font-semibold text-gray-700">Estado:</span>
-                            <p class="mt-1">
-                                <span class="px-2 py-1 rounded text-sm {{ $detalleMaterial->estado == 'Disponible' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $detalleMaterial->estado }}
-                                </span>
-                            </p>
+                            <span class="font-semibold texto-azul">Título :</span>
+                            <span class="ml-2">{{ $detalleMaterial->titulo ?? 'No disponible' }}</span>
                         </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Edición :</span>
+                            <span class="ml-2">{{ $detalleMaterial->edicion ?? 'No disponible' }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div>
+                            <span class="font-semibold texto-azul">Datos de Publicación :</span>
+                            <span class="ml-2">{{ $detalleMaterial->datos_publicacion ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Descripción :</span>
+                            <span class="ml-2">{{ $detalleMaterial->descripcion ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Material(s) :</span>
+                            <span class="ml-2 text-blue-600 font-semibold">{{ $detalleMaterial->materiales ?? 'No disponible' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Existencias -->
+        <div class="mb-6">
+            <div class="existencias-header">
+                Existencias
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="existencias-table">
+                    <thead>
+                        <tr>
+                            <th>Reserva</th>
+                            <th>Ubicación</th>
+                            <th>Volumen</th>
+                            <th>Parte</th>
+                            <th>Suplemento</th>
+                            <th>Días préstamo</th>
+                            <th>Formato</th>
+                            <th>Estado</th>
+                            <th>Copias</th>
+                            <th>Próxima devolución</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(isset($detalleMaterial->existencias) && count($detalleMaterial->existencias) > 0)
+                            @foreach($detalleMaterial->existencias as $index => $existencia)
+                                <tr class="{{ $index % 2 == 0 ? 'fila-par' : 'fila-impar' }}">
+                                    <td>
+                                        @if($existencia->nombre_tb_estado == 'DISPONIBLE')
+                                            <button class="btn-reservar">
+                                                Reservar
+                                            </button>
+                                        @else
+                                            <span class="text-gray-500 text-xs">No disponible</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $existencia->nombre_tb_campus ?? 'No disponible' }}</td>
+                                    <td>{{ $existencia->nro_volumen_existe ?? '-' }}</td>
+                                    <td>{{ $existencia->nro_parte_existe ?? '-' }}</td>
+                                    <td>{{ $existencia->nro_suplemento_existe ?? '-' }}</td>
+                                    <td>{{ $existencia->dias ?? '-' }}</td>
+                                    <td>{{ $existencia->nombre_tb_format ?? '-' }}</td>
+                                    <td>{{ $existencia->nombre_tb_estado ?? '-' }}</td>
+                                    <td>{{ $existencia->Total ?? '1' }}</td>
+                                    <td>{{ $existencia->fecha_dev ?? '-' }}</td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr class="fila-par">
+                                <td>
+                                    <span class="text-gray-500 text-xs">No disponible</span>
+                                </td>
+                                <td>No disponible</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>Libro</td>
+                                <td>Sin información</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
                         @endif
-                    </div>
-                </div>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                    <div>
-                        <span class="font-semibold">Año de Publicación:</span>
-                        <p>{{ $detalleMaterial->DSM_PUBLICACION }}</p>
-                    </div>
-
-                    <div>
-                        <span class="font-semibold">Cantidad Disponible:</span>
-                        <p>{{ $detalleMaterial->DSM_CANTIDAD_ORIGINAL }}</p>
-                    </div>
-
-                    @if($detalleMaterial->DSM_IND_SUSCRIPCION)
-                        <div>
-                            <span class="font-semibold">Suscripción:</span>
-                            <p>Material por suscripción</p>
-                        </div>
-                    @endif
-
-                    @if($detalleMaterial->DSM_OBSERVACION)
-                        <div>
-                            <span class="font-semibold">Observaciones:</span>
-                            <p>{{ $detalleMaterial->DSM_OBSERVACION }}</p>
-                        </div>
-                    @endif
-                </div>
-
+        <!-- Enlaces adicionales -->
+        <div class="text-center">
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="{{ route('material.detalle.completo', ['numero' => $detalleMaterial->nro_control]) }}" 
+                   class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                    <i class="fas fa-info-circle mr-2"></i>Información Bibliográfica Completa
+                </a>
             </div>
         </div>
     </div>

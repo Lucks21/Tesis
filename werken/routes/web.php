@@ -42,6 +42,8 @@ Route::get('busqueda-avanzada/titulos-materia/{materia}', [BusquedaAvanzadaContr
 Route::get('busqueda-avanzada/titulos-serie/{serie}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorSerie'])->name('mostrar-titulos-por-serie');
 Route::get('/export-ris/{nroControl}', [ExportacionController::class, 'exportRIS'])->name('export.ris');
 Route::get('/material/{numero}', [DetalleMaterialController::class, 'show'])->name('detalle-material');
+Route::get('/material/{numero}/resumen', [DetalleMaterialController::class, 'resumen'])->name('material.resumen');
+Route::get('/material/{numero}/completo', [DetalleMaterialController::class, 'detalleCompleto'])->name('material.detalle.completo');
 
 // manejo de cache para la busqueda avanzada
 Route::get('/busqueda-avanzada/limpiar-cache', [BusquedaAvanzadaController::class, 'limpiarCacheSession'])->name('limpiar-cache-busqueda');

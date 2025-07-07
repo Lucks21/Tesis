@@ -148,6 +148,14 @@
         .table-row:hover {
             background-color: #f0f7ff;
         }
+        .titulo-enlace {
+            cursor: pointer !important;
+            z-index: 10;
+            position: relative;
+        }
+        .titulo-enlace:hover {
+            text-decoration: underline !important;
+        }
         .form-checkbox {
             color: #003876;
             border-color: #003876;
@@ -852,11 +860,13 @@
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($resultados as $resultado)
                                             <tr class="table-row">                                                <td class="px-6 py-4 text-sm text-gray-900">
-                                                    <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
-                                                       class="text-blue-600 hover:text-blue-800 hover:underline flex items-center">
-                                                        <i class="fas fa-book mr-2"></i>
-                                                        {{ $resultado->titulo }}
-                                                    </a>
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-book mr-2 text-blue-600"></i>
+                                                        <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
+                                                           class="text-blue-600 hover:text-blue-800 hover:underline titulo-enlace">
+                                                            {{ $resultado->titulo }}
+                                                        </a>
+                                                    </div>
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->autor }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->editorial }}</td>
@@ -917,6 +927,21 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Debug para enlaces de título
+            console.log('DOM loaded, looking for titulo-enlace elements...');
+            const enlaces = document.querySelectorAll('.titulo-enlace');
+            console.log('Found', enlaces.length, 'titulo-enlace elements');
+            
+            enlaces.forEach(function(enlace, index) {
+                console.log('Setting up link', index, ':', enlace.href);
+                enlace.addEventListener('click', function(e) {
+                    console.log('Link clicked:', this.href);
+                    console.log('Event:', e);
+                    // Permitir navegación normal
+                    return true;
+                });
+            });
+            
             // Toggle collapsible filters
             document.querySelectorAll('.collapsible-header').forEach(header => {
                 header.addEventListener('click', function() {
