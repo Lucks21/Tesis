@@ -22,14 +22,14 @@ Route::middleware(['check.session'])->group(function () {
 });
 
 // Public search routes
-Route::get('/busqueda', function () {
-    return view('BusquedaView');
-})->name('busqueda');
+Route::get('/busqueda', [BusquedaSimpleController::class, 'mostrarFormulario'])->name('busqueda');
 
 Route::get('/buscar-titulo', [BusquedaSimpleController::class, 'buscarPorTitulo'])->name('buscar.titulo');
 Route::get('/resultados', [BusquedaSimpleController::class, 'buscar'])->name('resultados');
 Route::get('/recursos-asociados/{criterio}/{valor}', [BusquedaSimpleController::class, 'recursosAsociados'])
      ->name('recursos.asociados');
+Route::get('/busqueda/titulos-relacionados/{criterio}/{valor}', [BusquedaSimpleController::class, 'titulosRelacionados'])
+     ->name('busqueda.titulos-relacionados');
 
 Route::get('/busqueda-avanzada', function () {
     return view('BusquedaAvanzada');

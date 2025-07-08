@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\DetalleMaterial;
 use App\Models\Materia;
 use App\Models\Autor;
@@ -21,18 +22,54 @@ class BusquedaSimpleController extends Controller
     
         $titulo = $request->input('busqueda');
         $palabras = explode(' ', $titulo);
-    
-        $resultados = Titulo::where(function ($query) use ($palabras) {
+        
+        // Usar consulta similar a la búsqueda avanzada para obtener toda la información
+        $query = DB::table('V_TITULO as vt')
+            ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
+            ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
+            ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
+            ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
+            ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
+            ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
+            ->select([
+                'vt.nro_control',
+                'vt.nombre_busqueda as titulo',
+                'va.nombre_busqueda as autor',
+                've.nombre_busqueda as editorial',
+                'vm.nombre_busqueda as materia',
+                'vs.nombre_busqueda as serie',
+                'tc.nombre_tb_campus as biblioteca',
+            ])
+            ->distinct();
+
+        // Aplicar filtro de búsqueda por título
+        $query->where(function ($q) use ($palabras) {
             foreach ($palabras as $palabra) {
-                $query->orWhere('nombre_busqueda', 'LIKE', "%{$palabra}%");
+                $q->orWhere('vt.nombre_busqueda', 'LIKE', "%{$palabra}%");
             }
-        })->paginate(10)->withQueryString();
-    
-        return view('RecursosAsociadosView', [
+        });
+
+        $titulos = $query->get();
+        
+        // Paginación
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        $paginados = $titulos->forPage($pagina, $porPagina);
+
+        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginados,
+            $titulos->count(),
+            $porPagina,
+            $pagina,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('BusquedaSimpleResultados', [
             'criterio' => 'titulo',
-            'valor' => $titulo,
-            'recursos' => $resultados,
+            'busqueda' => $titulo,
+            'resultados' => $resultados,
             'noResultados' => $resultados->isEmpty(),
+            'mostrarTitulos' => true,
         ]);
     }
     
@@ -70,16 +107,20 @@ class BusquedaSimpleController extends Controller
         $porPagina = 10;
         $resultadosPaginados = $resultadosSinPaginar->slice(($pagina - 1) * $porPagina, $porPagina);
     
-        return view('ResultadosViewBS', [
-            'resultados' => new \Illuminate\Pagination\LengthAwarePaginator(
-                $resultadosPaginados,
-                $resultadosSinPaginar->count(),
-                $porPagina,
-                $pagina,
-                ['path' => $request->url(), 'query' => $request->query()]
-            ),
+        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
+            $resultadosPaginados,
+            $resultadosSinPaginar->count(),
+            $porPagina,
+            $pagina,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('BusquedaSimpleResultados', [
+            'resultados' => $resultados,
             'busqueda' => $busqueda,
             'criterio' => $criterio,
+            'noResultados' => $resultados->isEmpty(),
+            'mostrarTitulos' => false,
         ]);
     }
     
@@ -122,4 +163,116 @@ class BusquedaSimpleController extends Controller
             ),
         ]);
     }    
+    
+    public function titulosRelacionados($criterio, $valor)
+    {
+        // Configurar timeout para la consulta
+        ini_set('max_execution_time', 60);
+        
+        $modelos = [
+            'autor' => Autor::class,
+            'editorial' => Editorial::class,
+            'serie' => Serie::class,
+            'materia' => Materia::class,
+        ];
+
+        if (!array_key_exists($criterio, $modelos)) {
+            abort(404, 'Criterio no válido.');
+        }
+
+        // Buscar títulos usando la misma lógica que la búsqueda avanzada
+        $query = DB::table('V_TITULO as vt')
+            ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
+            ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
+            ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
+            ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
+            ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
+            ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
+            ->select([
+                'vt.nro_control',
+                'vt.nombre_busqueda as titulo',
+                'va.nombre_busqueda as autor',
+                've.nombre_busqueda as editorial',
+                'vm.nombre_busqueda as materia',
+                'vs.nombre_busqueda as serie',
+                'tc.nombre_tb_campus as biblioteca',
+            ])
+            ->distinct();
+
+        // Aplicar filtro según el criterio
+        switch ($criterio) {
+            case 'autor':
+                $query->where('va.nombre_busqueda', '=', $valor);
+                break;
+            case 'editorial':
+                $query->where('ve.nombre_busqueda', '=', $valor);
+                break;
+            case 'materia':
+                $query->where('vm.nombre_busqueda', '=', $valor);
+                break;
+            case 'serie':
+                $query->where('vs.nombre_busqueda', '=', $valor);
+                break;
+        }
+
+        $titulos = $query->get();
+
+        if ($titulos->isEmpty()) {
+            return view('BusquedaSimpleResultados', [
+                'criterio' => $criterio,
+                'busqueda' => $valor,
+                'resultados' => collect(),
+                'noResultados' => true,
+                'mostrarTitulos' => true,
+                'valorSeleccionado' => $valor,
+            ]);
+        }
+
+        // Paginación
+        $pagina = request()->input('page', 1);
+        $porPagina = 10;
+        $paginados = $titulos->forPage($pagina, $porPagina);
+
+        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginados,
+            $titulos->count(),
+            $porPagina,
+            $pagina,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return view('BusquedaSimpleResultados', [
+            'criterio' => $criterio,
+            'busqueda' => $valor,
+            'resultados' => $resultados,
+            'noResultados' => $titulos->isEmpty(),
+            'mostrarTitulos' => true,
+            'valorSeleccionado' => $valor,
+        ]);
+    }
+    
+    public function mostrarFormulario(Request $request)
+    {
+        // Si hay parámetros de búsqueda, procesar la búsqueda
+        if ($request->has('searchType') && $request->has('query')) {
+            $criterio = $request->input('searchType');
+            $busqueda = $request->input('query');
+            
+            // Crear un nuevo request con los parámetros correctos
+            if ($criterio === 'titulo') {
+                // Para títulos, usar buscarPorTitulo con parámetro 'busqueda'
+                $newRequest = new Request(['busqueda' => $busqueda]);
+                $newRequest->setMethod('GET');
+                return $this->buscarPorTitulo($newRequest);
+            } else {
+                // Para otros criterios, usar buscar con parámetros 'criterio' y 'busqueda'
+                $newRequest = new Request(['criterio' => $criterio, 'busqueda' => $busqueda]);
+                $newRequest->setMethod('GET');
+                return $this->buscar($newRequest);
+            }
+        }
+        
+        // Si no hay parámetros, mostrar el formulario
+        return view('BusquedaView');
+    }
 }
