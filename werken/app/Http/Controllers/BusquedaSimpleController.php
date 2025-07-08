@@ -51,28 +51,59 @@ class BusquedaSimpleController extends Controller
 
         // Aplicar filtros adicionales si están presentes
         if ($request->filled('autor')) {
-            $autores = is_array($request->autor) ? $request->autor : [$request->autor];
-            $query->whereIn('va.nombre_busqueda', $autores);
+            $autores = $request->autor;
+            // Si es un string separado por comas, convertirlo a array
+            if (is_string($autores)) {
+                $autores = explode(',', $autores);
+            }
+            $autores = array_filter($autores); // Eliminar elementos vacíos
+            if (!empty($autores)) {
+                $query->whereIn('va.nombre_busqueda', $autores);
+            }
         }
 
         if ($request->filled('editorial')) {
-            $editoriales = is_array($request->editorial) ? $request->editorial : [$request->editorial];
-            $query->whereIn('ve.nombre_busqueda', $editoriales);
+            $editoriales = $request->editorial;
+            if (is_string($editoriales)) {
+                $editoriales = explode(',', $editoriales);
+            }
+            $editoriales = array_filter($editoriales);
+            if (!empty($editoriales)) {
+                $query->whereIn('ve.nombre_busqueda', $editoriales);
+            }
         }
 
         if ($request->filled('materia')) {
-            $materias = is_array($request->materia) ? $request->materia : [$request->materia];
-            $query->whereIn('vm.nombre_busqueda', $materias);
+            $materias = $request->materia;
+            if (is_string($materias)) {
+                $materias = explode(',', $materias);
+            }
+            $materias = array_filter($materias);
+            if (!empty($materias)) {
+                $query->whereIn('vm.nombre_busqueda', $materias);
+            }
         }
 
         if ($request->filled('serie')) {
-            $series = is_array($request->serie) ? $request->serie : [$request->serie];
-            $query->whereIn('vs.nombre_busqueda', $series);
+            $series = $request->serie;
+            if (is_string($series)) {
+                $series = explode(',', $series);
+            }
+            $series = array_filter($series);
+            if (!empty($series)) {
+                $query->whereIn('vs.nombre_busqueda', $series);
+            }
         }
 
         if ($request->filled('campus')) {
-            $campuses = is_array($request->campus) ? $request->campus : [$request->campus];
-            $query->whereIn('tc.nombre_tb_campus', $campuses);
+            $campuses = $request->campus;
+            if (is_string($campuses)) {
+                $campuses = explode(',', $campuses);
+            }
+            $campuses = array_filter($campuses);
+            if (!empty($campuses)) {
+                $query->whereIn('tc.nombre_tb_campus', $campuses);
+            }
         }
 
         $titulos = $query->get();

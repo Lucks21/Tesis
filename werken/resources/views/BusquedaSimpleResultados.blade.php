@@ -565,16 +565,27 @@
                                     <div class="collapsible-inner">
                                         <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
                                             <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
-                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @if(request()->filled('editorial'))
+                                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            @endif
+                                            @if(request()->filled('campus'))
+                                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            @endif
+                                            @if(request()->filled('materia'))
+                                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            @endif
+                                            @if(request()->filled('serie'))
+                                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @endif
 
                                             <div class="filter-options-container" id="options-autor">
                                                 @foreach ($autores as $autor)
                                                     <div class="filter-option" data-value="{{ strtolower($autor) }}">
                                                         <input type="checkbox" name="autor[]" id="autor_{{ $loop->index }}"
-                                                               value="{{ $autor }}" {{ is_array(request('autor')) && in_array($autor, request('autor')) ? 'checked' : '' }}
+                                                               value="{{ $autor }}" {{ 
+                                                                   (is_array(request('autor')) && in_array($autor, request('autor'))) ||
+                                                                   (is_string(request('autor')) && in_array($autor, explode(',', request('autor'))))
+                                                                   ? 'checked' : '' }}
                                                                class="form-checkbox rounded">
                                                         <label for="autor_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                                             {{ $autor }}
@@ -626,16 +637,27 @@
                                     <div class="collapsible-inner">
                                         <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
                                             <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
-                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @if(request()->filled('autor'))
+                                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            @endif
+                                            @if(request()->filled('campus'))
+                                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            @endif
+                                            @if(request()->filled('materia'))
+                                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            @endif
+                                            @if(request()->filled('serie'))
+                                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @endif
 
                                             <div class="filter-options-container" id="options-editorial">
                                                 @foreach ($editoriales as $editorial)
                                                     <div class="filter-option" data-value="{{ strtolower($editorial) }}">
                                                         <input type="checkbox" name="editorial[]" id="editorial_{{ $loop->index }}"
-                                                               value="{{ $editorial }}" {{ is_array(request('editorial')) && in_array($editorial, request('editorial')) ? 'checked' : '' }}
+                                                               value="{{ $editorial }}" {{ 
+                                                                   (is_array(request('editorial')) && in_array($editorial, request('editorial'))) ||
+                                                                   (is_string(request('editorial')) && in_array($editorial, explode(',', request('editorial'))))
+                                                                   ? 'checked' : '' }}
                                                                class="form-checkbox rounded">
                                                         <label for="editorial_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                                             {{ $editorial }}
@@ -687,16 +709,27 @@
                                     <div class="collapsible-inner">
                                         <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
                                             <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
-                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @if(request()->filled('autor'))
+                                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            @endif
+                                            @if(request()->filled('editorial'))
+                                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            @endif
+                                            @if(request()->filled('materia'))
+                                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            @endif
+                                            @if(request()->filled('serie'))
+                                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @endif
 
                                             <div class="filter-options-container" id="options-campus">
                                                 @foreach ($campuses as $campus)
                                                     <div class="filter-option" data-value="{{ strtolower($campus) }}">
                                                         <input type="checkbox" name="campus[]" id="campus_{{ $loop->index }}"
-                                                               value="{{ $campus }}" {{ is_array(request('campus')) && in_array($campus, request('campus')) ? 'checked' : '' }}
+                                                               value="{{ $campus }}" {{ 
+                                                                   (is_array(request('campus')) && in_array($campus, request('campus'))) ||
+                                                                   (is_string(request('campus')) && in_array($campus, explode(',', request('campus'))))
+                                                                   ? 'checked' : '' }}
                                                                class="form-checkbox rounded">
                                                         <label for="campus_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                                             {{ $campus }}
@@ -748,16 +781,27 @@
                                     <div class="collapsible-inner">
                                         <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
                                             <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
-                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @if(request()->filled('autor'))
+                                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            @endif
+                                            @if(request()->filled('editorial'))
+                                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            @endif
+                                            @if(request()->filled('campus'))
+                                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            @endif
+                                            @if(request()->filled('serie'))
+                                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                            @endif
 
                                             <div class="filter-options-container" id="options-materia">
                                                 @foreach ($materias as $materia)
                                                     <div class="filter-option" data-value="{{ strtolower($materia) }}">
                                                         <input type="checkbox" name="materia[]" id="materia_{{ $loop->index }}"
-                                                               value="{{ $materia }}" {{ is_array(request('materia')) && in_array($materia, request('materia')) ? 'checked' : '' }}
+                                                               value="{{ $materia }}" {{ 
+                                                                   (is_array(request('materia')) && in_array($materia, request('materia'))) ||
+                                                                   (is_string(request('materia')) && in_array($materia, explode(',', request('materia'))))
+                                                                   ? 'checked' : '' }}
                                                                class="form-checkbox rounded">
                                                         <label for="materia_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                                             {{ $materia }}
@@ -809,16 +853,27 @@
                                     <div class="collapsible-inner">
                                         <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
                                             <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
-                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            @if(request()->filled('autor'))
+                                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            @endif
+                                            @if(request()->filled('editorial'))
+                                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            @endif
+                                            @if(request()->filled('campus'))
+                                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            @endif
+                                            @if(request()->filled('materia'))
+                                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            @endif
 
                                             <div class="filter-options-container" id="options-serie">
                                                 @foreach ($series as $serie)
                                                     <div class="filter-option" data-value="{{ strtolower($serie) }}">
                                                         <input type="checkbox" name="serie[]" id="serie_{{ $loop->index }}"
-                                                               value="{{ $serie }}" {{ is_array(request('serie')) && in_array($serie, request('serie')) ? 'checked' : '' }}
+                                                               value="{{ $serie }}" {{ 
+                                                                   (is_array(request('serie')) && in_array($serie, request('serie'))) ||
+                                                                   (is_string(request('serie')) && in_array($serie, explode(',', request('serie'))))
+                                                                   ? 'checked' : '' }}
                                                                class="form-checkbox rounded">
                                                         <label for="serie_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                                             {{ $serie }}
