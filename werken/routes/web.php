@@ -26,10 +26,9 @@ Route::get('/busqueda', function () {
     return view('BusquedaView');
 })->name('busqueda');
 
-Route::get('/buscar-titulo', [BusquedaSimpleController::class, 'buscarPorTitulo'])->name('buscar.titulo');
-Route::get('/resultados', [BusquedaSimpleController::class, 'buscar'])->name('resultados');
-Route::get('/recursos-asociados/{criterio}/{valor}', [BusquedaSimpleController::class, 'recursosAsociados'])
-     ->name('recursos.asociados');
+Route::get('/busqueda/resultados', [BusquedaSimpleController::class, 'buscar'])->name('busqueda.resultados');
+Route::get('/busqueda/detalles', [BusquedaSimpleController::class, 'detallesBusqueda'])->name('busqueda.detalles');
+Route::get('/busqueda/existencias', [BusquedaSimpleController::class, 'detalleExistencias'])->name('busqueda.existencias');
 
 Route::get('/busqueda-avanzada', function () {
     return view('BusquedaAvanzada');
