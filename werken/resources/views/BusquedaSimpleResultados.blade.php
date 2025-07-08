@@ -241,6 +241,199 @@
                 width: 100%;
             }
         }
+        /* Filtros colapsibles */
+        .collapsible-filter {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-filter:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .collapsible-filter.has-active-filter {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .collapsible-header:hover {
+            background: #f3f4f6;
+        }
+
+        .collapsible-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .collapsible-header h2 i {
+            color: #6b7280;
+        }
+
+        .filter-count {
+            font-size: 14px;
+            font-weight: 400;
+            color: #6b7280;
+        }
+
+        .collapsible-toggle {
+            font-size: 14px;
+            color: #6b7280;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible-filter.expanded .collapsible-toggle {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-filter.expanded .collapsible-content {
+            max-height: 500px;
+        }
+
+        .collapsible-inner {
+            padding: 16px;
+        }
+
+        .filter-search-container {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .filter-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .filter-search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .filter-options-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .filter-option:last-child {
+            border-bottom: none;
+        }
+
+        .filter-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #3b82f6;
+        }
+
+        .filter-option label {
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        .filter-option:hover {
+            background: #f9fafb;
+        }
+
+        .filter-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .filter-button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .remove-filter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .remove-filter:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .no-results-message {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* Responsive design for filters */
+        @media (max-width: 1024px) {
+            .collapsible-filter {
+                margin-bottom: 16px;
+            }
+            
+            .filter-options-container {
+                max-height: 200px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -343,6 +536,319 @@
                     </a>
                 </div>
             @else
+                <div class="flex flex-col lg:flex-row gap-6">
+                    @if(isset($mostrarTitulos) && $mostrarTitulos)
+                        <!-- Filtros laterales -->
+                        <div class="lg:w-1/4 space-y-6">
+                            <!-- Filtrar por Autor -->
+                            <div class="collapsible-filter {{ request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
+                                <div class="collapsible-header">
+                                    <h2>
+                                        <i class="fas fa-user-edit mr-2"></i>Filtrar por Autor
+                                        <span class="filter-count">({{ count($autores) }} opciones)</span>
+                                        @if(request()->filled('autor'))
+                                            <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                                {{ count((array) request('autor')) }} activo(s)
+                                            </span>
+                                        @endif
+                                    </h2>
+                                    <i class="fas fa-chevron-down collapsible-toggle"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <div class="filter-search-container">
+                                        <input type="text" 
+                                               class="filter-search-input" 
+                                               placeholder="Buscar autor..." 
+                                               id="search-autor"
+                                               onkeyup="filterOptions('autor', this.value)">
+                                    </div>
+                                    <div class="collapsible-inner">
+                                        <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
+                                            <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+
+                                            <div class="filter-options-container" id="options-autor">
+                                                @foreach ($autores as $autor)
+                                                    <div class="filter-option" data-value="{{ strtolower($autor) }}">
+                                                        <input type="checkbox" name="autor[]" id="autor_{{ $loop->index }}"
+                                                               value="{{ $autor }}" {{ is_array(request('autor')) && in_array($autor, request('autor')) ? 'checked' : '' }}
+                                                               class="form-checkbox rounded">
+                                                        <label for="autor_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
+                                                            {{ $autor }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                                <div class="no-results-message" id="no-results-autor" style="display: none;">
+                                                    No se encontraron autores con ese criterio.
+                                                </div>
+                                            </div>
+                                            <div class="pt-2 border-t border-gray-200">
+                                                <button type="submit" class="filter-button w-full">
+                                                    <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                                </button>
+                                                @if(request()->filled('autor'))
+                                                    <a href="{{ route('buscar.titulo', array_merge(request()->except('autor'), ['busqueda' => request('busqueda')])) }}"
+                                                       class="remove-filter w-full text-center block mt-2">
+                                                        <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filtrar por Editorial -->
+                            <div class="collapsible-filter {{ request()->filled('editorial') ? 'has-active-filter expanded' : '' }}">
+                                <div class="collapsible-header">
+                                    <h2>
+                                        <i class="fas fa-building mr-2"></i>Filtrar por Editorial
+                                        <span class="filter-count">({{ count($editoriales) }} opciones)</span>
+                                        @if(request()->filled('editorial'))
+                                            <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                                {{ count((array) request('editorial')) }} activo(s)
+                                            </span>
+                                        @endif
+                                    </h2>
+                                    <i class="fas fa-chevron-down collapsible-toggle"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <div class="filter-search-container">
+                                        <input type="text" 
+                                               class="filter-search-input" 
+                                               placeholder="Buscar editorial..." 
+                                               id="search-editorial"
+                                               onkeyup="filterOptions('editorial', this.value)">
+                                    </div>
+                                    <div class="collapsible-inner">
+                                        <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
+                                            <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+
+                                            <div class="filter-options-container" id="options-editorial">
+                                                @foreach ($editoriales as $editorial)
+                                                    <div class="filter-option" data-value="{{ strtolower($editorial) }}">
+                                                        <input type="checkbox" name="editorial[]" id="editorial_{{ $loop->index }}"
+                                                               value="{{ $editorial }}" {{ is_array(request('editorial')) && in_array($editorial, request('editorial')) ? 'checked' : '' }}
+                                                               class="form-checkbox rounded">
+                                                        <label for="editorial_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
+                                                            {{ $editorial }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                                <div class="no-results-message" id="no-results-editorial" style="display: none;">
+                                                    No se encontraron editoriales con ese criterio.
+                                                </div>
+                                            </div>
+                                            <div class="pt-2 border-t border-gray-200">
+                                                <button type="submit" class="filter-button w-full">
+                                                    <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                                </button>
+                                                @if(request()->filled('editorial'))
+                                                    <a href="{{ route('buscar.titulo', array_merge(request()->except('editorial'), ['busqueda' => request('busqueda')])) }}"
+                                                       class="remove-filter w-full text-center block mt-2">
+                                                        <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filtrar por Campus -->
+                            <div class="collapsible-filter {{ request()->filled('campus') ? 'has-active-filter expanded' : '' }}">
+                                <div class="collapsible-header">
+                                    <h2>
+                                        <i class="fas fa-university mr-2"></i>Filtrar por Campus
+                                        <span class="filter-count">({{ count($campuses) }} opciones)</span>
+                                        @if(request()->filled('campus'))
+                                            <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                                {{ count((array) request('campus')) }} activo(s)
+                                            </span>
+                                        @endif
+                                    </h2>
+                                    <i class="fas fa-chevron-down collapsible-toggle"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <div class="filter-search-container">
+                                        <input type="text" 
+                                               class="filter-search-input" 
+                                               placeholder="Buscar campus..." 
+                                               id="search-campus"
+                                               onkeyup="filterOptions('campus', this.value)">
+                                    </div>
+                                    <div class="collapsible-inner">
+                                        <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
+                                            <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+
+                                            <div class="filter-options-container" id="options-campus">
+                                                @foreach ($campuses as $campus)
+                                                    <div class="filter-option" data-value="{{ strtolower($campus) }}">
+                                                        <input type="checkbox" name="campus[]" id="campus_{{ $loop->index }}"
+                                                               value="{{ $campus }}" {{ is_array(request('campus')) && in_array($campus, request('campus')) ? 'checked' : '' }}
+                                                               class="form-checkbox rounded">
+                                                        <label for="campus_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
+                                                            {{ $campus }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                                <div class="no-results-message" id="no-results-campus" style="display: none;">
+                                                    No se encontraron campus con ese criterio.
+                                                </div>
+                                            </div>
+                                            <div class="pt-2 border-t border-gray-200">
+                                                <button type="submit" class="filter-button w-full">
+                                                    <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                                </button>
+                                                @if(request()->filled('campus'))
+                                                    <a href="{{ route('buscar.titulo', array_merge(request()->except('campus'), ['busqueda' => request('busqueda')])) }}"
+                                                       class="remove-filter w-full text-center block mt-2">
+                                                        <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filtrar por Materia -->
+                            <div class="collapsible-filter {{ request()->filled('materia') ? 'has-active-filter expanded' : '' }}">
+                                <div class="collapsible-header">
+                                    <h2>
+                                        <i class="fas fa-book-open mr-2"></i>Filtrar por Materia
+                                        <span class="filter-count">({{ count($materias) }} opciones)</span>
+                                        @if(request()->filled('materia'))
+                                            <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                                {{ count((array) request('materia')) }} activo(s)
+                                            </span>
+                                        @endif
+                                    </h2>
+                                    <i class="fas fa-chevron-down collapsible-toggle"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <div class="filter-search-container">
+                                        <input type="text" 
+                                               class="filter-search-input" 
+                                               placeholder="Buscar materia..." 
+                                               id="search-materia"
+                                               onkeyup="filterOptions('materia', this.value)">
+                                    </div>
+                                    <div class="collapsible-inner">
+                                        <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
+                                            <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+
+                                            <div class="filter-options-container" id="options-materia">
+                                                @foreach ($materias as $materia)
+                                                    <div class="filter-option" data-value="{{ strtolower($materia) }}">
+                                                        <input type="checkbox" name="materia[]" id="materia_{{ $loop->index }}"
+                                                               value="{{ $materia }}" {{ is_array(request('materia')) && in_array($materia, request('materia')) ? 'checked' : '' }}
+                                                               class="form-checkbox rounded">
+                                                        <label for="materia_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
+                                                            {{ $materia }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                                <div class="no-results-message" id="no-results-materia" style="display: none;">
+                                                    No se encontraron materias con ese criterio.
+                                                </div>
+                                            </div>
+                                            <div class="pt-2 border-t border-gray-200">
+                                                <button type="submit" class="filter-button w-full">
+                                                    <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                                </button>
+                                                @if(request()->filled('materia'))
+                                                    <a href="{{ route('buscar.titulo', array_merge(request()->except('materia'), ['busqueda' => request('busqueda')])) }}"
+                                                       class="remove-filter w-full text-center block mt-2">
+                                                        <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filtrar por Serie -->
+                            <div class="collapsible-filter {{ request()->filled('serie') ? 'has-active-filter expanded' : '' }}">
+                                <div class="collapsible-header">
+                                    <h2>
+                                        <i class="fas fa-list-ol mr-2"></i>Filtrar por Serie
+                                        <span class="filter-count">({{ count($series) }} opciones)</span>
+                                        @if(request()->filled('serie'))
+                                            <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                                {{ count((array) request('serie')) }} activo(s)
+                                            </span>
+                                        @endif
+                                    </h2>
+                                    <i class="fas fa-chevron-down collapsible-toggle"></i>
+                                </div>
+                                <div class="collapsible-content">
+                                    <div class="filter-search-container">
+                                        <input type="text" 
+                                               class="filter-search-input" 
+                                               placeholder="Buscar serie..." 
+                                               id="search-serie"
+                                               onkeyup="filterOptions('serie', this.value)">
+                                    </div>
+                                    <div class="collapsible-inner">
+                                        <form method="GET" action="{{ route('buscar.titulo') }}" class="space-y-3">
+                                            <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                            <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                            <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                            <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                            <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+
+                                            <div class="filter-options-container" id="options-serie">
+                                                @foreach ($series as $serie)
+                                                    <div class="filter-option" data-value="{{ strtolower($serie) }}">
+                                                        <input type="checkbox" name="serie[]" id="serie_{{ $loop->index }}"
+                                                               value="{{ $serie }}" {{ is_array(request('serie')) && in_array($serie, request('serie')) ? 'checked' : '' }}
+                                                               class="form-checkbox rounded">
+                                                        <label for="serie_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
+                                                            {{ $serie }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                                <div class="no-results-message" id="no-results-serie" style="display: none;">
+                                                    No se encontraron series con ese criterio.
+                                                </div>
+                                            </div>
+                                            <div class="pt-2 border-t border-gray-200">
+                                                <button type="submit" class="filter-button w-full">
+                                                    <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                                </button>
+                                                @if(request()->filled('serie'))
+                                                    <a href="{{ route('buscar.titulo', array_merge(request()->except('serie'), ['busqueda' => request('busqueda')])) }}"
+                                                       class="remove-filter w-full text-center block mt-2">
+                                                        <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Área de resultados -->
+                    <div class="{{ isset($mostrarTitulos) && $mostrarTitulos ? 'lg:w-3/4' : 'w-full' }}">
                 <div class="overflow-x-auto rounded-lg border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="table-header">
@@ -587,11 +1093,71 @@
                         </div>
                     </div>
                 </div>
+                    </div>
+                </div>
             @endif
 
             <div class="text-center mt-8">
             </div>
         </div>
     </main>
+
+    <script>
+        // Función para mostrar/ocultar filtros colapsibles
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+            
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const filter = this.parentElement;
+                    filter.classList.toggle('expanded');
+                });
+            });
+        });
+
+        // Función para filtrar opciones en tiempo real
+        function filterOptions(filterType, searchValue) {
+            const container = document.getElementById('options-' + filterType);
+            const options = container.querySelectorAll('.filter-option');
+            const noResultsMessage = document.getElementById('no-results-' + filterType);
+            let visibleCount = 0;
+
+            options.forEach(option => {
+                const value = option.getAttribute('data-value');
+                if (value.includes(searchValue.toLowerCase())) {
+                    option.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+
+            // Mostrar mensaje de "sin resultados" si no hay opciones visibles
+            if (visibleCount === 0) {
+                noResultsMessage.style.display = 'block';
+            } else {
+                noResultsMessage.style.display = 'none';
+            }
+        }
+
+        // Función para limpiar todas las búsquedas de filtros
+        function clearAllFilterSearches() {
+            const searchInputs = document.querySelectorAll('.filter-search-input');
+            searchInputs.forEach(input => {
+                input.value = '';
+                // Trigger the filter function to show all options
+                const filterType = input.id.replace('search-', '');
+                filterOptions(filterType, '');
+            });
+        }
+
+        // Auto-expandir filtros que tienen valores activos
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeFilters = document.querySelectorAll('.collapsible-filter.has-active-filter');
+            activeFilters.forEach(filter => {
+                filter.classList.add('expanded');
+            });
+        });
+    </script>
 </body>
 </html>

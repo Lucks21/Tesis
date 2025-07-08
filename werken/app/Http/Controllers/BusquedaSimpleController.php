@@ -49,7 +49,40 @@ class BusquedaSimpleController extends Controller
             }
         });
 
+        // Aplicar filtros adicionales si están presentes
+        if ($request->filled('autor')) {
+            $autores = is_array($request->autor) ? $request->autor : [$request->autor];
+            $query->whereIn('va.nombre_busqueda', $autores);
+        }
+
+        if ($request->filled('editorial')) {
+            $editoriales = is_array($request->editorial) ? $request->editorial : [$request->editorial];
+            $query->whereIn('ve.nombre_busqueda', $editoriales);
+        }
+
+        if ($request->filled('materia')) {
+            $materias = is_array($request->materia) ? $request->materia : [$request->materia];
+            $query->whereIn('vm.nombre_busqueda', $materias);
+        }
+
+        if ($request->filled('serie')) {
+            $series = is_array($request->serie) ? $request->serie : [$request->serie];
+            $query->whereIn('vs.nombre_busqueda', $series);
+        }
+
+        if ($request->filled('campus')) {
+            $campuses = is_array($request->campus) ? $request->campus : [$request->campus];
+            $query->whereIn('tc.nombre_tb_campus', $campuses);
+        }
+
         $titulos = $query->get();
+        
+        // Obtener datos para filtros
+        $autores = collect($titulos)->pluck('autor')->filter()->unique()->sort()->values();
+        $editoriales = collect($titulos)->pluck('editorial')->filter()->unique()->sort()->values();
+        $materias = collect($titulos)->pluck('materia')->filter()->unique()->sort()->values();
+        $series = collect($titulos)->pluck('serie')->filter()->unique()->sort()->values();
+        $campuses = collect($titulos)->pluck('biblioteca')->filter()->unique()->sort()->values();
         
         // Paginación
         $pagina = $request->input('page', 1);
@@ -70,6 +103,11 @@ class BusquedaSimpleController extends Controller
             'resultados' => $resultados,
             'noResultados' => $resultados->isEmpty(),
             'mostrarTitulos' => true,
+            'autores' => $autores,
+            'editoriales' => $editoriales,
+            'materias' => $materias,
+            'series' => $series,
+            'campuses' => $campuses,
         ]);
     }
     
@@ -115,12 +153,24 @@ class BusquedaSimpleController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
+        // Obtener datos para filtros (vacíos para búsquedas que no son por título)
+        $autores = collect();
+        $editoriales = collect();
+        $materias = collect();
+        $series = collect();
+        $campuses = collect();
+
         return view('BusquedaSimpleResultados', [
             'resultados' => $resultados,
             'busqueda' => $busqueda,
             'criterio' => $criterio,
             'noResultados' => $resultados->isEmpty(),
             'mostrarTitulos' => false,
+            'autores' => $autores,
+            'editoriales' => $editoriales,
+            'materias' => $materias,
+            'series' => $series,
+            'campuses' => $campuses,
         ]);
     }
     
@@ -225,8 +275,20 @@ class BusquedaSimpleController extends Controller
                 'noResultados' => true,
                 'mostrarTitulos' => true,
                 'valorSeleccionado' => $valor,
+                'autores' => collect(),
+                'editoriales' => collect(),
+                'materias' => collect(),
+                'series' => collect(),
+                'campuses' => collect(),
             ]);
         }
+
+        // Obtener datos para filtros
+        $autores = collect($titulos)->pluck('autor')->filter()->unique()->sort()->values();
+        $editoriales = collect($titulos)->pluck('editorial')->filter()->unique()->sort()->values();
+        $materias = collect($titulos)->pluck('materia')->filter()->unique()->sort()->values();
+        $series = collect($titulos)->pluck('serie')->filter()->unique()->sort()->values();
+        $campuses = collect($titulos)->pluck('biblioteca')->filter()->unique()->sort()->values();
 
         // Paginación
         $pagina = request()->input('page', 1);
@@ -248,6 +310,11 @@ class BusquedaSimpleController extends Controller
             'noResultados' => $titulos->isEmpty(),
             'mostrarTitulos' => true,
             'valorSeleccionado' => $valor,
+            'autores' => $autores,
+            'editoriales' => $editoriales,
+            'materias' => $materias,
+            'series' => $series,
+            'campuses' => $campuses,
         ]);
     }
     
