@@ -191,10 +191,6 @@
                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
                     <i class="fas fa-info-circle mr-2"></i>Información Bibliográfica Completa
                 </a>
-                <a href="{{ route('export.ris', ['nroControl' => $detalleMaterial->nro_control]) }}" 
-                   class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm">
-                    <i class="fas fa-file-export mr-2"></i>Exportar RIS
-                </a>
             </div>
         </div>
     </div>

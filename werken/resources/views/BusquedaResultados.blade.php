@@ -445,65 +445,201 @@
                     <table class="results-table">
                         <thead class="table-header">
                             <tr>
-                                <th>
-                                    <i class="fas fa-book mr-2"></i>Material
-                                </th>
-                                <th>
-                                    <i class="fas fa-user mr-2"></i>Autor
-                                </th>
-                                <th>
-                                    <i class="fas fa-building mr-2"></i>Publicación
-                                </th>
-                                <th>
-                                    <i class="fas fa-tag mr-2"></i>Tipo
-                                </th>
+                                @switch($criterio)
+                                    @case('autor')
+                                        <th>
+                                            <i class="fas fa-user mr-2"></i>Autor
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-info mr-2"></i>Información Adicional
+                                        </th>
+                                        @break
+                                    @case('materia')
+                                        <th>
+                                            <i class="fas fa-book-open mr-2"></i>Materia
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-info mr-2"></i>Información Adicional
+                                        </th>
+                                        @break
+                                    @case('titulo')
+                                        <th>
+                                            <i class="fas fa-book mr-2"></i>Título
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-user mr-2"></i>Autor
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-building mr-2"></i>Publicación
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-tag mr-2"></i>Tipo
+                                        </th>
+                                        @break
+                                    @case('editorial')
+                                        <th>
+                                            <i class="fas fa-building mr-2"></i>Editorial
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-info mr-2"></i>Información Adicional
+                                        </th>
+                                        @break
+                                    @case('serie')
+                                        <th>
+                                            <i class="fas fa-list-ol mr-2"></i>Serie
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-info mr-2"></i>Información Adicional
+                                        </th>
+                                        @break
+                                    @default
+                                        <th>
+                                            <i class="fas fa-book mr-2"></i>Resultado
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-info mr-2"></i>Información
+                                        </th>
+                                @endswitch
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($resultados as $resultado)
                                 <tr>
-                                    <td>
-                                        <div class="flex items-center">
-                                            <i class="fas fa-book mr-2 text-blue-600"></i>
-                                            @if(isset($resultado->nro_control))
-                                                <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
-                                                   class="titulo-enlace">
-                                                    {{ $resultado->nombre_busqueda ?? 'Sin título' }}
-                                                </a>
-                                            @else
-                                                {{ $resultado->nombre_busqueda ?? 'Sin título' }}
-                                            @endif
-                                        </div>
-                                        @if(isset($resultado->nro_control))
-                                            <small class="text-gray-500">Nº Control: {{ $resultado->nro_control }}</small>
-                                        @endif
-                                    </td>
-                                    <td>{{ $resultado->autor ?? 'N/A' }}</td>
-                                    <td>{{ $resultado->publicacion ?? 'N/A' }}</td>
-                                    <td>
-                                        @if(isset($resultado->tipo))
-                                            @php
-                                                $tipo = strtolower($resultado->tipo);
-                                            @endphp
-                                            @switch($tipo)
-                                                @case('am')
-                                                @case('m')
-                                                    <span class="tipo-badge tipo-monografia">Monografía</span>
-                                                    @break
-                                                @case('s')
-                                                    <span class="tipo-badge tipo-seriada">Seriada</span>
-                                                    @break
-                                                @case('b')
-                                                @case('a')
-                                                    <span class="tipo-badge tipo-articulo">Artículo</span>
-                                                    @break
-                                                @default
-                                                    <span class="tipo-badge">{{ ucfirst($resultado->tipo) }}</span>
-                                            @endswitch
-                                        @else
-                                            <span class="tipo-badge">N/A</span>
-                                        @endif
-                                    </td>
+                                    @switch($criterio)
+                                        @case('autor')
+                                            <td>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                                                    {{ $resultado->nombre_busqueda ?? 'Sin autor' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if(isset($resultado->nro_control))
+                                                    <small class="text-gray-500">Nº Control: {{ $resultado->nro_control }}</small><br>
+                                                @endif
+                                                @if(isset($resultado->autor))
+                                                    <strong>Autor:</strong> {{ $resultado->autor }}<br>
+                                                @endif
+                                                @if(isset($resultado->publicacion))
+                                                    <strong>Publicación:</strong> {{ $resultado->publicacion }}
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('materia')
+                                            <td>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-book-open mr-2 text-green-600"></i>
+                                                    {{ $resultado->nombre_busqueda ?? 'Sin materia' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if(isset($resultado->nro_control))
+                                                    <small class="text-gray-500">Nº Control: {{ $resultado->nro_control }}</small><br>
+                                                @endif
+                                                @if(isset($resultado->autor))
+                                                    <strong>Autor:</strong> {{ $resultado->autor }}<br>
+                                                @endif
+                                                @if(isset($resultado->publicacion))
+                                                    <strong>Publicación:</strong> {{ $resultado->publicacion }}
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('titulo')
+                                            <td>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-book mr-2 text-blue-600"></i>
+                                                    @if(isset($resultado->nro_control))
+                                                        <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
+                                                           class="titulo-enlace">
+                                                            {{ $resultado->nombre_busqueda ?? 'Sin título' }}
+                                                        </a>
+                                                    @else
+                                                        {{ $resultado->nombre_busqueda ?? 'Sin título' }}
+                                                    @endif
+                                                </div>
+                                                @if(isset($resultado->nro_control))
+                                                    <small class="text-gray-500">Nº Control: {{ $resultado->nro_control }}</small>
+                                                @endif
+                                            </td>
+                                            <td>{{ $resultado->autor ?? 'N/A' }}</td>
+                                            <td>{{ $resultado->publicacion ?? 'N/A' }}</td>
+                                            <td>
+                                                @if(isset($resultado->tipo))
+                                                    @php
+                                                        $tipo = strtolower($resultado->tipo);
+                                                    @endphp
+                                                    @switch($tipo)
+                                                        @case('am')
+                                                        @case('m')
+                                                            <span class="tipo-badge tipo-monografia">Monografía</span>
+                                                            @break
+                                                        @case('s')
+                                                            <span class="tipo-badge tipo-seriada">Seriada</span>
+                                                            @break
+                                                        @case('b')
+                                                        @case('a')
+                                                            <span class="tipo-badge tipo-articulo">Artículo</span>
+                                                            @break
+                                                        @default
+                                                            <span class="tipo-badge">{{ ucfirst($resultado->tipo) }}</span>
+                                                    @endswitch
+                                                @else
+                                                    <span class="tipo-badge">N/A</span>
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('editorial')
+                                            <td>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-building mr-2 text-orange-600"></i>
+                                                    {{ $resultado->nombre_busqueda ?? 'Sin editorial' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if(isset($resultado->nro_control))
+                                                    <small class="text-gray-500">Nº Control: {{ $resultado->nro_control }}</small><br>
+                                                @endif
+                                                @if(isset($resultado->autor))
+                                                    <strong>Autor:</strong> {{ $resultado->autor }}<br>
+                                                @endif
+                                                @if(isset($resultado->publicacion))
+                                                    <strong>Publicación:</strong> {{ $resultado->publicacion }}
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('serie')
+                                            <td>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-list-ol mr-2 text-purple-600"></i>
+                                                    {{ $resultado->nombre_busqueda ?? 'Sin serie' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if(isset($resultado->nro_control))
+                                                    <small class="text-gray-500">Nº Control: {{ $resultado->nro_control }}</small><br>
+                                                @endif
+                                                @if(isset($resultado->autor))
+                                                    <strong>Autor:</strong> {{ $resultado->autor }}<br>
+                                                @endif
+                                                @if(isset($resultado->publicacion))
+                                                    <strong>Publicación:</strong> {{ $resultado->publicacion }}
+                                                @endif
+                                            </td>
+                                            @break
+                                        @default
+                                            <td>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-book mr-2 text-blue-600"></i>
+                                                    {{ $resultado->nombre_busqueda ?? 'Sin información' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if(isset($resultado->nro_control))
+                                                    <small class="text-gray-500">Nº Control: {{ $resultado->nro_control }}</small><br>
+                                                @endif
+                                                Información adicional disponible
+                                            </td>
+                                    @endswitch
                                 </tr>
                             @endforeach
                         </tbody>

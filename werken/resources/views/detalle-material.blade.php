@@ -124,10 +124,6 @@
                 <a href="{{ route('busqueda-avanzada-resultados', ['titulo' => '']) }}" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
                     <i class="fas fa-arrow-left mr-2"></i>Volver a resultados
                 </a>
-                <a href="{{ route('export.ris', ['nroControl' => $detalleMaterial->nro_control]) }}" 
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                    <i class="fas fa-file-export mr-2"></i>Exportar RIS
-                </a>
             </div>
         </div>
     </div>
