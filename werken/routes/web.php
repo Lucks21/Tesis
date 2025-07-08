@@ -27,6 +27,7 @@ Route::get('/busqueda', function () {
 })->name('busqueda');
 
 Route::get('/busqueda/resultados', [BusquedaSimpleController::class, 'buscar'])->name('busqueda.resultados');
+Route::get('/busqueda/titulos-relacionados', [BusquedaSimpleController::class, 'mostrarTitulosRelacionados'])->name('busqueda.titulos-relacionados');
 Route::get('/busqueda/detalles', [BusquedaSimpleController::class, 'detallesBusqueda'])->name('busqueda.detalles');
 Route::get('/busqueda/existencias', [BusquedaSimpleController::class, 'detalleExistencias'])->name('busqueda.existencias');
 
