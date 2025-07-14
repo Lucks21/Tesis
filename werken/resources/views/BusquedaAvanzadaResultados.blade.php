@@ -509,6 +509,25 @@
             color: #1f2937;
         }
 
+        .dewey-number {
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            user-select: text;
+            position: relative;
+        }
+
+        .dewey-number:hover {
+            text-decoration: underline;
+            color: #003876;
+        }
+
+        .dewey-number:active {
+            background-color: #f0f7ff;
+            transform: scale(0.98);
+        }
+
         .biblioteca-cell {
             color: #1f2937;
         }
@@ -1046,7 +1065,7 @@
                                                 <td class="px-6 py-4 text-sm text-gray-900 serie-cell">{{ $resultado->serie }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 dewey-cell">
                                                     @if($resultado->dewey)
-                                                        <span class="text-gray-700">
+                                                        <span class="dewey-number text-gray-700" onclick="selectDeweyText(this)" title="Haz clic para copiar el número de Dewey al portapapeles">
                                                             {{ $resultado->dewey }}
                                                         </span>
                                                     @else
@@ -1274,6 +1293,96 @@
                 });
             });
         });
+
+        // Función para copiar el número de Dewey al portapapeles al hacer clic
+        function selectDeweyText(element) {
+            const deweyNumber = element.textContent.trim();
+            
+            // Intentar copiar usando la API moderna del portapapeles
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(deweyNumber).then(function() {
+                    // Feedback visual de éxito
+                    showCopyFeedback(element, '✓ Copiado');
+                    console.log('Número de Dewey copiado al portapapeles:', deweyNumber);
+                }).catch(function(err) {
+                    // Si falla, usar el método de fallback
+                    fallbackCopyText(element, deweyNumber);
+                });
+            } else {
+                // Usar método de fallback para navegadores más antiguos o contextos no seguros
+                fallbackCopyText(element, deweyNumber);
+            }
+        }
+
+        // Función de fallback para copiar texto
+        function fallbackCopyText(element, text) {
+            // Crear un elemento temporal para la selección
+            const tempInput = document.createElement('textarea');
+            tempInput.style.position = 'absolute';
+            tempInput.style.left = '-9999px';
+            tempInput.style.top = '0';
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            
+            // Seleccionar y copiar
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999); // Para móviles
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyFeedback(element, '✓ Copiado');
+                    console.log('Número de Dewey copiado al portapapeles (fallback):', text);
+                } else {
+                    showCopyFeedback(element, '✗ Error', true);
+                    console.error('Error al copiar el número de Dewey');
+                }
+            } catch (err) {
+                showCopyFeedback(element, '✗ Error', true);
+                console.error('Error al copiar:', err);
+            }
+            
+            // Limpiar el elemento temporal
+            document.body.removeChild(tempInput);
+        }
+
+        // Función para mostrar feedback visual
+        function showCopyFeedback(element, message, isError = false) {
+            // Crear elemento de feedback más sutil
+            const feedback = document.createElement('span');
+            feedback.textContent = message;
+            feedback.style.position = 'absolute';
+            feedback.style.background = isError ? '#dc2626' : '#16a34a';
+            feedback.style.color = 'white';
+            feedback.style.padding = '3px 8px';
+            feedback.style.borderRadius = '4px';
+            feedback.style.fontSize = '0.75em';
+            feedback.style.fontWeight = '500';
+            feedback.style.marginLeft = '8px';
+            feedback.style.zIndex = '1000';
+            feedback.style.opacity = '0';
+            feedback.style.transition = 'opacity 0.2s ease';
+            feedback.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            
+            element.parentNode.style.position = 'relative';
+            element.parentNode.appendChild(feedback);
+            
+            // Mostrar feedback con animación suave
+            setTimeout(() => {
+                feedback.style.opacity = '1';
+            }, 10);
+            
+            // Ocultar feedback
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                
+                setTimeout(() => {
+                    if (feedback.parentNode) {
+                        feedback.parentNode.removeChild(feedback);
+                    }
+                }, 200);
+            }, 1200);
+        }
     </script>
 </body>
 </html>
