@@ -577,6 +577,152 @@
             padding: 0 0.5rem;
         }
 
+        /* Export controls styles */
+        .export-controls {
+            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .export-button {
+            background-color: #059669;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: bold;
+            min-width: 180px;
+            text-align: center;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .export-button.enabled {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .export-button:hover.enabled {
+            background-color: #047857;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+        }
+
+        .export-button i {
+            margin-right: 0.5rem;
+        }
+
+        .select-all-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .select-all-checkbox {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: #003876;
+            cursor: pointer;
+        }
+
+        .select-all-label {
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .selection-counter {
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: 600;
+            color: #059669;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+        }
+
+        .resource-checkbox {
+            width: 1.125rem;
+            height: 1.125rem;
+            accent-color: #003876;
+            cursor: pointer;
+        }
+
+        .resource-checkbox:checked + td {
+            background-color: #f0f7ff;
+        }
+
+        tr:has(.resource-checkbox:checked) {
+            background-color: #f0f7ff;
+            border-left: 3px solid #003876;
+        }
+
+        tr:has(.resource-checkbox:checked):hover {
+            background-color: #e0f2fe;
+        }
+
+        .col-checkbox {
+            width: 4%;
+            min-width: 60px;
+        }
+
+        /* Adjust other column widths */
+        .col-titulo {
+            width: 35%;
+            min-width: 200px;
+        }
+
+        .col-autor {
+            width: 18%;
+            min-width: 150px;
+        }
+
+        .col-editorial {
+            width: 14%;
+            min-width: 120px;
+        }
+
+        .col-materia {
+            width: 11%;
+            min-width: 120px;
+        }
+
+        .col-serie {
+            width: 5%;
+            min-width: 80px;
+        }
+
+        .col-dewey {
+            width: 9%;
+            min-width: 60px;
+        }
+
+        .col-biblioteca {
+            width: 14%;
+            min-width: 120px;
+        }
+
+        .col-exportar {
+            width: 2%;
+            min-width: 55px;
+        }
+
         @media (min-width: 1024px) {
             .results-main-container {
                 padding: 0 1rem;
@@ -1017,10 +1163,35 @@
                                 <p class="text-gray-500 text-xl">No se encontraron resultados.</p>
                             </div>
                         @else
+                            <!-- Controles de exportación -->
+                            <div class="export-controls">
+                                <div class="select-all-container">
+                                    <input type="checkbox" id="selectAll" class="select-all-checkbox">
+                                    <label for="selectAll" class="select-all-label">
+                                        <i class="fas fa-check-square mr-2"></i>Seleccionar todos
+                                    </label>
+                                </div>
+                                
+                                <div class="selection-counter">
+                                    <i class="fas fa-list-check mr-2"></i>
+                                    <span id="selectedCount">0</span> recursos seleccionados
+                                </div>
+                                
+                                <form id="exportForm" method="POST" action="{{ route('export.ris.multiple') }}">
+                                    @csrf
+                                    <button type="submit" id="exportButton" class="export-button">
+                                        <i class="fas fa-download"></i>Exportar seleccionados
+                                    </button>
+                                </form>
+                            </div>
+
                             <div class="overflow-x-auto rounded-lg border border-gray-200">
                                 <table class="min-w-full divide-y divide-gray-200 results-table">
                                     <thead class="table-header">
                                         <tr>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-checkbox">
+                                                <i class="fas fa-check mr-2"></i>Sel.
+                                            </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-titulo">
                                                 <i class="fas fa-book mr-2"></i>Título
                                             </th>
@@ -1050,6 +1221,12 @@
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($resultados as $resultado)
                                             <tr class="table-row">
+                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                                    <input type="checkbox" name="resource_checkbox" 
+                                                           value="{{ $resultado->nro_control }}" 
+                                                           class="resource-checkbox"
+                                                           onchange="updateExportButton()">
+                                                </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 titulo-cell">
                                                     <div class="flex items-center">
                                                         <i class="fas fa-book mr-2 text-blue-600"></i>
@@ -1383,6 +1560,106 @@
                 }, 200);
             }, 1200);
         }
+
+        // Funciones para manejo de exportación múltiple
+        function updateExportButton() {
+            const checkboxes = document.querySelectorAll('input[name="resource_checkbox"]:checked');
+            const exportButton = document.getElementById('exportButton');
+            const selectedCount = document.getElementById('selectedCount');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const totalCheckboxes = document.querySelectorAll('input[name="resource_checkbox"]');
+            
+            // Actualizar contador
+            selectedCount.textContent = checkboxes.length;
+            
+            // Habilitar/deshabilitar botón de exportación
+            if (checkboxes.length > 0) {
+                exportButton.classList.add('enabled');
+            } else {
+                exportButton.classList.remove('enabled');
+            }
+            
+            // Actualizar estado del checkbox "Seleccionar todos"
+            if (checkboxes.length === totalCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkboxes.length > 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const resourceCheckboxes = document.querySelectorAll('input[name="resource_checkbox"]');
+            
+            resourceCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            
+            updateExportButton();
+        }
+
+        function handleExportSubmit(event) {
+            const checkboxes = document.querySelectorAll('input[name="resource_checkbox"]:checked');
+            
+            if (checkboxes.length === 0) {
+                event.preventDefault();
+                alert('Por favor, selecciona al menos un recurso para exportar.');
+                return false;
+            }
+            
+            // Agregar los números de control seleccionados al formulario
+            const form = document.getElementById('exportForm');
+            
+            // Limpiar inputs anteriores
+            form.querySelectorAll('input[name="nro_controles[]"]').forEach(input => {
+                input.remove();
+            });
+            
+            // Agregar nuevos inputs
+            checkboxes.forEach(checkbox => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'nro_controles[]';
+                hiddenInput.value = checkbox.value;
+                form.appendChild(hiddenInput);
+            });
+            
+            // Mostrar mensaje de carga
+            const exportButton = document.getElementById('exportButton');
+            const originalText = exportButton.innerHTML;
+            exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generando archivos...';
+            exportButton.disabled = true;
+            
+            // Restaurar botón después de un tiempo
+            setTimeout(() => {
+                exportButton.innerHTML = originalText;
+                exportButton.disabled = false;
+            }, 5000);
+            
+            return true;
+        }
+
+        // Event listeners para exportación múltiple
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const exportForm = document.getElementById('exportForm');
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', toggleSelectAll);
+            }
+            
+            if (exportForm) {
+                exportForm.addEventListener('submit', handleExportSubmit);
+            }
+            
+            // Inicializar estado del botón
+            updateExportButton();
+        });
     </script>
 </body>
 </html>
