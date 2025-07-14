@@ -73,6 +73,7 @@ class BusquedaAvanzadaController extends Controller
                 ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
                 ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
                 ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
+                ->leftJoin('V_DEWEY as vd', 'vt.nro_control', '=', 'vd.nro_control')
                 ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
                 ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
                 ->distinct();
@@ -118,6 +119,7 @@ class BusquedaAvanzadaController extends Controller
                 've.nombre_busqueda as editorial',
                 'vm.nombre_busqueda as materia',
                 'vs.nombre_busqueda as serie',
+                'vd.nombre_busqueda as dewey',
                 'tc.nombre_tb_campus as biblioteca',
                 DB::raw("(
                     (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) +

@@ -850,6 +850,9 @@
                                                 <i class="fas fa-list-ol mr-2"></i>Serie
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                                <i class="fas fa-sort-numeric-up mr-2"></i>Dewey
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
                                                 <i class="fas fa-university mr-2"></i>Biblioteca
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white">
@@ -872,6 +875,15 @@
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->editorial }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->materia }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->serie }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                                    @if($resultado->dewey)
+                                                        <span class="text-gray-700">
+                                                            {{ $resultado->dewey }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-gray-400 italic">Sin clasificación</span>
+                                                    @endif
+                                                </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->biblioteca }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">
                                                     <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 
