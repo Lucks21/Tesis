@@ -409,6 +409,174 @@
             font-style: italic;
             padding: 1rem;
         }
+
+        /* Enhanced results table styles for better space utilization */
+        .results-table {
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .results-table th {
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            font-size: 0.875rem;
+        }
+
+        .results-table td {
+            padding: 1.25rem 1.5rem;
+            vertical-align: top;
+            line-height: 1.6;
+        }
+
+        .results-table tbody tr:hover {
+            background-color: #ffffff;
+        }
+
+        /* Responsive column widths for better space distribution */
+        .col-titulo {
+            width: 39%;
+            min-width: 200px;
+        }
+
+        .col-autor {
+            width: 20%;
+            min-width: 150px;
+        }
+
+        .col-editorial {
+            width: 15%;
+            min-width: 120px;
+        }
+
+        .col-materia {
+            width: 12%;
+            min-width: 120px;
+        }
+
+        .col-serie {
+            width: 5%;
+            min-width: 80px;
+        }
+
+        .col-dewey {
+            width: 10%;
+            min-width: 60px;
+        }
+
+        .col-biblioteca {
+            width: 15%;
+            min-width: 120px;
+        }
+
+        .col-exportar {
+            width: 2%;
+            min-width: 55px;
+        }
+
+        /* Better text wrapping and spacing */
+        .results-table td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .titulo-cell {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .autor-cell {
+            color: #1f2937;
+        }
+
+        .editorial-cell {
+            color: #1f2937;
+            font-size: 0.9em;
+        }
+
+        .materia-cell {
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .serie-cell {
+            color: #1f2937;
+        }
+
+        .dewey-cell {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .biblioteca-cell {
+            color: #1f2937;
+        }
+
+        /* Enhanced pagination area */
+        .pagination-enhanced {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            border-radius: 0.75rem;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Compact RIS export button */
+        .ris-button {
+            background-color: #003876;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: 600;
+            font-size: 0.75rem;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .ris-button i {
+            margin-right: 0.25rem;
+            font-size: 0.7rem;
+        }
+
+        .ris-button:hover {
+            background-color: #002b5c;
+        }
+
+        /* Custom container styles for better space utilization */
+        .results-main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 0.5rem;
+        }
+
+        @media (min-width: 1024px) {
+            .results-main-container {
+                padding: 0 1rem;
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .results-main-container {
+                max-width: 1500px;
+                padding: 0 1.5rem;
+            }
+        }
+
+        @media (min-width: 1536px) {
+            .results-main-container {
+                max-width: 1600px;
+                padding: 0 2rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">    <!-- Barra institucional -->
@@ -461,7 +629,7 @@
     </nav>
 
     <!-- Contenido principal -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="results-main-container py-8">
         <div class="results-container p-6">
             <h1 class="text-3xl font-bold text-gray-800 mb-6">Resultados de la Búsqueda</h1>
             
@@ -475,7 +643,7 @@
 
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Filtros laterales -->
-                <div class="lg:w-1/4 space-y-6">
+                <div class="lg:w-1/5 space-y-6">
                     <!-- Filtrar por Autor -->
                     <div class="collapsible-filter {{ request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
                         <div class="collapsible-header">
@@ -798,7 +966,7 @@
                 </div>
 
                 <!-- Resultados -->
-                <div class="lg:w-3/4">
+                <div class="lg:w-4/5">
                     <div class="bg-white rounded-xl shadow-lg p-6">
                         <div class="mb-6 bg-blue-50 p-4 rounded-lg">
                             <form action="{{ route('busqueda-avanzada-resultados') }}" method="GET" class="flex items-center space-x-4">
@@ -831,38 +999,39 @@
                             </div>
                         @else
                             <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="min-w-full divide-y divide-gray-200">
+                                <table class="min-w-full divide-y divide-gray-200 results-table">
                                     <thead class="table-header">
                                         <tr>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-titulo">
                                                 <i class="fas fa-book mr-2"></i>Título
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-autor">
                                                 <i class="fas fa-user mr-2"></i>Autor
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-editorial">
                                                 <i class="fas fa-building mr-2"></i>Editorial
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-materia">
                                                 <i class="fas fa-book-open mr-2"></i>Materia
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-serie">
                                                 <i class="fas fa-list-ol mr-2"></i>Serie
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-dewey">
                                                 <i class="fas fa-sort-numeric-up mr-2"></i>Dewey
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-biblioteca">
                                                 <i class="fas fa-university mr-2"></i>Biblioteca
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-exportar">
                                                 <i class="fas fa-file-export mr-2"></i>Exportar
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($resultados as $resultado)
-                                            <tr class="table-row">                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                            <tr class="table-row">
+                                                <td class="px-6 py-4 text-sm text-gray-900 titulo-cell">
                                                     <div class="flex items-center">
                                                         <i class="fas fa-book mr-2 text-blue-600"></i>
                                                         <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
@@ -871,11 +1040,11 @@
                                                         </a>
                                                     </div>
                                                 </td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->autor }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->editorial }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->materia }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->serie }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                                <td class="px-6 py-4 text-sm text-gray-900 autor-cell">{{ $resultado->autor }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 editorial-cell">{{ $resultado->editorial }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 materia-cell">{{ $resultado->materia }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 serie-cell">{{ $resultado->serie }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 dewey-cell">
                                                     @if($resultado->dewey)
                                                         <span class="text-gray-700">
                                                             {{ $resultado->dewey }}
@@ -884,10 +1053,10 @@
                                                         <span class="text-gray-400 italic">Sin clasificación</span>
                                                     @endif
                                                 </td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->biblioteca }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 biblioteca-cell">{{ $resultado->biblioteca }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">
                                                     <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 
-                                                       class="filter-button inline-flex items-center py-1 px-3 text-sm">
+                                                       class="ris-button">
                                                         <i class="fas fa-file-export mr-2"></i>RIS
                                                     </a>
                                                 </td>
@@ -897,7 +1066,7 @@
                                 </table>
                             </div>
 
-                            <div class="mt-6">
+                            <div class="pagination-enhanced">
                                 <div class="pagination-container">
                                     <!-- Información de paginación -->
                                     <div class="pagination-info">
