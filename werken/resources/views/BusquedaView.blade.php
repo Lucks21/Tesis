@@ -234,24 +234,26 @@
         <div class="main-content">
             <h1 class="page-title">Búsqueda Simple</h1>
             <div class="search-form">
-                <form action="{{ route('busqueda') }}" method="GET">
+                <form action="{{ route('busqueda.sp') }}" method="GET">
                     <div class="form-group">
-                        <label for="searchType" class="form-label">Buscar por:</label>
-                        <select name="searchType" id="searchType" class="form-select">
-                            <option value="autor">Autor</option>
-                            <option value="titulo">Título</option>
-                            <option value="materia">Materia</option>
-                            <option value="editorial">Editorial</option>
+                        <label for="tipo_busqueda" class="form-label">Buscar por:</label>
+                        <select name="tipo_busqueda" id="tipo_busqueda" class="form-select">
+                            <option value="1" {{ request('tipo_busqueda') == '1' ? 'selected' : '' }}>Autor</option>
+                            <option value="3" {{ request('tipo_busqueda') == '3' || !request('tipo_busqueda') ? 'selected' : '' }}>Título</option>
+                            <option value="2" {{ request('tipo_busqueda') == '2' ? 'selected' : '' }}>Materia</option>
+                            <option value="4" {{ request('tipo_busqueda') == '4' ? 'selected' : '' }}>Editorial</option>
+                            <option value="5" {{ request('tipo_busqueda') == '5' ? 'selected' : '' }}>Serie</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="searchTerm" class="form-label">Término de búsqueda:</label>
+                        <label for="busqueda" class="form-label">Término de búsqueda:</label>
                         <input type="text" 
-                               id="searchTerm"
-                               name="query" 
+                               id="busqueda"
+                               name="busqueda" 
                                class="form-input" 
                                placeholder="Ingrese el término a buscar..."
-                               value="{{ request('query') }}">
+                               value="{{ request('busqueda') }}"
+                               required>
                     </div>                    <div class="flex justify-between">
                         <a href="{{ url('/') }}" class="search-button">
                             <i class="fas fa-home mr-2"></i>Volver

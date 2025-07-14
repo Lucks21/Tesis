@@ -4,373 +4,599 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\DetalleMaterial;
-use App\Models\Materia;
-use App\Models\Autor;
-use App\Models\Editorial;
-use App\Models\Serie;
-use App\Models\Titulo;
-
 
 class BusquedaSimpleController extends Controller
 {
-    public function buscarPorTitulo(Request $request)
+    public function mostrarFormulario(Request $request)
     {
-        $request->validate([
-            'busqueda' => 'required|string|max:255',
-        ]);
-    
-        $titulo = $request->input('busqueda');
-        $palabras = explode(' ', $titulo);
-        
-        // Usar consulta similar a la búsqueda avanzada para obtener toda la información
-        $query = DB::table('V_TITULO as vt')
-            ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
-            ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
-            ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
-            ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
-            ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
-            ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
-            ->select([
-                'vt.nro_control',
-                'vt.nombre_busqueda as titulo',
-                'va.nombre_busqueda as autor',
-                've.nombre_busqueda as editorial',
-                'vm.nombre_busqueda as materia',
-                'vs.nombre_busqueda as serie',
-                'tc.nombre_tb_campus as biblioteca',
-            ])
-            ->distinct();
+        // Mostrar el formulario de búsqueda simple
+        return view('BusquedaView');
+    }
 
-        // Aplicar filtro de búsqueda por título
-        $query->where(function ($q) use ($palabras) {
-            foreach ($palabras as $palabra) {
-                $q->orWhere('vt.nombre_busqueda', 'LIKE', "%{$palabra}%");
+    /**
+     * Búsqueda usando el stored procedure sp_WEB_detalle_busqueda
+     */
+    public function buscarConStoredProcedure(Request $request)
+    {
+        // Log para debug
+        \Log::info('Iniciando búsqueda con stored procedure', [
+            'request_all' => $request->all(),
+            'method' => $request->method()
+        ]);
+
+        // Validación flexible para diferentes fuentes de parámetros
+        $request->validate([
+            'busqueda' => 'nullable|string|max:255',
+            'termino' => 'nullable|string|max:255',
+            'tipo_busqueda' => 'nullable|integer|min:1|max:6',
+            'tipo' => 'nullable|integer|min:1|max:6',
+        ]);
+
+        $textoBusqueda = $request->input('busqueda');
+        $termino = $request->input('termino');
+        $tipoBusqueda = $request->input('tipo_busqueda', 3);
+        $tipo = $request->input('tipo');
+        $valorSeleccionado = $request->input('valor_seleccionado');
+        $verTitulos = $request->input('ver_titulos');
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+
+        // Log de parámetros procesados
+        \Log::info('Parámetros procesados', [
+            'textoBusqueda' => $textoBusqueda,
+            'termino' => $termino,
+            'tipoBusqueda' => $tipoBusqueda,
+            'tipo' => $tipo,
+            'valorSeleccionado' => $valorSeleccionado,
+            'verTitulos' => $verTitulos
+        ]);
+
+        // Verificar que al menos uno de los parámetros de búsqueda esté presente
+        if (!$request->filled('busqueda') && !$request->filled('termino')) {
+            \Log::warning('No se proporcionó término de búsqueda');
+            return redirect()->back()->withErrors(['error' => 'Debe proporcionar un término de búsqueda']);
+        }
+        
+        try {
+            // CASO 1: Clic en "Ver títulos" - viene con termino, tipo y ver_titulos
+            if (($verTitulos && $termino && $tipo) || ($termino && $tipo && !$textoBusqueda)) {
+                \Log::info('Ejecutando mostrarTitulosAsociados');
+                return $this->mostrarTitulosAsociados($termino, $tipo, $request);
             }
+            
+            // Si hay un valor seleccionado, mostrar títulos asociados
+            if ($valorSeleccionado) {
+                \Log::info('Ejecutando mostrarTitulosAsociados con valor seleccionado');
+                return $this->mostrarTitulosAsociados($valorSeleccionado, $tipoBusqueda, $request);
+            }
+            
+            // Usar textoBusqueda si no hay termino específico
+            $busquedaFinal = $termino ?: $textoBusqueda;
+            $tipoFinal = $tipo ?: $tipoBusqueda;
+            
+            \Log::info('Parámetros finales', [
+                'busquedaFinal' => $busquedaFinal,
+                'tipoFinal' => $tipoFinal
+            ]);
+            
+            // Si es búsqueda por título (tipo 3), usar el SP directamente
+            if ($tipoFinal == 3) {
+                \Log::info('Ejecutando buscarTitulos (tipo 3)');
+                return $this->buscarTitulos($busquedaFinal, $tipoFinal, $request);
+            }
+            
+            // Para otros tipos (autor, materia, editorial, serie, dewey), buscar elementos
+            \Log::info('Ejecutando buscarElementos');
+            return $this->buscarElementos($busquedaFinal, $tipoFinal, $request);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en buscarConStoredProcedure', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // En caso de error, retornar vista con resultados vacíos
+            $busquedaFinal = $termino ?: $textoBusqueda;
+            $tipoFinal = $tipo ?: $tipoBusqueda;
+            return $this->retornarVistaError($e->getMessage(), $busquedaFinal, $tipoFinal, $request);
+        }
+    }
+
+    /**
+     * Buscar títulos directamente (para búsqueda por título)
+     */
+    private function buscarTitulos($textoBusqueda, $tipoBusqueda, $request)
+    {
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        
+        // Ejecutar el stored procedure para títulos
+        $resultadosBrutos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
+            $textoBusqueda,
+            $tipoBusqueda
+        ]);
+
+        // Procesar los resultados para el formato esperado por la vista
+        $resultadosProcesados = collect($resultadosBrutos)->map(function ($item) {
+            return (object) [
+                'nro_control' => $item->nro_control,
+                'titulo' => $item->nombre_busqueda,
+                'nombre_autor' => $item->autor,
+                'nombre_editorial' => $item->editorial ?? null,
+                'nombre_materia' => $item->materia ?? null,
+                'nombre_serie' => $item->serie ?? null,
+                'biblioteca' => $item->biblioteca ?? null,
+                'anio_publicacion' => $item->publicacion,
+                'tipo_material' => $item->tipo,
+                'isbn' => $item->isbn ?? null,
+                'signatura_topografica' => $item->signatura ?? null,
+            ];
         });
 
-        // Aplicar filtros adicionales si están presentes
-        if ($request->filled('autor')) {
-            $autores = $request->autor;
-            // Si es un string separado por comas, convertirlo a array
-            if (is_string($autores)) {
-                $autores = explode(',', $autores);
-            }
-            $autores = array_filter($autores); // Eliminar elementos vacíos
-            if (!empty($autores)) {
-                $query->whereIn('va.nombre_busqueda', $autores);
-            }
-        }
-
-        if ($request->filled('editorial')) {
-            $editoriales = $request->editorial;
-            if (is_string($editoriales)) {
-                $editoriales = explode(',', $editoriales);
-            }
-            $editoriales = array_filter($editoriales);
-            if (!empty($editoriales)) {
-                $query->whereIn('ve.nombre_busqueda', $editoriales);
-            }
-        }
-
-        if ($request->filled('materia')) {
-            $materias = $request->materia;
-            if (is_string($materias)) {
-                $materias = explode(',', $materias);
-            }
-            $materias = array_filter($materias);
-            if (!empty($materias)) {
-                $query->whereIn('vm.nombre_busqueda', $materias);
-            }
-        }
-
-        if ($request->filled('serie')) {
-            $series = $request->serie;
-            if (is_string($series)) {
-                $series = explode(',', $series);
-            }
-            $series = array_filter($series);
-            if (!empty($series)) {
-                $query->whereIn('vs.nombre_busqueda', $series);
-            }
-        }
-
-        if ($request->filled('campus')) {
-            $campuses = $request->campus;
-            if (is_string($campuses)) {
-                $campuses = explode(',', $campuses);
-            }
-            $campuses = array_filter($campuses);
-            if (!empty($campuses)) {
-                $query->whereIn('tc.nombre_tb_campus', $campuses);
-            }
-        }
-
-        $titulos = $query->get();
+        // Obtener datos únicos para filtros
+        $autores = collect($resultadosBrutos)->pluck('autor')->filter()->unique()->sort()->values();
+        $años = collect($resultadosBrutos)->pluck('publicacion')->filter()->unique()->sort()->values();
+        $tipos = collect($resultadosBrutos)->pluck('tipo')->filter()->unique()->sort()->values();
         
-        // Obtener datos para filtros
-        $autores = collect($titulos)->pluck('autor')->filter()->unique()->sort()->values();
-        $editoriales = collect($titulos)->pluck('editorial')->filter()->unique()->sort()->values();
-        $materias = collect($titulos)->pluck('materia')->filter()->unique()->sort()->values();
-        $series = collect($titulos)->pluck('serie')->filter()->unique()->sort()->values();
-        $campuses = collect($titulos)->pluck('biblioteca')->filter()->unique()->sort()->values();
-        
-        // Paginación
-        $pagina = $request->input('page', 1);
-        $porPagina = 10;
-        $paginados = $titulos->forPage($pagina, $porPagina);
+        // Obtener editoriales, materias y series desde los resultados
+        $editoriales = collect($resultadosBrutos)->pluck('editorial')->filter()->unique()->sort()->values();
+        $materias = collect($resultadosBrutos)->pluck('materia')->filter()->unique()->sort()->values();
+        $series = collect($resultadosBrutos)->pluck('serie')->filter()->unique()->sort()->values();      
+        $campuses = collect();    
 
-        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
-            $paginados,
-            $titulos->count(),
-            $porPagina,
-            $pagina,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+        // Crear paginación
+        $totalResultados = $resultadosProcesados->count();
+        $resultadosPaginados = $resultadosProcesados->slice(($pagina - 1) * $porPagina, $porPagina);
 
-        return view('BusquedaSimpleResultados', [
-            'criterio' => 'titulo',
-            'busqueda' => $titulo,
-            'resultados' => $resultados,
-            'noResultados' => $resultados->isEmpty(),
-            'mostrarTitulos' => true,
-            'autores' => $autores,
-            'editoriales' => $editoriales,
-            'materias' => $materias,
-            'series' => $series,
-            'campuses' => $campuses,
-        ]);
-    }
-    
-    public function buscar(Request $request)
-    {
-        $request->validate([
-            'criterio' => 'required|string|in:autor,editorial,serie,materia',
-            'busqueda' => 'required|string|max:255',
-        ]);
-    
-        $criterio = $request->input('criterio');
-        $busqueda = $request->input('busqueda');
-        $palabras = explode(' ', $busqueda);
-    
-        $modelos = [
-            'autor' => Autor::class,
-            'editorial' => Editorial::class,
-            'serie' => Serie::class,
-            'materia' => Materia::class,
-        ];
-    
-        if (!array_key_exists($criterio, $modelos)) {
-            abort(404, 'Criterio no válido.');
-        }
-    
-        $modelo = $modelos[$criterio];
-    
-        $resultadosSinPaginar = $modelo::where(function ($query) use ($palabras) {
-            foreach ($palabras as $palabra) {
-                $query->where('nombre_busqueda', 'LIKE', "%{$palabra}%");
-            }
-        })->select('nombre_busqueda')->distinct()->get();
-    
-        $pagina = $request->input('page', 1);
-        $porPagina = 10;
-        $resultadosPaginados = $resultadosSinPaginar->slice(($pagina - 1) * $porPagina, $porPagina);
-    
         $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
             $resultadosPaginados,
-            $resultadosSinPaginar->count(),
+            $totalResultados,
             $porPagina,
             $pagina,
-            ['path' => $request->url(), 'query' => $request->query()]
+            [
+                'path' => $request->url(),
+                'query' => $request->query()
+            ]
         );
 
-        // Obtener datos para filtros (vacíos para búsquedas que no son por título)
+        // Preparar datos para la vista (compatible con vista avanzada)
+        // $resultados ya contiene la paginación de títulos
+        $criterio = 'busqueda_simple';
+        $valorCriterio = $textoBusqueda;
+        $titulo = $textoBusqueda;
+        $orden = $request->input('orden', 'titulo_asc');
+
+        return view('BusquedaSimpleResultados', compact(
+            'resultados',
+            'criterio',
+            'valorCriterio',
+            'titulo',
+            'orden',
+            'autores',
+            'editoriales',
+            'materias',
+            'series',
+            'campuses'
+        ));
+    }
+
+    /**
+     * Buscar elementos (autores, materias, etc.) - Primer paso
+     */
+    private function buscarElementos($textoBusqueda, $tipoBusqueda, $request)
+    {
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        
+        $vista = $this->getVistaPorTipo($tipoBusqueda);
+        
+        if (!$vista) {
+            throw new \Exception('Tipo de búsqueda no válido');
+        }
+
+        // Buscar elementos que coincidan con el texto (búsqueda más flexible)
+        // Dividir el término de búsqueda en palabras para buscar coincidencias parciales
+        $palabras = explode(' ', trim($textoBusqueda));
+        $condiciones = [];
+        $parametros = [];
+        
+        foreach ($palabras as $palabra) {
+            if (strlen(trim($palabra)) > 2) { // Solo buscar palabras de más de 2 caracteres
+                $condiciones[] = "nombre_busqueda LIKE ?";
+                $parametros[] = "%{$palabra}%";
+            }
+        }
+        
+        if (empty($condiciones)) {
+            // Si no hay palabras válidas, usar búsqueda simple
+            $condiciones[] = "nombre_busqueda LIKE ?";
+            $parametros[] = "%{$textoBusqueda}%";
+        }
+        
+        $sql = "
+            SELECT DISTINCT nombre_busqueda 
+            FROM {$vista} 
+            WHERE " . implode(' AND ', $condiciones) . " 
+            ORDER BY nombre_busqueda
+        ";
+        
+        $elementos = DB::select($sql, $parametros);
+
+        // Convertir a objetos para la vista
+        $elementosProcesados = collect($elementos)->map(function ($item) use ($tipoBusqueda) {
+            return (object) [
+                'nombre' => $item->nombre_busqueda,
+                'tipo' => $tipoBusqueda,
+                'url_titulos' => route('busqueda.sp', [
+                    'busqueda' => request('busqueda'),
+                    'tipo_busqueda' => $tipoBusqueda,
+                    'valor_seleccionado' => $item->nombre_busqueda
+                ])
+            ];
+        });
+
+        // Crear paginación
+        $totalResultados = $elementosProcesados->count();
+        $resultadosPaginados = $elementosProcesados->slice(($pagina - 1) * $porPagina, $porPagina);
+
+        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
+            $resultadosPaginados,
+            $totalResultados,
+            $porPagina,
+            $pagina,
+            [
+                'path' => $request->url(),
+                'query' => $request->query()
+            ]
+        );
+
+        // Datos para la vista de elementos
+        $criterio = $this->getTipoBusquedaNombre($tipoBusqueda);
+        $valorCriterio = $textoBusqueda;
+
+        return view('BusquedaSimpleElementos', compact(
+            'resultados',
+            'criterio',
+            'valorCriterio',
+            'tipoBusqueda'
+        ));
+    }
+
+    /**
+     * Mostrar títulos asociados a un elemento seleccionado - Segundo paso
+     */
+    private function mostrarTitulosAsociados($valorSeleccionado, $tipoBusqueda, $request)
+    {
+        try {
+            $pagina = $request->input('page', 1);
+            $porPagina = 10;
+            
+            // Ejecutar el stored procedure con el valor exacto seleccionado
+            $resultadosBrutos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
+                $valorSeleccionado,
+                $tipoBusqueda
+            ]);
+            
+            // DEBUG: Agregar información de debug para ver la estructura real
+            if (count($resultadosBrutos) > 0) {
+                $primerElemento = $resultadosBrutos[0];
+                \Log::info('DEBUG: Estructura del resultado del SP:', [
+                    'campos' => get_object_vars($primerElemento),
+                    'valor_seleccionado' => $valorSeleccionado,
+                    'tipo_busqueda' => $tipoBusqueda
+                ]);
+            }
+            
+            $resultadosProcesados = collect($resultadosBrutos)->map(function ($item) {
+                return (object) [
+                    'nro_control' => $this->getValue($item, ['nro_control', 'numero_control']),
+                    'titulo' => $this->getValue($item, ['nombre_busqueda', 'titulo']),
+                    'nombre_autor' => $this->getValue($item, ['autor', 'nombre_autor']),
+                    'nombre_editorial' => $this->getValue($item, ['editorial', 'nombre_editorial']),
+                    'nombre_materia' => $this->getValue($item, ['materia', 'nombre_materia']),
+                    'nombre_serie' => $this->getValue($item, ['serie', 'nombre_serie']),
+                    'biblioteca' => $this->getValue($item, ['biblioteca', 'nombre_biblioteca']),
+                    'anio_publicacion' => $this->getValue($item, ['publicacion', 'anio_publicacion', 'año_publicacion']),
+                    'tipo_material' => $this->getValue($item, ['tipo', 'tipo_material']),
+                    'isbn' => $this->getValue($item, ['isbn']),
+                    'signatura_topografica' => $this->getValue($item, ['signatura', 'signatura_topografica']),
+                ];
+            });
+
+            // Obtener datos únicos para filtros
+            $autores = collect($resultadosBrutos)->map(function($item) {
+                return property_exists($item, 'autor') ? $item->autor : 
+                       (property_exists($item, 'nombre_autor') ? $item->nombre_autor : null);
+            })->filter()->unique()->sort()->values();
+            
+            $editoriales = collect($resultadosBrutos)->map(function($item) {
+                return property_exists($item, 'editorial') ? $item->editorial : 
+                       (property_exists($item, 'nombre_editorial') ? $item->nombre_editorial : null);
+            })->filter()->unique()->sort()->values();
+            
+            $materias = collect($resultadosBrutos)->map(function($item) {
+                return property_exists($item, 'materia') ? $item->materia : 
+                       (property_exists($item, 'nombre_materia') ? $item->nombre_materia : null);
+            })->filter()->unique()->sort()->values();
+            
+            $series = collect($resultadosBrutos)->map(function($item) {
+                return property_exists($item, 'serie') ? $item->serie : 
+                       (property_exists($item, 'nombre_serie') ? $item->nombre_serie : null);
+            })->filter()->unique()->sort()->values();
+            
+            $campuses = collect();
+
+            // Aplicar filtros si están presentes
+            $resultadosProcesados = $this->aplicarFiltros($resultadosProcesados, $request);
+
+            // Aplicar ordenamiento
+            $orden = $request->input('orden', 'titulo_asc');
+            $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
+
+            // Crear paginación
+            $totalResultados = $resultadosProcesados->count();
+            $resultadosPaginados = $resultadosProcesados->slice(($pagina - 1) * $porPagina, $porPagina);
+
+            $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
+                $resultadosPaginados,
+                $totalResultados,
+                $porPagina,
+                $pagina,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query()
+                ]
+            );
+
+            // Preparar datos para la vista (compatible con vista avanzada)
+            // $resultados ya contiene la paginación de títulos
+            $criterio = 'busqueda_simple';
+            $valorCriterio = $valorSeleccionado;
+            $titulo = $valorSeleccionado;
+            $orden = $request->input('orden', 'titulo_asc');
+
+            return view('BusquedaSimpleResultados', compact(
+                'resultados',
+                'criterio',
+                'valorCriterio',
+                'titulo',
+                'orden',
+                'autores',
+                'editoriales',
+                'materias',
+                'series',
+                'campuses'
+            ));
+        } catch (\Exception $e) {
+            // Crear vista de error simple
+            $criterio = $this->getTipoBusquedaNombre($tipoBusqueda);
+            $valorCriterio = $valorSeleccionado;
+            $resultados = collect();
+            $autores = collect();
+            $editoriales = collect();
+            $materias = collect();
+            $series = collect();
+            $años = collect();
+            $tipos = collect();
+            $campuses = collect();
+            
+            session()->flash('error', 'Error en la búsqueda: ' . $e->getMessage());
+            
+            return view('BusquedaSimpleResultados', compact(
+                'resultados',
+                'autores',
+                'editoriales',
+                'materias', 
+                'series',
+                'años',
+                'tipos',
+                'campuses',
+                'criterio',
+                'valorCriterio'
+            ));
+        }
+    }
+
+    /**
+     * Aplicar filtros a los resultados
+     */
+    private function aplicarFiltros($resultados, $request)
+    {
+        $filtrados = $resultados;
+
+        // Filtrar por autor
+        if ($request->filled('autor')) {
+            $autoresFiltro = is_array($request->input('autor')) ? $request->input('autor') : [$request->input('autor')];
+            $filtrados = $filtrados->filter(function ($item) use ($autoresFiltro) {
+                return in_array($item->nombre_autor, $autoresFiltro);
+            });
+        }
+
+        // Filtrar por editorial
+        if ($request->filled('editorial')) {
+            $editorialesFiltro = is_array($request->input('editorial')) ? $request->input('editorial') : [$request->input('editorial')];
+            $filtrados = $filtrados->filter(function ($item) use ($editorialesFiltro) {
+                return $item->nombre_editorial && in_array($item->nombre_editorial, $editorialesFiltro);
+            });
+        }
+
+        // Filtrar por materia
+        if ($request->filled('materia')) {
+            $materiasFiltro = is_array($request->input('materia')) ? $request->input('materia') : [$request->input('materia')];
+            $filtrados = $filtrados->filter(function ($item) use ($materiasFiltro) {
+                return $item->nombre_materia && in_array($item->nombre_materia, $materiasFiltro);
+            });
+        }
+
+        // Filtrar por serie
+        // Filtrar por serie
+        if ($request->filled('serie')) {
+            $seriesFiltro = is_array($request->input('serie')) ? $request->input('serie') : [$request->input('serie')];
+            $filtrados = $filtrados->filter(function ($item) use ($seriesFiltro) {
+                return $item->nombre_serie && in_array($item->nombre_serie, $seriesFiltro);
+            });
+        }
+
+        // Filtrar por campus/biblioteca
+        if ($request->filled('campus')) {
+            $campusFiltro = is_array($request->input('campus')) ? $request->input('campus') : [$request->input('campus')];
+            $filtrados = $filtrados->filter(function ($item) use ($campusFiltro) {
+                return $item->biblioteca && in_array($item->biblioteca, $campusFiltro);
+            });
+        }
+
+        return $filtrados;
+    }
+
+    /**
+     * Retornar vista con error
+     */
+    private function retornarVistaError($mensaje, $textoBusqueda, $tipoBusqueda, $request)
+    {
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        
+        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
+            collect(),
+            0,
+            $porPagina,
+            $pagina,
+            [
+                'path' => $request->url(),
+                'query' => $request->query()
+            ]
+        );
+
+        $criterio = $this->getTipoBusquedaNombre($tipoBusqueda);
+        $valorCriterio = $textoBusqueda;
+        $titulo = $textoBusqueda;
+        $orden = 'titulo_asc';
         $autores = collect();
         $editoriales = collect();
         $materias = collect();
         $series = collect();
         $campuses = collect();
 
-        return view('BusquedaSimpleResultados', [
-            'resultados' => $resultados,
-            'busqueda' => $busqueda,
-            'criterio' => $criterio,
-            'noResultados' => $resultados->isEmpty(),
-            'mostrarTitulos' => false,
-            'autores' => $autores,
-            'editoriales' => $editoriales,
-            'materias' => $materias,
-            'series' => $series,
-            'campuses' => $campuses,
-        ]);
+        session()->flash('error', 'Error en la búsqueda: ' . $mensaje);
+
+        return view('BusquedaSimpleResultados', compact(
+            'resultados',
+            'criterio',
+            'valorCriterio',
+            'titulo',
+            'orden',
+            'autores',
+            'editoriales',
+            'materias',
+            'series',
+            'campuses'
+        ));
     }
-    
-        public function recursosAsociados($criterio, $valor)
+
+    /**
+     * Obtener el nombre del tipo de búsqueda
+     */
+    private function getTipoBusquedaNombre($tipo)
     {
-        $modelos = [
-            'autor' => Autor::class,
-            'editorial' => Editorial::class,
-            'serie' => Serie::class,
-            'materia' => Materia::class,
+        $tipos = [
+            1 => 'Autor',
+            2 => 'Materia',
+            3 => 'Título',
+            4 => 'Editorial',
+            5 => 'Serie'
         ];
-    
-        if (!array_key_exists($criterio, $modelos)) {
-            abort(404, 'Criterio no válido.');
-        }
-    
-        $modelo = $modelos[$criterio];
-    
-        $recursos = $modelo::where('nombre_busqueda', $valor)->with('titulos')->get();
-    
-        if ($recursos->isEmpty()) {
-            abort(404, 'No se encontraron recursos asociados.');
-        }
-    
-        $titulos = $recursos->flatMap->titulos;
-    
-        $pagina = request()->input('page', 1);
-        $porPagina = 10;
-        $paginados = $titulos->forPage($pagina, $porPagina);
-    
-        return view('RecursosAsociadosView', [
-            'criterio' => ucfirst($criterio),
-            'valor' => $valor,
-            'recursos' => new \Illuminate\Pagination\LengthAwarePaginator(
-                $paginados,
-                $titulos->count(),
-                $porPagina,
-                $pagina,
-                ['path' => request()->url(), 'query' => request()->query()]
-            ),
-        ]);
-    }    
-    
-    public function titulosRelacionados($criterio, $valor)
+
+        return $tipos[$tipo] ?? 'Desconocido';
+    }
+
+    /**
+     * Método para obtener sugerencias de búsqueda según el tipo
+     */
+    public function obtenerSugerenciasBusqueda(Request $request)
     {
-        // Configurar timeout para la consulta
-        ini_set('max_execution_time', 60);
+        $tipoBusqueda = $request->input('tipo', 3);
+        $limite = $request->input('limite', 10);
+
+        $vista = $this->getVistaPorTipo($tipoBusqueda);
         
-        $modelos = [
-            'autor' => Autor::class,
-            'editorial' => Editorial::class,
-            'serie' => Serie::class,
-            'materia' => Materia::class,
+        if (!$vista) {
+            return response()->json(['sugerencias' => []]);
+        }
+
+        try {
+            $sugerencias = DB::select("
+                SELECT TOP {$limite} nombre_busqueda 
+                FROM {$vista} 
+                ORDER BY nombre_busqueda
+            ");
+
+            return response()->json([
+                'sugerencias' => collect($sugerencias)->pluck('nombre_busqueda')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['sugerencias' => []]);
+        }
+    }
+
+    /**
+     * Obtener la vista correspondiente según el tipo de búsqueda
+     */
+    private function getVistaPorTipo($tipo)
+    {
+        $vistas = [
+            1 => 'V_AUTOR',
+            2 => 'V_MATERIA',
+            3 => 'V_TITULO',
+            4 => 'V_EDITORIAL',
+            5 => 'V_SERIE',
+            6 => 'V_DEWEY'
         ];
 
-        if (!array_key_exists($criterio, $modelos)) {
-            abort(404, 'Criterio no válido.');
-        }
-
-        // Buscar títulos usando la misma lógica que la búsqueda avanzada
-        $query = DB::table('V_TITULO as vt')
-            ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
-            ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
-            ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
-            ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
-            ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
-            ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
-            ->select([
-                'vt.nro_control',
-                'vt.nombre_busqueda as titulo',
-                'va.nombre_busqueda as autor',
-                've.nombre_busqueda as editorial',
-                'vm.nombre_busqueda as materia',
-                'vs.nombre_busqueda as serie',
-                'tc.nombre_tb_campus as biblioteca',
-            ])
-            ->distinct();
-
-        // Aplicar filtro según el criterio
-        switch ($criterio) {
-            case 'autor':
-                $query->where('va.nombre_busqueda', '=', $valor);
-                break;
-            case 'editorial':
-                $query->where('ve.nombre_busqueda', '=', $valor);
-                break;
-            case 'materia':
-                $query->where('vm.nombre_busqueda', '=', $valor);
-                break;
-            case 'serie':
-                $query->where('vs.nombre_busqueda', '=', $valor);
-                break;
-        }
-
-        $titulos = $query->get();
-
-        if ($titulos->isEmpty()) {
-            return view('BusquedaSimpleResultados', [
-                'criterio' => $criterio,
-                'busqueda' => $valor,
-                'resultados' => collect(),
-                'noResultados' => true,
-                'mostrarTitulos' => true,
-                'valorSeleccionado' => $valor,
-                'autores' => collect(),
-                'editoriales' => collect(),
-                'materias' => collect(),
-                'series' => collect(),
-                'campuses' => collect(),
-            ]);
-        }
-
-        // Obtener datos para filtros
-        $autores = collect($titulos)->pluck('autor')->filter()->unique()->sort()->values();
-        $editoriales = collect($titulos)->pluck('editorial')->filter()->unique()->sort()->values();
-        $materias = collect($titulos)->pluck('materia')->filter()->unique()->sort()->values();
-        $series = collect($titulos)->pluck('serie')->filter()->unique()->sort()->values();
-        $campuses = collect($titulos)->pluck('biblioteca')->filter()->unique()->sort()->values();
-
-        // Paginación
-        $pagina = request()->input('page', 1);
-        $porPagina = 10;
-        $paginados = $titulos->forPage($pagina, $porPagina);
-
-        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
-            $paginados,
-            $titulos->count(),
-            $porPagina,
-            $pagina,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        return view('BusquedaSimpleResultados', [
-            'criterio' => $criterio,
-            'busqueda' => $valor,
-            'resultados' => $resultados,
-            'noResultados' => $titulos->isEmpty(),
-            'mostrarTitulos' => true,
-            'valorSeleccionado' => $valor,
-            'autores' => $autores,
-            'editoriales' => $editoriales,
-            'materias' => $materias,
-            'series' => $series,
-            'campuses' => $campuses,
-        ]);
+        return $vistas[$tipo] ?? null;
     }
-    
-    public function mostrarFormulario(Request $request)
+
+    /**
+     * Función robusta para obtener valores de objetos con diferentes nombres de campo
+     */
+    private function getValue($item, $fields)
     {
-        // Si hay parámetros de búsqueda, procesar la búsqueda
-        if ($request->has('searchType') && $request->has('query')) {
-            $criterio = $request->input('searchType');
-            $busqueda = $request->input('query');
-            
-            // Crear un nuevo request con los parámetros correctos
-            if ($criterio === 'titulo') {
-                // Para títulos, usar buscarPorTitulo con parámetro 'busqueda'
-                $newRequest = new Request(['busqueda' => $busqueda]);
-                $newRequest->setMethod('GET');
-                return $this->buscarPorTitulo($newRequest);
-            } else {
-                // Para otros criterios, usar buscar con parámetros 'criterio' y 'busqueda'
-                $newRequest = new Request(['criterio' => $criterio, 'busqueda' => $busqueda]);
-                $newRequest->setMethod('GET');
-                return $this->buscar($newRequest);
+        if (is_string($fields)) {
+            $fields = [$fields];
+        }
+        
+        foreach ($fields as $field) {
+            if (property_exists($item, $field) && $item->$field !== null) {
+                return $item->$field;
             }
         }
         
-        // Si no hay parámetros, mostrar el formulario
-        return view('BusquedaView');
+        return null;
+    }
+
+    /**
+     * Aplicar ordenamiento a los resultados
+     */
+    private function aplicarOrdenamiento($resultados, $orden)
+    {
+        switch ($orden) {
+            case 'titulo_asc':
+                return $resultados->sortBy('titulo');
+            case 'titulo_desc':
+                return $resultados->sortByDesc('titulo');
+            case 'autor_asc':
+                return $resultados->sortBy('nombre_autor');
+            case 'autor_desc':
+                return $resultados->sortByDesc('nombre_autor');
+            case 'editorial_asc':
+                return $resultados->sortBy('nombre_editorial');
+            case 'editorial_desc':
+                return $resultados->sortByDesc('nombre_editorial');
+            case 'año_asc':
+                return $resultados->sortBy('anio_publicacion');
+            case 'año_desc':
+                return $resultados->sortByDesc('anio_publicacion');
+            default:
+                return $resultados->sortBy('titulo');
+        }
     }
 }
