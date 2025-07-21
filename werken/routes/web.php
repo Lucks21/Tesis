@@ -44,6 +44,9 @@ Route::get('/export-ris/{nroControl}', [ExportacionController::class, 'exportRIS
 Route::post('/export-ris-multiple', [ExportacionController::class, 'exportMultipleRIS'])->name('export.ris.multiple');
 Route::get('/material/{numero}', [DetalleMaterialController::class, 'show'])->name('detalle-material');
 Route::get('/material/{numero}/resumen', [DetalleMaterialController::class, 'resumen'])->name('material.resumen');
+Route::get('/material/{numero}/test-busqueda', [DetalleMaterialController::class, 'testBusqueda'])->name('test.busqueda');
+Route::get('/material/{numero}/test-detalle', [DetalleMaterialController::class, 'testDetalleMaterial'])->name('test.detalle');
+Route::get('/material/{numero}/test-titulo', [DetalleMaterialController::class, 'testBusquedaPorTitulo'])->name('test.titulo');
 
 // manejo de cache para la busqueda avanzada
 Route::get('/busqueda-avanzada/limpiar-cache', [BusquedaAvanzadaController::class, 'limpiarCacheSession'])->name('limpiar-cache-busqueda');
