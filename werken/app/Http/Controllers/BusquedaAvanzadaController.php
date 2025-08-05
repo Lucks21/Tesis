@@ -44,12 +44,17 @@ class BusquedaAvanzadaController extends Controller
         ];
         $texto_procesado = $titulo . '|' . $valorCriterio . '|' . serialize($filtros);
 
-        // Verificar si necesitamos ejecutar nueva consulta
+        // Verificar si necesitamos ejecutar nueva consulta con TTL mejorado
+        $cache_timestamp = session('cache_timestamp', 0);
+        $cache_ttl = config('app.cacshe_ttl', 1800); // 30 min
+        $cache_expired = (time() - $cache_timestamp) > $cache_ttl;
+        
         $ejecutar_nueva_consulta = (
             !session()->has('texto_busqueda') ||
             session('texto_busqueda') != $texto_procesado ||
             session('tipo_busqueda') != $criterio ||
-            session('ind_busqueda') != 'avanzada'
+            session('ind_busqueda') != 'avanzada' ||
+            $cache_expired
         );
 
         if ($ejecutar_nueva_consulta) {
@@ -227,14 +232,17 @@ class BusquedaAvanzadaController extends Controller
             // Ejecutar consulta
             $allResults = $query->limit(5000)->get();
 
-            // Almacenar en sesión tras nueva búsqueda
+            // Almacenar en sesión tras nueva búsqueda con metadatos mejorados
             session([
                 'busqueda' => $allResults->toArray(),
                 'tipo_busqueda' => $criterio,
                 'texto_busqueda' => $texto_procesado,
                 'nav_pagina' => $pagina,
                 'busq_numrows' => $allResults->count(),
-                'ind_busqueda' => 'avanzada'
+                'ind_busqueda' => 'avanzada',
+                'cache_timestamp' => time(),
+                'cache_version' => '1.0',
+                'query_execution_time' => microtime(true) - (microtime(true) - 0.1) // Placeholder para tiempo real
             ]);
         } else {
             // Recuperar datos desde sesión
@@ -242,12 +250,29 @@ class BusquedaAvanzadaController extends Controller
             session(['nav_pagina' => $pagina]);
         }
 
-        // Obtener todos los valores únicos para los filtros (sin paginación)
-        $autores = $allResults->pluck('autor')->filter()->unique()->sort()->values();
-        $editoriales = $allResults->pluck('editorial')->filter()->unique()->sort()->values();
-        $materias = $allResults->pluck('materia')->filter()->unique()->sort()->values();
-        $series = $allResults->pluck('serie')->filter()->unique()->sort()->values();
-        $campuses = $allResults->pluck('biblioteca')->filter()->unique()->sort()->values();
+        // Obtener filtros con cache inteligente separado
+        $filtros_cache_key = 'filtros_' . md5($texto_procesado);
+        $filtros_timestamp = session($filtros_cache_key . '_timestamp', 0);
+        $filtros_expired = (time() - $filtros_timestamp) > ($cache_ttl * 2); // Filtros duran más
+        
+        if (!session()->has($filtros_cache_key) || $filtros_expired) {
+            // Recalcular filtros solo si es necesario
+            $autores = $allResults->pluck('autor')->filter()->unique()->sort()->values();
+            $editoriales = $allResults->pluck('editorial')->filter()->unique()->sort()->values();
+            $materias = $allResults->pluck('materia')->filter()->unique()->sort()->values();
+            $series = $allResults->pluck('serie')->filter()->unique()->sort()->values();
+            $campuses = $allResults->pluck('biblioteca')->filter()->unique()->sort()->values();
+            
+            // Guardar filtros en cache separado
+            session([
+                $filtros_cache_key => compact('autores', 'editoriales', 'materias', 'series', 'campuses'),
+                $filtros_cache_key . '_timestamp' => time()
+            ]);
+        } else {
+            // Usar filtros desde cache
+            $filtros_data = session($filtros_cache_key);
+            extract($filtros_data);
+        }
 
         // Crear paginación para resultados principales
         $porPagina = 10;
@@ -461,7 +486,73 @@ class BusquedaAvanzadaController extends Controller
         return view('TitulosPorSerie', compact('serie', 'titulos', 'titulo'));
     }
 
-    //Limpiar el caché de sesión para búsquedas avanzadas
+    //Limpiar el caché de sesión de forma inteligente
+    
+    public function limpiarCacheInteligente($tipo = 'all', $forzar = false)
+    {
+        $cache_ttl = config('app.cache_ttl', 1800);
+        $current_time = time();
+        
+        $session_keys = [
+            'principal' => ['busqueda', 'tipo_busqueda', 'texto_busqueda', 'nav_pagina', 'busq_numrows', 'ind_busqueda', 'cache_timestamp', 'cache_version'],
+            'autor' => ['busqueda_autor', 'texto_busqueda_autor', 'busq_numrows_autor'],
+            'editorial' => ['busqueda_editorial', 'texto_busqueda_editorial', 'busq_numrows_editorial'],
+            'materia' => ['busqueda_materia', 'texto_busqueda_materia', 'busq_numrows_materia'],
+            'serie' => ['busqueda_serie', 'texto_busqueda_serie', 'busq_numrows_serie']
+        ];
+        
+        $cleaned_keys = [];
+        
+        if ($tipo === 'all' || $forzar) {
+            // Limpiar todo
+            foreach ($session_keys as $categoria => $keys) {
+                foreach ($keys as $key) {
+                    if (session()->has($key)) {
+                        session()->forget($key);
+                        $cleaned_keys[] = $key;
+                    }
+                }
+            }
+            
+            // Limpiar también filtros cacheados
+            $this->limpiarFiltrosCache();
+            
+        } else {
+            // Limpiar solo caché expirado
+            $timestamp_key = $tipo === 'principal' ? 'cache_timestamp' : 'cache_timestamp_' . $tipo;
+            $timestamp = session($timestamp_key, 0);
+            
+            if (($current_time - $timestamp) > $cache_ttl) {
+                $keys_to_clean = $session_keys[$tipo] ?? [];
+                foreach ($keys_to_clean as $key) {
+                    if (session()->has($key)) {
+                        session()->forget($key);
+                        $cleaned_keys[] = $key;
+                    }
+                }
+            }
+        }
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Cache inteligente limpiado exitosamente',
+            'cleaned_keys' => $cleaned_keys,
+            'timestamp' => $current_time
+        ]);
+    }
+    
+    //Limpiar filtros cacheados
+    private function limpiarFiltrosCache()
+    {
+        $session_data = session()->all();
+        foreach ($session_data as $key => $value) {
+            if (strpos($key, 'filtros_') === 0) {
+                session()->forget($key);
+            }
+        }
+    }
+
+    //Limpiar el caché de sesión para búsquedas avanzadas (método legacy)
     
     public function limpiarCacheSession()
     {
@@ -480,7 +571,78 @@ class BusquedaAvanzadaController extends Controller
         return response()->json(['success' => true, 'message' => 'Cache de sesión limpiado exitosamente']);
     }
 
-    //Obtener estadísticas del caché de sesión
+    //Obtener estadísticas avanzadas del caché
+    
+    public function obtenerEstadisticasAvanzadas()
+    {
+        $current_time = time();
+        $cache_ttl = config('app.cache_ttl', 1800);
+        
+        $stats = [
+            'sistema' => [
+                'cache_ttl_configurado' => $cache_ttl,
+                'timestamp_actual' => $current_time,
+                'fecha_actual' => date('Y-m-d H:i:s', $current_time)
+            ],
+            'busqueda_principal' => [
+                'existe' => session()->has('busqueda'),
+                'registros' => session('busq_numrows', 0),
+                'tipo' => session('tipo_busqueda', 'N/A'),
+                'pagina_actual' => session('nav_pagina', 1),
+                'timestamp' => session('cache_timestamp', 0),
+                'edad_cache' => $current_time - session('cache_timestamp', 0),
+                'expirado' => ($current_time - session('cache_timestamp', 0)) > $cache_ttl,
+                'version' => session('cache_version', 'legacy'),
+                'tiempo_ejecucion' => session('query_execution_time', 0)
+            ],
+            'cache_filtros' => $this->obtenerEstadisticasFiltros(),
+            'uso_memoria' => [
+                'session_size' => strlen(serialize(session()->all())),
+                'memory_usage' => memory_get_usage(true),
+                'memory_peak' => memory_get_peak_usage(true)
+            ]
+        ];
+        
+        // Agregar estadísticas de subcaches
+        $subcaches = ['autor', 'editorial', 'materia', 'serie'];
+        foreach ($subcaches as $tipo) {
+            $stats['busqueda_' . $tipo] = [
+                'existe' => session()->has('busqueda_' . $tipo),
+                'registros' => session('busq_numrows_' . $tipo, 0),
+                'timestamp' => session('cache_timestamp_' . $tipo, 0),
+                'edad_cache' => $current_time - session('cache_timestamp_' . $tipo, 0),
+                'expirado' => ($current_time - session('cache_timestamp_' . $tipo, 0)) > $cache_ttl
+            ];
+        }
+        
+        return response()->json($stats);
+    }
+    
+    //Obtener estadísticas de filtros cacheados
+    private function obtenerEstadisticasFiltros()
+    {
+        $session_data = session()->all();
+        $filtros_stats = [];
+        
+        foreach ($session_data as $key => $value) {
+            if (strpos($key, 'filtros_') === 0 && !strpos($key, '_timestamp')) {
+                $timestamp_key = $key . '_timestamp';
+                $timestamp = session($timestamp_key, 0);
+                $edad = time() - $timestamp;
+                
+                $filtros_stats[$key] = [
+                    'existe' => true,
+                    'timestamp' => $timestamp,
+                    'edad_cache' => $edad,
+                    'size' => is_array($value) ? count($value) : 0
+                ];
+            }
+        }
+        
+        return $filtros_stats;
+    }
+
+    //Obtener estadísticas del caché de sesión (método legacy)
     
     public function obtenerEstadisticasCache()
     {
