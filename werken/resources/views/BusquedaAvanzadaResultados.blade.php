@@ -460,8 +460,13 @@
             min-width: 80px;
         }
 
+        .col-tipo-material {
+            width: 8%;
+            min-width: 100px;
+        }
+
         .col-dewey {
-            width: 10%;
+            width: 9%;
             min-width: 60px;
         }
 
@@ -502,6 +507,11 @@
 
         .serie-cell {
             color: #1f2937;
+        }
+
+        .tipo-material-cell {
+            color: #1f2937;
+            font-size: 0.85em;
         }
 
         .dewey-cell {
@@ -841,6 +851,7 @@
                                     <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
                                     <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-autor">
                                         @foreach ($autores as $autor)
@@ -905,6 +916,7 @@
                                     <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
                                     <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-editorial">
                                         @foreach ($editoriales as $editorial)
@@ -969,6 +981,7 @@
                                     <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
                                     <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-campus">
                                         @foreach ($campuses as $campus)
@@ -1033,6 +1046,7 @@
                                     <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
                                     <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-materia">
                                         @foreach ($materias as $materia)
@@ -1128,6 +1142,71 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Filtrar por Tipo de Material -->
+                    <div class="collapsible-filter {{ request()->filled('tipo_material') ? 'has-active-filter expanded' : '' }}">
+                        <div class="collapsible-header">
+                            <h2>
+                                <i class="fas fa-tags mr-2"></i>Filtrar por Tipo de Material
+                                <span class="filter-count">({{ count($tiposMaterial ?? []) }} opciones)</span>
+                                @if(request()->filled('tipo_material'))
+                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {{ count((array) request('tipo_material')) }} activo(s)
+                                    </span>
+                                @endif
+                            </h2>
+                            <i class="fas fa-chevron-down collapsible-toggle"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="filter-search-container">
+                                <input type="text" 
+                                       class="filter-search-input" 
+                                       placeholder="Buscar tipo de material..." 
+                                       id="search-tipo-material"
+                                       onkeyup="filterOptions('tipo-material', this.value)">
+                            </div>
+                            <div class="collapsible-inner">
+                                <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
+                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+
+                                    <div class="filter-options-container" id="options-tipo-material">
+                                        @foreach ($tiposMaterial ?? [] as $tipoMaterial)
+                                            <div class="filter-option" data-value="{{ strtolower($tipoMaterial) }}">
+                                                <input type="checkbox" name="tipo_material[]" id="tipo_material_{{ $loop->index }}"
+                                                       value="{{ $tipoMaterial }}" {{ is_array(request('tipo_material')) && in_array($tipoMaterial, request('tipo_material')) ? 'checked' : '' }}
+                                                       class="form-checkbox rounded">
+                                                <label for="tipo_material_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
+                                                    {{ $tipoMaterial }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                        <div class="no-results-message" id="no-results-tipo-material" style="display: none;">
+                                            No se encontraron tipos de material con ese criterio.
+                                        </div>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-200">
+                                        <button type="submit" class="filter-button w-full">
+                                            <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                        </button>
+                                        @if(request()->filled('tipo_material'))
+                                            <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('tipo_material', 'page_tipos_material'))) }}"
+                                               class="remove-filter w-full text-center block mt-2">
+                                                <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                            </a>
+                                        @endif
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Resultados -->
@@ -1143,6 +1222,7 @@
                                 <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
                                 <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
                                 <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
 
                                 <label for="orden" class="text-gray-700 font-semibold">
                                     <i class="fas fa-sort mr-2"></i>Ordenar:
@@ -1207,6 +1287,9 @@
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-serie">
                                                 <i class="fas fa-list-ol mr-2"></i>Serie
                                             </th>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-tipo-material">
+                                                <i class="fas fa-tags mr-2"></i>Tipo
+                                            </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-dewey">
                                                 <i class="fas fa-sort-numeric-up mr-2"></i>Dewey
                                             </th>
@@ -1220,28 +1303,38 @@
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($resultados as $resultado)
+                                            @if(is_object($resultado) && isset($resultado->nro_control))
                                             <tr class="table-row">
                                                 <td class="px-6 py-4 text-sm text-gray-900">
                                                     <input type="checkbox" name="resource_checkbox" 
-                                                           value="{{ $resultado->nro_control }}" 
+                                                           value="{{ $resultado->nro_control ?? '' }}" 
                                                            class="resource-checkbox"
                                                            onchange="updateExportButton()">
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 titulo-cell">
                                                     <div class="flex items-center">
                                                         <i class="fas fa-book mr-2 text-blue-600"></i>
-                                                        <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
+                                                        <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control ?? '']) }}" 
                                                            class="text-blue-600 hover:text-blue-800 hover:underline titulo-enlace">
-                                                            {{ $resultado->titulo }}
+                                                            {{ $resultado->titulo ?? 'Sin título' }}
                                                         </a>
                                                     </div>
                                                 </td>
-                                                <td class="px-6 py-4 text-sm text-gray-900 autor-cell">{{ $resultado->autor }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900 editorial-cell">{{ $resultado->editorial }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900 materia-cell">{{ $resultado->materia }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900 serie-cell">{{ $resultado->serie }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 autor-cell">{{ $resultado->autor ?? 'Sin autor' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 editorial-cell">{{ $resultado->editorial ?? 'Sin editorial' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 materia-cell">{{ $resultado->materia ?? 'Sin materia' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 serie-cell">{{ $resultado->serie ?? 'Sin serie' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 tipo-material-cell">
+                                                    @if(isset($resultado->tipo_material_descripcion) && !empty($resultado->tipo_material_descripcion))
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            {{ $resultado->tipo_material_descripcion }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-gray-400 italic">No especificado</span>
+                                                    @endif
+                                                </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 dewey-cell">
-                                                    @if($resultado->dewey)
+                                                    @if(isset($resultado->dewey) && !empty($resultado->dewey))
                                                         <span class="dewey-number text-gray-700" onclick="selectDeweyText(this)" title="Haz clic para copiar el número de Dewey al portapapeles">
                                                             {{ $resultado->dewey }}
                                                         </span>
@@ -1249,14 +1342,15 @@
                                                         <span class="text-gray-400 italic">Sin clasificación</span>
                                                     @endif
                                                 </td>
-                                                <td class="px-6 py-4 text-sm text-gray-900 biblioteca-cell">{{ $resultado->biblioteca }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 biblioteca-cell">{{ $resultado->biblioteca ?? 'Sin ubicación' }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">
-                                                    <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 
+                                                    <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control ?? '']) }}" 
                                                        class="ris-button">
                                                         <i class="fas fa-file-export mr-2"></i>RIS
                                                     </a>
                                                 </td>
                                             </tr>
+                                            @endif
                                         @endforeach
                                     </tbody>
                                 </table>

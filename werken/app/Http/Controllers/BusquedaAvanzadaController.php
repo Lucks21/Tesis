@@ -25,6 +25,7 @@ class BusquedaAvanzadaController extends Controller
         $campusFiltro = $request->input('campus', []);
         $materiaFiltro = $request->input('materia', []);
         $serieFiltro = $request->input('serie', []);
+        $tipoMaterialFiltro = $request->input('tipo_material', []);
 
         // Procesar los filtros para manejar tanto arrays como strings separadas por comas
         $autorFiltro = $this->procesarFiltro($autorFiltro);
@@ -32,6 +33,7 @@ class BusquedaAvanzadaController extends Controller
         $campusFiltro = $this->procesarFiltro($campusFiltro);
         $materiaFiltro = $this->procesarFiltro($materiaFiltro);
         $serieFiltro = $this->procesarFiltro($serieFiltro);
+        $tipoMaterialFiltro = $this->procesarFiltro($tipoMaterialFiltro);
 
         // Procesar los parámetros de entrada para crear un texto procesado
         $filtros = [
@@ -40,6 +42,7 @@ class BusquedaAvanzadaController extends Controller
             'campus' => $campusFiltro,
             'materia' => $materiaFiltro,
             'serie' => $serieFiltro,
+            'tipo_material' => $tipoMaterialFiltro,
             'orden' => $orden
         ];
         $texto_procesado = $titulo . '|' . $valorCriterio . '|' . serialize($filtros);
@@ -67,6 +70,7 @@ class BusquedaAvanzadaController extends Controller
                 ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
                 ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
                 ->leftJoin('V_DEWEY as vd', 'vt.nro_control', '=', 'vd.nro_control')
+                ->leftJoin('DETALLE_MATERIAL as dm', 'vt.nombre_busqueda', '=', 'dm.DSM_TITULO')
                 ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
                 ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus');
 
@@ -112,7 +116,8 @@ class BusquedaAvanzadaController extends Controller
                 'vm.nombre_busqueda as materia',
                 'vs.nombre_busqueda as serie',
                 'vd.nombre_busqueda as dewey',
-                'tc.nombre_tb_campus as biblioteca'
+                'tc.nombre_tb_campus as biblioteca',
+                'dm.DSM_TIPO_MATERIAL as tipo_material'
             ];
 
             // Solo agregar cálculo de relevancia si hay criterios de búsqueda
@@ -201,8 +206,30 @@ class BusquedaAvanzadaController extends Controller
                 });
             }
 
+            if (!empty($tipoMaterialFiltro) && count($tipoMaterialFiltro) > 0) {
+                // Para tipo de material, necesitamos convertir las descripciones de vuelta a códigos
+                $codigosTipoMaterial = [];
+                foreach ($tipoMaterialFiltro as $descripcion) {
+                    $codigos = $this->obtenerCodigoTipoMaterial($descripcion);
+                    if ($codigos && is_array($codigos)) {
+                        $codigosTipoMaterial = array_merge($codigosTipoMaterial, $codigos);
+                    }
+                }
+                
+                if (!empty($codigosTipoMaterial)) {
+                    $query->where(function($q) use ($codigosTipoMaterial) {
+                        foreach ($codigosTipoMaterial as $codigo) {
+                            $q->orWhere(function($subQ) use ($codigo) {
+                                $subQ->where('dm.DSM_TIPO_MATERIAL', '=', trim($codigo))
+                                     ->whereNotNull('dm.DSM_TIPO_MATERIAL');
+                            });
+                        }
+                    });
+                }
+            }
+
             // Excluir registros con campos principales vacíos para búsquedas amplias
-            if (empty($valorCriterio) && empty($titulo) && empty($autorFiltro) && empty($editorialFiltro) && empty($materiaFiltro) && empty($serieFiltro) && empty($campusFiltro)) {
+            if (empty($valorCriterio) && empty($titulo) && empty($autorFiltro) && empty($editorialFiltro) && empty($materiaFiltro) && empty($serieFiltro) && empty($campusFiltro) && empty($tipoMaterialFiltro)) {
                 switch ($criterio) {
                     case 'autor':
                         $query->whereNotNull('va.nombre_busqueda')
@@ -232,9 +259,21 @@ class BusquedaAvanzadaController extends Controller
             // Ejecutar consulta
             $allResults = $query->limit(5000)->get();
 
+            // Procesar los resultados para mapear tipos de material
+            $allResults = $allResults->map(function ($item) {
+                // Mapear el tipo de material a descripción legible
+                if (isset($item->tipo_material)) {
+                    $item->tipo_material_descripcion = $this->mapearTipoMaterial($item->tipo_material);
+                } else {
+                    $item->tipo_material_descripcion = 'No especificado';
+                }
+                
+                return $item;
+            });
+
             // Almacenar en sesión tras nueva búsqueda con metadatos mejorados
             session([
-                'busqueda' => $allResults->toArray(),
+                'busqueda' => $allResults->all(),
                 'tipo_busqueda' => $criterio,
                 'texto_busqueda' => $texto_procesado,
                 'nav_pagina' => $pagina,
@@ -245,8 +284,11 @@ class BusquedaAvanzadaController extends Controller
                 'query_execution_time' => microtime(true) - (microtime(true) - 0.1) // Placeholder para tiempo real
             ]);
         } else {
-            // Recuperar datos desde sesión
-            $allResults = collect(session('busqueda', []));
+            // Recuperar datos desde sesión y convertir arrays a objetos
+            $sessionData = session('busqueda', []);
+            $allResults = collect($sessionData)->map(function ($item) {
+                return is_array($item) ? (object) $item : $item;
+            });
             session(['nav_pagina' => $pagina]);
         }
 
@@ -262,10 +304,11 @@ class BusquedaAvanzadaController extends Controller
             $materias = $allResults->pluck('materia')->filter()->unique()->sort()->values();
             $series = $allResults->pluck('serie')->filter()->unique()->sort()->values();
             $campuses = $allResults->pluck('biblioteca')->filter()->unique()->sort()->values();
+            $tiposMaterial = $allResults->pluck('tipo_material_descripcion')->filter()->unique()->sort()->values();
             
             // Guardar filtros en cache separado
             session([
-                $filtros_cache_key => compact('autores', 'editoriales', 'materias', 'series', 'campuses'),
+                $filtros_cache_key => compact('autores', 'editoriales', 'materias', 'series', 'campuses', 'tiposMaterial'),
                 $filtros_cache_key . '_timestamp' => time()
             ]);
         } else {
@@ -278,6 +321,13 @@ class BusquedaAvanzadaController extends Controller
         $porPagina = 10;
         $totalResultados = session('busq_numrows', $allResults->count());
         $currentItems = $allResults->slice(($pagina - 1) * $porPagina, $porPagina);
+        
+        // Debug temporal - eliminar después de corregir
+        if ($currentItems->count() > 0) {
+            \Log::info('Tipos de material encontrados:', [
+                'tipos_desc' => $allResults->pluck('tipo_material_descripcion')->filter()->unique()->values()->toArray()
+            ]);
+        }
         
         $resultados = new LengthAwarePaginator(
             $currentItems,
@@ -300,7 +350,8 @@ class BusquedaAvanzadaController extends Controller
             'editoriales',
             'materias',
             'series',
-            'campuses'
+            'campuses',
+            'tiposMaterial'
         ));
     }
 
@@ -771,5 +822,35 @@ class BusquedaAvanzadaController extends Controller
         }
 
         return [];
+    }
+
+    /**
+     * Mapea los códigos de tipo de material a sus descripciones legibles
+     * @param string $codigo El código del tipo de material
+     * @return string La descripción del tipo de material
+     */
+    private function mapearTipoMaterial($codigo)
+    {
+        $tipos = [
+            'M' => 'Monografías/Libros',
+            'S' => 'Publicaciones Seriadas',
+        ];
+
+        return $tipos[$codigo] ?? ($codigo ?? 'No especificado');
+    }
+
+    /**
+     * Obtiene el código de tipo de material a partir de su descripción
+     * @param string $descripcion La descripción del tipo de material
+     * @return array|null Los códigos del tipo de material
+     */
+    private function obtenerCodigoTipoMaterial($descripcion)
+    {
+        $tipos = [
+            'Monografías/Libros' => ['M'],
+            'Publicaciones Seriadas' => ['S'],
+        ];
+
+        return $tipos[$descripcion] ?? null;
     }
 }
