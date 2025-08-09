@@ -51,6 +51,9 @@ class BusquedaAvanzadaController extends Controller
         ];
         $texto_procesado = $titulo . '|' . $valorCriterio . '|' . serialize($filtros);
 
+        // Definir clave de cache para filtros (necesaria tanto para consultas nuevas como paginación)
+        $filtros_cache_key = 'filtros_' . md5($texto_procesado . $criterio);
+
         // Verificar si necesitamos ejecutar nueva consulta con TTL mejorado
         $cache_timestamp = session('cache_timestamp', 0);
         $cache_ttl = config('app.cacshe_ttl', 1800); // 30 min
@@ -93,9 +96,7 @@ class BusquedaAvanzadaController extends Controller
                 case 'autor':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
-                            $q->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('va.nombre_normal', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('va.nombre_alternative', 'LIKE', "%{$valorCriterio}%");
+                            $q->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                         });
                     }
                     $orderByField = 'va.nombre_busqueda';
@@ -103,9 +104,7 @@ class BusquedaAvanzadaController extends Controller
                 case 'editorial':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
-                            $q->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('ve.nombre_normal', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('ve.nombre_alternative', 'LIKE', "%{$valorCriterio}%");
+                            $q->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                         });
                     }
                     $orderByField = 've.nombre_busqueda';
@@ -113,9 +112,7 @@ class BusquedaAvanzadaController extends Controller
                 case 'materia':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
-                            $q->where('vm.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('vm.nombre_normal', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('vm.nombre_alternative', 'LIKE', "%{$valorCriterio}%");
+                            $q->where('vm.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                         });
                     }
                     $orderByField = 'vm.nombre_busqueda';
@@ -123,9 +120,7 @@ class BusquedaAvanzadaController extends Controller
                 case 'serie':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
-                            $q->where('vs.nombre_busqueda', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('vs.nombre_normal', 'LIKE', "%{$valorCriterio}%")
-                              ->orWhere('vs.nombre_alternative', 'LIKE', "%{$valorCriterio}%");
+                            $q->where('vs.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                         });
                     }
                     $orderByField = 'vs.nombre_busqueda';
@@ -173,9 +168,7 @@ class BusquedaAvanzadaController extends Controller
             if (!empty($titulo)) {
                 $query->where(function($q) use ($titulo) {
                     // Búsqueda más flexible en el título
-                    $q->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%")
-                      ->orWhere('vt.nombre_normal', 'LIKE', "%{$titulo}%")
-                      ->orWhere('vt.nombre_alternative', 'LIKE', "%{$titulo}%");
+                    $q->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
                 });
             }
 
@@ -262,19 +255,18 @@ class BusquedaAvanzadaController extends Controller
             }
 
             // Excluir registros con campos principales vacíos para búsquedas amplias
-            // IMPORTANTE: Solo aplicar lógica especial si NO hay filtros de tipo material específicos
+            // IMPORTANTE: Solo aplicar lógica especial si NO hay filtros Y NO hay criterios de búsqueda específicos
             if (empty($valorCriterio) && empty($titulo) && empty($autorFiltro) && empty($editorialFiltro) && empty($materiaFiltro) && empty($serieFiltro) && empty($campusFiltro) && empty($tipoMaterialFiltro)) {
                 switch ($criterio) {
                     case 'autor':
-                        // Lógica mejorada: incluir registros con autor O materiales tipo S (publicaciones seriadas)
-                        // Esto asegura que tanto libros con autor como publicaciones seriadas aparezcan en la búsqueda general SIN FILTROS
+                        // Solo para búsquedas completamente generales sin ningún criterio
                         $query->where(function($q) {
                             $q->where(function($subQ) {
                                 // Registros con autor válido
                                 $subQ->whereNotNull('va.nombre_busqueda')
                                      ->where('va.nombre_busqueda', '!=', '');
                             })->orWhere(function($subQ) {
-                                // O materiales tipo S (publicaciones seriadas) independientemente del autor
+                                // O materiales tipo S (publicaciones seriadas) solo en búsquedas completamente generales
                                 $subQ->where('dm.DSM_TIPO_MATERIAL', '=', 'S');
                             });
                         });
@@ -310,7 +302,8 @@ class BusquedaAvanzadaController extends Controller
             $allResults = $query->limit(5000)->get(); // Reducido temporalmente para mejorar rendimiento
             
             // Agregar búsqueda específica para materiales tipo S que no aparecieron en los resultados principales
-            if ($criterio === 'autor') {
+            // SOLO si hay criterios específicos de búsqueda Y realmente se necesitan más resultados
+            if ($criterio === 'autor' && (!empty($valorCriterio) || !empty($titulo))) {
                 $materialesTipoSExistentes = $allResults->where('tipo_material', 'S')->pluck('titulo')->toArray();
                 
                 // Consulta adicional para materiales tipo S que pueden haberse perdido
@@ -319,25 +312,44 @@ class BusquedaAvanzadaController extends Controller
                         $join->whereRaw('dm.DSM_TITULO = va.nombre_busqueda OR dm.DSM_TITULO LIKE va.nombre_busqueda + \'%\'');
                     })
                     ->where('dm.DSM_TIPO_MATERIAL', 'S')
-                    ->whereNotIn('dm.DSM_TITULO', $materialesTipoSExistentes)
-                    ->select(
-                        DB::raw('\'DM_\' + dm.DSM_TITULO + \'_S\' as nro_control'),
-                        'dm.DSM_TITULO as titulo',
-                        'va.nombre_busqueda as autor',
-                        DB::raw('NULL as editorial'),
-                        DB::raw('NULL as materia'),
-                        DB::raw('NULL as serie'),
-                        DB::raw('NULL as dewey'),
-                        DB::raw('NULL as biblioteca'),
-                        'dm.DSM_TIPO_MATERIAL as tipo_material',
-                        DB::raw('0 as relevancia')
-                    )
-                    ->limit(1000);
-                    
-                $resultadosTipoS = $queryTipoS->get();
+                    ->whereNotIn('dm.DSM_TITULO', $materialesTipoSExistentes);
                 
-                // Combinar resultados
-                $allResults = $allResults->merge($resultadosTipoS);
+                // Aplicar los mismos filtros de búsqueda que la consulta principal - MÁS ESTRICTO
+                $hasValidCriteria = false;
+                
+                if (!empty($valorCriterio)) {
+                    $queryTipoS->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                    $hasValidCriteria = true;
+                }
+                
+                if (!empty($titulo)) {
+                    $queryTipoS->where('dm.DSM_TITULO', 'LIKE', "%{$titulo}%");
+                    $hasValidCriteria = true;
+                }
+                
+                // Solo ejecutar la consulta adicional si hay criterios válidos
+                if ($hasValidCriteria) {
+                    $queryTipoS->select(
+                            DB::raw('\'DM_\' + dm.DSM_TITULO + \'_S\' as nro_control'),
+                            'dm.DSM_TITULO as titulo',
+                            'va.nombre_busqueda as autor',
+                            DB::raw('NULL as editorial'),
+                            DB::raw('NULL as materia'),
+                            DB::raw('NULL as serie'),
+                            DB::raw('NULL as dewey'),
+                            DB::raw('NULL as biblioteca'),
+                            'dm.DSM_TIPO_MATERIAL as tipo_material',
+                            DB::raw('0 as relevancia')
+                        )
+                        ->limit(1000);
+                        
+                    $resultadosTipoS = $queryTipoS->get();
+                    
+                    // Combinar resultados solo si hay resultados válidos
+                    if ($resultadosTipoS->count() > 0) {
+                        $allResults = $allResults->merge($resultadosTipoS);
+                    }
+                }
             }
             
             // Si no hay suficientes resultados y tenemos criterios de búsqueda, hacer búsqueda ampliada
@@ -366,31 +378,25 @@ class BusquedaAvanzadaController extends Controller
                 return $item;
             });
 
-            // Construir filtros inmediatamente después del mapeo de tipos de material
-            $filtros_cache_key = 'filtros_' . md5($texto_procesado . $criterio);
+            // Construir filtros AL FINAL, después de toda la lógica de resultados
             $filtros_timestamp = session($filtros_cache_key . '_timestamp', 0);
             $filtros_ttl = 1800; // 30 min
             $filtros_expired = (time() - $filtros_timestamp) > $filtros_ttl;
 
-            if (!session()->has($filtros_cache_key) || $filtros_expired) {
-                // Recalcular filtros usando los datos ya mapeados
-                $autores = $allResults->pluck('autor')->filter()->unique()->sort()->values();
-                $editoriales = $allResults->pluck('editorial')->filter()->unique()->sort()->values();
-                $materias = $allResults->pluck('materia')->filter()->unique()->sort()->values();
-                $series = $allResults->pluck('serie')->filter()->unique()->sort()->values();
-                $campuses = $allResults->pluck('biblioteca')->filter()->unique()->sort()->values();
-                $tiposMaterial = $allResults->pluck('tipo_material_descripcion')->filter()->unique()->sort()->values();
-                
-                // Guardar filtros en cache separado
-                session([
-                    $filtros_cache_key => compact('autores', 'editoriales', 'materias', 'series', 'campuses', 'tiposMaterial'),
-                    $filtros_cache_key . '_timestamp' => time()
-                ]);
-            } else {
-                // Usar filtros desde cache
-                $filtros_data = session($filtros_cache_key);
-                extract($filtros_data);
-            }
+            // SIEMPRE recalcular filtros para asegurar que reflejen los resultados actuales
+            // Recalcular filtros usando los datos ya mapeados FINALES
+            $autores = $allResults->pluck('autor')->filter()->unique()->sort()->values();
+            $editoriales = $allResults->pluck('editorial')->filter()->unique()->sort()->values();
+            $materias = $allResults->pluck('materia')->filter()->unique()->sort()->values();
+            $series = $allResults->pluck('serie')->filter()->unique()->sort()->values();
+            $campuses = $allResults->pluck('biblioteca')->filter()->unique()->sort()->values();
+            $tiposMaterial = $allResults->pluck('tipo_material_descripcion')->filter()->unique()->sort()->values();
+            
+            // Guardar filtros en cache separado
+            session([
+                $filtros_cache_key => compact('autores', 'editoriales', 'materias', 'series', 'campuses', 'tiposMaterial'),
+                $filtros_cache_key . '_timestamp' => time()
+            ]);
 
             // Almacenar en sesión tras nueva búsqueda con metadatos mejorados
             session([
@@ -1044,13 +1050,11 @@ class BusquedaAvanzadaController extends Controller
             if (!empty($palabras)) {
                 $query->where(function($q) use ($palabras, $titulo) {
                     // Primero buscar el término completo
-                    $q->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%")
-                      ->orWhere('vt.nombre_normal', 'LIKE', "%{$titulo}%");
+                    $q->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
                     
                     // Luego buscar por palabras individuales
                     foreach ($palabras as $palabra) {
                         $q->orWhere('vt.nombre_busqueda', 'LIKE', "%{$palabra}%")
-                          ->orWhere('vt.nombre_normal', 'LIKE', "%{$palabra}%")
                           ->orWhere('va.nombre_busqueda', 'LIKE', "%{$palabra}%")
                           ->orWhere('ve.nombre_busqueda', 'LIKE', "%{$palabra}%")
                           ->orWhere('vm.nombre_busqueda', 'LIKE', "%{$palabra}%")
