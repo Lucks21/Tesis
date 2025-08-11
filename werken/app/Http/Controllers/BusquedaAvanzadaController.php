@@ -87,7 +87,20 @@ class BusquedaAvanzadaController extends Controller
                 case 'autor':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
+                            // Buscar la cadena completa primero (ej: "pablo neruda")
                             $q->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($valorCriterio);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $q->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('va.nombre_busqueda', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
                         });
                     }
                     $orderByField = 'va.nombre_busqueda';
@@ -95,7 +108,20 @@ class BusquedaAvanzadaController extends Controller
                 case 'editorial':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
+                            // Buscar la cadena completa primero (ej: "grupo editorial norma")
                             $q->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($valorCriterio);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $q->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('ve.nombre_busqueda', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
                         });
                     }
                     $orderByField = 've.nombre_busqueda';
@@ -103,7 +129,20 @@ class BusquedaAvanzadaController extends Controller
                 case 'materia':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
+                            // Buscar la cadena completa primero (ej: "ciencias sociales")
                             $q->where('vm.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($valorCriterio);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $q->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('vm.nombre_busqueda', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
                         });
                     }
                     $orderByField = 'vm.nombre_busqueda';
@@ -111,7 +150,20 @@ class BusquedaAvanzadaController extends Controller
                 case 'serie':
                     if (!empty($valorCriterio)) {
                         $query->where(function($q) use ($valorCriterio) {
+                            // Buscar la cadena completa primero (ej: "series de matemáticas")
                             $q->where('vs.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($valorCriterio);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $q->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('vs.nombre_busqueda', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
                         });
                     }
                     $orderByField = 'vs.nombre_busqueda';
@@ -167,9 +219,29 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($autorFiltro) {
                     foreach ($autorFiltro as $autor) {
                         $q->orWhere(function($subQ) use ($autor) {
-                            $subQ->where('va.nombre_busqueda', '=', trim($autor))
-                                 ->orWhereRaw('TRIM(va.nombre_busqueda) = ?', [trim($autor)])
+                            // Buscar la cadena completa primero (ej: "pablo neruda")
+                            $subQ->where('va.nombre_busqueda', 'LIKE', "%{$autor}%")
                                  ->whereNotNull('va.nombre_busqueda');
+                            
+                            // También buscar coincidencia exacta después de trim para mayor precisión
+                            $subQ->orWhere(function($exactQ) use ($autor) {
+                                $exactQ->where('va.nombre_busqueda', '=', trim($autor))
+                                       ->orWhereRaw('TRIM(va.nombre_busqueda) = ?', [trim($autor)])
+                                       ->whereNotNull('va.nombre_busqueda');
+                            });
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($autor);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $subQ->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('va.nombre_busqueda', 'LIKE', "%{$palabra}%")
+                                             ->whereNotNull('va.nombre_busqueda');
+                                    }
+                                });
+                            }
                         });
                     }
                 });
@@ -179,9 +251,29 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($editorialFiltro) {
                     foreach ($editorialFiltro as $editorial) {
                         $q->orWhere(function($subQ) use ($editorial) {
-                            $subQ->where('ve.nombre_busqueda', '=', trim($editorial))
-                                 ->orWhereRaw('TRIM(ve.nombre_busqueda) = ?', [trim($editorial)])
+                            // Buscar la cadena completa primero (ej: "grupo editorial norma")
+                            $subQ->where('ve.nombre_busqueda', 'LIKE', "%{$editorial}%")
                                  ->whereNotNull('ve.nombre_busqueda');
+                            
+                            // También buscar coincidencia exacta después de trim para mayor precisión
+                            $subQ->orWhere(function($exactQ) use ($editorial) {
+                                $exactQ->where('ve.nombre_busqueda', '=', trim($editorial))
+                                       ->orWhereRaw('TRIM(ve.nombre_busqueda) = ?', [trim($editorial)])
+                                       ->whereNotNull('ve.nombre_busqueda');
+                            });
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($editorial);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $subQ->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('ve.nombre_busqueda', 'LIKE', "%{$palabra}%")
+                                             ->whereNotNull('ve.nombre_busqueda');
+                                    }
+                                });
+                            }
                         });
                     }
                 });
@@ -191,9 +283,29 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($materiaFiltro) {
                     foreach ($materiaFiltro as $materia) {
                         $q->orWhere(function($subQ) use ($materia) {
-                            $subQ->where('vm.nombre_busqueda', '=', trim($materia))
-                                 ->orWhereRaw('TRIM(vm.nombre_busqueda) = ?', [trim($materia)])
+                            // Buscar la cadena completa primero (ej: "ciencias sociales")
+                            $subQ->where('vm.nombre_busqueda', 'LIKE', "%{$materia}%")
                                  ->whereNotNull('vm.nombre_busqueda');
+                            
+                            // También buscar coincidencia exacta después de trim para mayor precisión
+                            $subQ->orWhere(function($exactQ) use ($materia) {
+                                $exactQ->where('vm.nombre_busqueda', '=', trim($materia))
+                                       ->orWhereRaw('TRIM(vm.nombre_busqueda) = ?', [trim($materia)])
+                                       ->whereNotNull('vm.nombre_busqueda');
+                            });
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($materia);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $subQ->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('vm.nombre_busqueda', 'LIKE', "%{$palabra}%")
+                                             ->whereNotNull('vm.nombre_busqueda');
+                                    }
+                                });
+                            }
                         });
                     }
                 });
@@ -203,9 +315,29 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($serieFiltro) {
                     foreach ($serieFiltro as $serie) {
                         $q->orWhere(function($subQ) use ($serie) {
-                            $subQ->where('vs.nombre_busqueda', '=', trim($serie))
-                                 ->orWhereRaw('TRIM(vs.nombre_busqueda) = ?', [trim($serie)])
+                            // Buscar la cadena completa primero (ej: "series de matemáticas")
+                            $subQ->where('vs.nombre_busqueda', 'LIKE', "%{$serie}%")
                                  ->whereNotNull('vs.nombre_busqueda');
+                            
+                            // También buscar coincidencia exacta después de trim para mayor precisión
+                            $subQ->orWhere(function($exactQ) use ($serie) {
+                                $exactQ->where('vs.nombre_busqueda', '=', trim($serie))
+                                       ->orWhereRaw('TRIM(vs.nombre_busqueda) = ?', [trim($serie)])
+                                       ->whereNotNull('vs.nombre_busqueda');
+                            });
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($serie);
+                            
+                            if (count($palabras) >= 2) {
+                                // Usar AND para asegurar que TODAS las palabras estén presentes
+                                $subQ->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('vs.nombre_busqueda', 'LIKE', "%{$palabra}%")
+                                             ->whereNotNull('vs.nombre_busqueda');
+                                    }
+                                });
+                            }
                         });
                     }
                 });
@@ -1043,6 +1175,64 @@ class BusquedaAvanzadaController extends Controller
         ];
 
         return $tipos[$descripcion] ?? null;
+    }
+
+    /**
+     * Filtra palabras para obtener solo las significativas para búsqueda
+     * @param string $termino El término completo a procesar
+     * @return array Array de palabras significativas
+     */
+    private function extraerPalabrasSignificativas($termino)
+    {
+        return array_filter(explode(' ', trim($termino)), function($palabra) {
+            $palabra = trim($palabra);
+            // Filtrar palabras muy cortas, números (años), caracteres especiales y palabras comunes
+            return strlen($palabra) >= 2 && 
+                   !preg_match('/^\d+$/', $palabra) && // No solo números
+                   !preg_match('/^\d{4}-\d{4}$/', $palabra) && // No rangos de años (ej: 1904-1973)
+                   !preg_match('/^\d{4}$/', $palabra) && // No años individuales
+                   !preg_match('/^[^\w]+$/', $palabra) && // No solo caracteres especiales
+                   preg_match('/^[a-záéíóúñüç]/i', $palabra) && // Debe empezar con letra
+                   !in_array(strtolower($palabra), ['de', 'del', 'la', 'el', 'y', 'e', 'o', 'u', 'a', 'en', 'con', 'por', 'para']); // No palabras comunes
+        });
+    }
+
+    /**
+     * Procesa términos de búsqueda para manejar cadenas con múltiples palabras
+     * @param string $termino El término de búsqueda
+     * @param string $tipo El tipo de término (autor, editorial, materia, serie)
+     * @return array Array con información sobre cómo buscar el término
+     */
+    private function procesarTerminoBusqueda($termino, $tipo = 'general')
+    {
+        if (empty($termino)) {
+            return ['tipo' => 'vacio', 'buscar_completo' => false, 'palabras' => []];
+        }
+
+        $terminoLimpio = trim($termino);
+        $palabras = $this->extraerPalabrasSignificativas($terminoLimpio);
+
+        $resultado = [
+            'termino_original' => $terminoLimpio,
+            'palabras' => array_map('trim', $palabras),
+            'es_multiple' => count($palabras) >= 2,
+            'buscar_completo' => true,
+            'tipo_campo' => $tipo,
+            'tipo_busqueda' => count($palabras) >= 2 ? 'multiple' : 'simple'
+        ];
+
+        return $resultado;
+    }
+
+    /**
+     * Procesa términos de búsqueda de autor para manejar cadenas con múltiples palabras
+     * @param string $termino El término de búsqueda del autor
+     * @return array Array con información sobre cómo buscar el término
+     * @deprecated Usar procesarTerminoBusqueda() en su lugar
+     */
+    private function procesarTerminoAutor($termino)
+    {
+        return $this->procesarTerminoBusqueda($termino, 'autor');
     }
 
     /**
