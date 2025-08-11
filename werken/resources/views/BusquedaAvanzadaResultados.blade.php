@@ -826,8 +826,15 @@
                                 <i class="fas fa-user-edit mr-2"></i>Filtrar por Autor
                                 <span class="filter-count">({{ count($autores) }} opciones)</span>
                                 @if(request()->filled('autor'))
+                                    @php
+                                        $autorActivos = is_array(request('autor')) 
+                                            ? array_filter(request('autor'), function($value) { 
+                                                return !empty(trim($value)); 
+                                            })
+                                            : (request('autor') ? [request('autor')] : []);
+                                    @endphp
                                     <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ count((array) request('autor')) }} activo(s)
+                                        {{ count($autorActivos) }} activo(s)
                                     </span>
                                 @endif
                             </h2>
@@ -847,11 +854,11 @@
                                     <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                                     <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                                     <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-autor">
                                         @foreach ($autores as $autor)
@@ -891,8 +898,15 @@
                                 <i class="fas fa-building mr-2"></i>Filtrar por Editorial
                                 <span class="filter-count">({{ count($editoriales) }} opciones)</span>
                                 @if(request()->filled('editorial'))
+                                    @php
+                                        $editorialActivos = is_array(request('editorial')) 
+                                            ? array_filter(request('editorial'), function($value) { 
+                                                return !empty(trim($value)); 
+                                            })
+                                            : (request('editorial') ? [request('editorial')] : []);
+                                    @endphp
                                     <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ count((array) request('editorial')) }} activo(s)
+                                        {{ count($editorialActivos) }} activo(s)
                                     </span>
                                 @endif
                             </h2>
@@ -912,11 +926,11 @@
                                     <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                                     <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                                     <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', array_filter(request('autor'), function($v) { return !empty(trim($v)); })) : request('autor') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-editorial">
                                         @foreach ($editoriales as $editorial)
@@ -956,8 +970,15 @@
                                 <i class="fas fa-university mr-2"></i>Filtrar por Campus
                                 <span class="filter-count">({{ count($campuses) }} opciones)</span>
                                 @if(request()->filled('campus'))
+                                    @php
+                                        $campusActivos = is_array(request('campus')) 
+                                            ? array_filter(request('campus'), function($value) { 
+                                                return !empty(trim($value)); 
+                                            })
+                                            : (request('campus') ? [request('campus')] : []);
+                                    @endphp
                                     <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ count((array) request('campus')) }} activo(s)
+                                        {{ count($campusActivos) }} activo(s)
                                     </span>
                                 @endif
                             </h2>
@@ -977,11 +998,11 @@
                                     <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                                     <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                                     <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', array_filter(request('autor'), function($v) { return !empty(trim($v)); })) : request('autor') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-campus">
                                         @foreach ($campuses as $campus)
@@ -1021,8 +1042,15 @@
                                 <i class="fas fa-book-open mr-2"></i>Filtrar por Materia
                                 <span class="filter-count">({{ count($materias) }} opciones)</span>
                                 @if(request()->filled('materia'))
+                                    @php
+                                        $materiaActivos = is_array(request('materia')) 
+                                            ? array_filter(request('materia'), function($value) { 
+                                                return !empty(trim($value)); 
+                                            })
+                                            : (request('materia') ? [request('materia')] : []);
+                                    @endphp
                                     <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ count((array) request('materia')) }} activo(s)
+                                        {{ count($materiaActivos) }} activo(s)
                                     </span>
                                 @endif
                             </h2>
@@ -1042,11 +1070,11 @@
                                     <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                                     <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                                     <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', array_filter(request('autor'), function($v) { return !empty(trim($v)); })) : request('autor') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
+                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-materia">
                                         @foreach ($materias as $materia)
@@ -1086,8 +1114,15 @@
                                 <i class="fas fa-list-ol mr-2"></i>Filtrar por Serie
                                 <span class="filter-count">({{ count($series) }} opciones)</span>
                                 @if(request()->filled('serie'))
+                                    @php
+                                        $serieActivos = is_array(request('serie')) 
+                                            ? array_filter(request('serie'), function($value) { 
+                                                return !empty(trim($value)); 
+                                            })
+                                            : (request('serie') ? [request('serie')] : []);
+                                    @endphp
                                     <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ count((array) request('serie')) }} activo(s)
+                                        {{ count($serieActivos) }} activo(s)
                                     </span>
                                 @endif
                             </h2>
@@ -1150,8 +1185,16 @@
                                 <i class="fas fa-tags mr-2"></i>Filtrar por Tipo de Material
                                 <span class="filter-count">({{ count($tiposMaterial ?? []) }} opciones)</span>
                                 @if(request()->filled('tipo_material'))
+                                    @php
+                                        $tipoMaterialRequest = request('tipo_material');
+                                        $tipoMaterialActivos = is_array($tipoMaterialRequest) 
+                                            ? array_filter($tipoMaterialRequest, function($value) { 
+                                                return !empty(trim($value)) && $value !== null && $value !== ''; 
+                                            })
+                                            : ($tipoMaterialRequest ? [$tipoMaterialRequest] : []);
+                                    @endphp
                                     <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ count((array) request('tipo_material')) }} activo(s)
+                                        {{ count($tipoMaterialActivos) }} activo(s)
                                     </span>
                                 @endif
                             </h2>
@@ -1217,12 +1260,12 @@
                                 <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                                 <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                                 <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
-                                <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', request('tipo_material')) : request('tipo_material') }}">
+                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', array_filter(request('autor'), function($v) { return !empty(trim($v)); })) : request('autor') }}">
+                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
+                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
+                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
+                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
+                                <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                 <label for="orden" class="text-gray-700 font-semibold">
                                     <i class="fas fa-sort mr-2"></i>Ordenar:

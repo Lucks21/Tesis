@@ -224,25 +224,30 @@ class BusquedaAvanzadaController extends Controller
             }
 
             if (!empty($tipoMaterialFiltro) && count($tipoMaterialFiltro) > 0) {
-                // Para tipo de material, necesitamos convertir las descripciones de vuelta a códigos
-                $codigosTipoMaterial = [];
-                foreach ($tipoMaterialFiltro as $descripcion) {
-                    $codigos = $this->obtenerCodigoTipoMaterial($descripcion);
-                    if ($codigos && is_array($codigos)) {
-                        $codigosTipoMaterial = array_merge($codigosTipoMaterial, $codigos);
-                    }
-                }
-                
-                if (!empty($codigosTipoMaterial)) {
-                    $query->where(function($q) use ($codigosTipoMaterial) {
-                        foreach ($codigosTipoMaterial as $codigo) {
-                            $q->orWhere(function($subQ) use ($codigo) {
-                                $subQ->where('dm.DSM_TIPO_MATERIAL', '=', trim($codigo))
-                                     ->whereNotNull('dm.DSM_TIPO_MATERIAL');
-                            });
+                $query->where(function($q) use ($tipoMaterialFiltro) {
+                    foreach ($tipoMaterialFiltro as $descripcion) {
+                        $codigosArray = $this->obtenerCodigoTipoMaterial($descripcion);
+                        
+                        if ($codigosArray && is_array($codigosArray)) {
+                            foreach ($codigosArray as $codigo) {
+                                $q->orWhere(function($subQ) use ($codigo) {
+                                    if ($codigo === null || $codigo === '' || $codigo === 'NULL') {
+                                        // Para "No especificado", buscar valores null, vacíos o 'NULL'
+                                        $subQ->where(function($nullQ) {
+                                            $nullQ->whereNull('dm.DSM_TIPO_MATERIAL')
+                                                  ->orWhere('dm.DSM_TIPO_MATERIAL', '')
+                                                  ->orWhere('dm.DSM_TIPO_MATERIAL', 'NULL');
+                                        });
+                                    } else {
+                                        // Para códigos específicos
+                                        $subQ->where('dm.DSM_TIPO_MATERIAL', '=', trim($codigo))
+                                             ->whereNotNull('dm.DSM_TIPO_MATERIAL');
+                                    }
+                                });
+                            }
                         }
-                    });
-                }
+                    }
+                });
             }
 
             // Para búsquedas completamente generales (sin filtros ni criterios específicos),
@@ -986,21 +991,24 @@ class BusquedaAvanzadaController extends Controller
         if (is_array($filtro)) {
             // Si ya es un array, filtrar valores vacíos y limpiar
             $resultado = array_filter($filtro, function($valor) {
-                return !empty(trim($valor)) && $valor !== null;
+                return !empty(trim($valor)) && $valor !== null && $valor !== '';
             });
-            // Limpiar espacios y normalizar
-            return array_values(array_map(function($valor) {
+            // Limpiar espacios y normalizar, eliminar duplicados
+            $limpio = array_values(array_unique(array_map(function($valor) {
                 return trim($valor);
-            }, $resultado));
+            }, $resultado)));
+            
+            return $limpio;
         }
 
         if (is_string($filtro)) {
             // Si es un string, dividir por comas y filtrar valores vacíos
             $valores = explode(',', $filtro);
             $resultado = array_filter(array_map('trim', $valores), function($valor) {
-                return !empty($valor) && $valor !== null;
+                return !empty($valor) && $valor !== null && $valor !== '';
             });
-            return array_values($resultado);
+            // Eliminar duplicados
+            return array_values(array_unique($resultado));
         }
 
         return [];
@@ -1031,6 +1039,7 @@ class BusquedaAvanzadaController extends Controller
         $tipos = [
             'Monografías/Libros' => ['M'],
             'Publicaciones Seriadas' => ['S'],
+            'No especificado' => [null, '', 'NULL'] // Para manejar valores vacíos, null o string 'NULL'
         ];
 
         return $tipos[$descripcion] ?? null;
