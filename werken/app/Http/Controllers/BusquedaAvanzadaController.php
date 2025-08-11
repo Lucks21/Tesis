@@ -596,11 +596,10 @@ class BusquedaAvanzadaController extends Controller
             $materias = $allResults->pluck('materia')->filter()->unique()->sort()->values();
             $series = $allResults->pluck('serie')->filter()->unique()->sort()->values();
             $campuses = $allResults->pluck('biblioteca')->filter()->unique()->sort()->values();
-            $tiposMaterial = $allResults->pluck('tipo_material_descripcion')->filter()->unique()->sort()->values();
             
             // Guardar filtros en cache separado
             session([
-                $filtros_cache_key => compact('autores', 'editoriales', 'materias', 'series', 'campuses', 'tiposMaterial'),
+                $filtros_cache_key => compact('autores', 'editoriales', 'materias', 'series', 'campuses'),
                 $filtros_cache_key . '_timestamp' => time()
             ]);
 
@@ -666,8 +665,7 @@ class BusquedaAvanzadaController extends Controller
             'editoriales',
             'materias',
             'series',
-            'campuses',
-            'tiposMaterial'
+            'campuses'
         ));
     }
 

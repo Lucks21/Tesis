@@ -297,6 +297,9 @@
             font-family: 'Tipo-UBB', sans-serif;
             font-weight: bold;
             font-size: 1.125rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .collapsible-toggle {
@@ -436,7 +439,7 @@
 
         /* Responsive column widths for better space distribution */
         .col-titulo {
-            width: 39%;
+            width: 51%;
             min-width: 200px;
         }
 
@@ -446,7 +449,7 @@
         }
 
         .col-editorial {
-            width: 15%;
+            width: 14%;
             min-width: 120px;
         }
 
@@ -456,18 +459,13 @@
         }
 
         .col-serie {
-            width: 5%;
-            min-width: 80px;
-        }
-
-        .col-tipo-material {
-            width: 8%;
-            min-width: 100px;
+            width: 4%;
+            min-width: 70px;
         }
 
         .col-dewey {
-            width: 9%;
-            min-width: 60px;
+            width: 3%;
+            min-width: 40px;
         }
 
         .col-biblioteca {
@@ -507,11 +505,6 @@
 
         .serie-cell {
             color: #1f2937;
-        }
-
-        .tipo-material-cell {
-            color: #1f2937;
-            font-size: 0.85em;
         }
 
         .dewey-cell {
@@ -582,7 +575,7 @@
 
         /* Custom container styles for better space utilization */
         .results-main-container {
-            max-width: 1400px;
+            max-width: 100%;
             margin: 0 auto;
             padding: 0 0.5rem;
         }
@@ -741,15 +734,34 @@
 
         @media (min-width: 1280px) {
             .results-main-container {
-                max-width: 1500px;
                 padding: 0 1.5rem;
             }
         }
 
         @media (min-width: 1536px) {
             .results-main-container {
-                max-width: 1600px;
                 padding: 0 2rem;
+            }
+        }
+
+        /* Custom layout widths for filters and results */
+        .filters-sidebar {
+            width: 220px;
+            flex-shrink: 0;
+        }
+        
+        .results-main {
+            flex: 1;
+            min-width: 0; /* Permite que el flex funcione correctamente */
+        }
+        
+        /* Para pantallas móviles */
+        @media (max-width: 1023px) {
+            .filters-sidebar {
+                width: 100%;
+            }
+            .results-main {
+                width: 100%;
             }
         }
     </style>
@@ -816,15 +828,38 @@
                 </p>
             </div>
 
-            <div class="flex flex-col lg:flex-row gap-6">
-                <!-- Filtros laterales -->
-                <div class="lg:w-1/5 space-y-6">
+            <!-- Control de ordenación -->
+            <div class="mb-6 bg-blue-50 p-4 rounded-lg">
+                <form action="{{ route('busqueda-avanzada-resultados') }}" method="GET" class="flex items-center space-x-4">
+                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', array_filter(request('autor'), function($v) { return !empty(trim($v)); })) : request('autor') }}">
+                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
+                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
+                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
+                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
+
+                    <label for="orden" class="text-gray-700 font-semibold">
+                        <i class="fas fa-sort mr-2"></i>Ordenar:
+                    </label>
+                    <select name="orden" id="orden" class="rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="asc" {{ request('orden') == 'asc' ? 'selected' : '' }}>Ascendente</option>
+                        <option value="desc" {{ request('orden') == 'desc' ? 'selected' : '' }}>Descendente</option>
+                    </select>
+                    <button type="submit" class="filter-button">
+                        Aplicar
+                    </button>
+                </form>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-3">
+                <div class="filters-sidebar space-y-3">
                     <!-- Filtrar por Autor -->
                     <div class="collapsible-filter {{ request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
                         <div class="collapsible-header">
                             <h2>
                                 <i class="fas fa-user-edit mr-2"></i>Filtrar por Autor
-                                <span class="filter-count">({{ count($autores) }} opciones)</span>
                                 @if(request()->filled('autor'))
                                     @php
                                         $autorActivos = is_array(request('autor')) 
@@ -858,7 +893,6 @@
                                     <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
                                     <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-autor">
                                         @foreach ($autores as $autor)
@@ -896,7 +930,6 @@
                         <div class="collapsible-header">
                             <h2>
                                 <i class="fas fa-building mr-2"></i>Filtrar por Editorial
-                                <span class="filter-count">({{ count($editoriales) }} opciones)</span>
                                 @if(request()->filled('editorial'))
                                     @php
                                         $editorialActivos = is_array(request('editorial')) 
@@ -930,7 +963,6 @@
                                     <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
                                     <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-editorial">
                                         @foreach ($editoriales as $editorial)
@@ -968,7 +1000,6 @@
                         <div class="collapsible-header">
                             <h2>
                                 <i class="fas fa-university mr-2"></i>Filtrar por Campus
-                                <span class="filter-count">({{ count($campuses) }} opciones)</span>
                                 @if(request()->filled('campus'))
                                     @php
                                         $campusActivos = is_array(request('campus')) 
@@ -1002,7 +1033,6 @@
                                     <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
                                     <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-campus">
                                         @foreach ($campuses as $campus)
@@ -1040,7 +1070,6 @@
                         <div class="collapsible-header">
                             <h2>
                                 <i class="fas fa-book-open mr-2"></i>Filtrar por Materia
-                                <span class="filter-count">({{ count($materias) }} opciones)</span>
                                 @if(request()->filled('materia'))
                                     @php
                                         $materiaActivos = is_array(request('materia')) 
@@ -1074,7 +1103,6 @@
                                     <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
                                     <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
                                     <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
-                                    <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
 
                                     <div class="filter-options-container" id="options-materia">
                                         @foreach ($materias as $materia)
@@ -1112,7 +1140,6 @@
                         <div class="collapsible-header">
                             <h2>
                                 <i class="fas fa-list-ol mr-2"></i>Filtrar por Serie
-                                <span class="filter-count">({{ count($series) }} opciones)</span>
                                 @if(request()->filled('serie'))
                                     @php
                                         $serieActivos = is_array(request('serie')) 
@@ -1178,108 +1205,11 @@
                         </div>
                     </div>
 
-                    <!-- Filtrar por Tipo de Material -->
-                    <div class="collapsible-filter {{ request()->filled('tipo_material') ? 'has-active-filter expanded' : '' }}">
-                        <div class="collapsible-header">
-                            <h2>
-                                <i class="fas fa-tags mr-2"></i>Filtrar por Tipo de Material
-                                <span class="filter-count">({{ count($tiposMaterial ?? []) }} opciones)</span>
-                                @if(request()->filled('tipo_material'))
-                                    @php
-                                        $tipoMaterialRequest = request('tipo_material');
-                                        $tipoMaterialActivos = is_array($tipoMaterialRequest) 
-                                            ? array_filter($tipoMaterialRequest, function($value) { 
-                                                return !empty(trim($value)) && $value !== null && $value !== ''; 
-                                            })
-                                            : ($tipoMaterialRequest ? [$tipoMaterialRequest] : []);
-                                    @endphp
-                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ count($tipoMaterialActivos) }} activo(s)
-                                    </span>
-                                @endif
-                            </h2>
-                            <i class="fas fa-chevron-down collapsible-toggle"></i>
-                        </div>
-                        <div class="collapsible-content">
-                            <div class="filter-search-container">
-                                <input type="text" 
-                                       class="filter-search-input" 
-                                       placeholder="Buscar tipo de material..." 
-                                       id="search-tipo-material"
-                                       onkeyup="filterOptions('tipo-material', this.value)">
-                            </div>
-                            <div class="collapsible-inner">
-                                <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" class="space-y-3">
-                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-                                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
-
-                                    <div class="filter-options-container" id="options-tipo-material">
-                                        @foreach ($tiposMaterial ?? [] as $tipoMaterial)
-                                            <div class="filter-option" data-value="{{ strtolower($tipoMaterial) }}">
-                                                <input type="checkbox" name="tipo_material[]" id="tipo_material_{{ $loop->index }}"
-                                                       value="{{ $tipoMaterial }}" {{ is_array(request('tipo_material')) && in_array($tipoMaterial, request('tipo_material')) ? 'checked' : '' }}
-                                                       class="form-checkbox rounded">
-                                                <label for="tipo_material_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
-                                                    {{ $tipoMaterial }}
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                        <div class="no-results-message" id="no-results-tipo-material" style="display: none;">
-                                            No se encontraron tipos de material con ese criterio.
-                                        </div>
-                                    </div>
-                                    <div class="pt-2 border-t border-gray-200">
-                                        <button type="submit" class="filter-button w-full">
-                                            <i class="fas fa-check mr-2"></i>Aplicar Filtro
-                                        </button>
-                                        @if(request()->filled('tipo_material'))
-                                            <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except('tipo_material', 'page_tipos_material'))) }}"
-                                               class="remove-filter w-full text-center block mt-2">
-                                                <i class="fas fa-times mr-2"></i>Quitar Filtro
-                                            </a>
-                                        @endif
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Resultados -->
-                <div class="lg:w-4/5">
+                <div class="results-main">
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <div class="mb-6 bg-blue-50 p-4 rounded-lg">
-                            <form action="{{ route('busqueda-avanzada-resultados') }}" method="GET" class="flex items-center space-x-4">
-                                <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                                <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                                <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', array_filter(request('autor'), function($v) { return !empty(trim($v)); })) : request('autor') }}">
-                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
-                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
-                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
-                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
-                                <input type="hidden" name="tipo_material" value="{{ is_array(request('tipo_material')) ? implode(',', array_filter(request('tipo_material'), function($v) { return !empty(trim($v)); })) : request('tipo_material') }}">
-
-                                <label for="orden" class="text-gray-700 font-semibold">
-                                    <i class="fas fa-sort mr-2"></i>Ordenar:
-                                </label>
-                                <select name="orden" id="orden" class="rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="asc" {{ request('orden') == 'asc' ? 'selected' : '' }}>Ascendente</option>
-                                    <option value="desc" {{ request('orden') == 'desc' ? 'selected' : '' }}>Descendente</option>
-                                </select>
-                                <button type="submit" class="filter-button">
-                                    Aplicar
-                                </button>
-                            </form>
-                        </div>
-
                         @if($resultados->isEmpty())
                             <div class="text-center py-8">
                                 <i class="fas fa-search text-gray-400 text-5xl mb-4"></i>
@@ -1330,9 +1260,6 @@
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-serie">
                                                 <i class="fas fa-list-ol mr-2"></i>Serie
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-tipo-material">
-                                                <i class="fas fa-tags mr-2"></i>Tipo
-                                            </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-dewey">
                                                 <i class="fas fa-sort-numeric-up mr-2"></i>Dewey
                                             </th>
@@ -1367,15 +1294,6 @@
                                                 <td class="px-6 py-4 text-sm text-gray-900 editorial-cell">{{ $resultado->editorial ?? 'Sin editorial' }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 materia-cell">{{ $resultado->materia ?? 'Sin materia' }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 serie-cell">{{ $resultado->serie ?? 'Sin serie' }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900 tipo-material-cell">
-                                                    @if(isset($resultado->tipo_material_descripcion) && !empty($resultado->tipo_material_descripcion))
-                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                            {{ $resultado->tipo_material_descripcion }}
-                                                        </span>
-                                                    @else
-                                                        <span class="text-gray-400 italic">No especificado</span>
-                                                    @endif
-                                                </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 dewey-cell">
                                                     @if(isset($resultado->dewey) && !empty($resultado->dewey))
                                                         <span class="dewey-number text-gray-700" onclick="selectDeweyText(this)" title="Haz clic para copiar el número de Dewey al portapapeles">
