@@ -73,7 +73,6 @@
         /* Main header */
         .main-header {
             background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 1rem 0;
             text-align: center;
         }
@@ -134,10 +133,9 @@
         .results-container {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 56, 118, 0.1);
         }
         .filter-section {
-            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            background: #ffffff;
             border: 1px solid rgba(0, 56, 118, 0.1);
             border-radius: 0.5rem;
         }
@@ -273,7 +271,7 @@
             border: 1px solid rgba(0, 56, 118, 0.1);
             border-radius: 0.5rem;
             overflow: hidden;
-            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            background: #ffffff;
         }
 
         .collapsible-header {
@@ -356,7 +354,6 @@
         .filter-search-input:focus {
             outline: none;
             border-color: #003876;
-            box-shadow: 0 0 0 2px rgba(0, 56, 118, 0.1);
         }
 
         .filter-options-container {
@@ -539,7 +536,7 @@
         .pagination-enhanced {
             margin: 2rem 0;
             padding: 1.5rem;
-            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            background: #f8fafc;
             border-radius: 0.75rem;
             border: 1px solid #cbd5e1;
         }
@@ -582,7 +579,7 @@
 
         /* Export controls styles */
         .export-controls {
-            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            background: #f8fafc;
             border: 1px solid #cbd5e1;
             border-radius: 0.75rem;
             padding: 1rem;
@@ -621,8 +618,6 @@
 
         .export-button:hover.enabled {
             background-color: #047857;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
         }
 
         .export-button i {
@@ -1209,7 +1204,7 @@
 
                 <!-- Resultados -->
                 <div class="results-main">
-                    <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="bg-white rounded-xl p-6">
                         @if($resultados->isEmpty())
                             <div class="text-center py-8">
                                 <i class="fas fa-search text-gray-400 text-5xl mb-4"></i>
@@ -1283,7 +1278,6 @@
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 titulo-cell">
                                                     <div class="flex items-center">
-                                                        <i class="fas fa-book mr-2 text-blue-600"></i>
                                                         <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control ?? '']) }}" 
                                                            class="text-blue-600 hover:text-blue-800 hover:underline titulo-enlace">
                                                             {{ $resultado->titulo ?? 'Sin título' }}
@@ -1568,7 +1562,6 @@
             feedback.style.zIndex = '1000';
             feedback.style.opacity = '0';
             feedback.style.transition = 'opacity 0.2s ease';
-            feedback.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
             
             element.parentNode.style.position = 'relative';
             element.parentNode.appendChild(feedback);
