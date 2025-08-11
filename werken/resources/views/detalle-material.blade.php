@@ -254,51 +254,6 @@
             </div>
         </div>
 
-        <!-- Aviso informativo si muchos datos no están disponibles -->
-        @php
-            $camposNoDisponibles = 0;
-            $totalCampos = 13; // Total de campos principales mostrados
-            
-            $campos = [
-                $detalleMaterial->autor ?? 'No disponible',
-                $detalleMaterial->editorial ?? 'No disponible',
-                $detalleMaterial->isbn_issn ?? 'No disponible',
-                $detalleMaterial->datos_publicacion ?? 'No disponible',
-                $detalleMaterial->tipo ?? 'No disponible',
-                $detalleMaterial->dewey ?? 'No disponible',
-                $detalleMaterial->materiales ?? 'No disponible',
-                $detalleMaterial->copias_registradas ?? 'No disponible',
-                $detalleMaterial->catalogador ?? 'No disponible',
-                $detalleMaterial->fecha_ingreso ?? 'No disponible',
-                $detalleMaterial->descripcion ?? 'No disponible',
-                $detalleMaterial->titulo_normalizado ?? 'No disponible',
-                $detalleMaterial->suscripcion ?? 'No'
-            ];
-            
-            foreach ($campos as $campo) {
-                if ($campo === 'No disponible' || $campo === 'No') {
-                    $camposNoDisponibles++;
-                }
-            }
-            
-            $porcentajeDisponible = (($totalCampos - $camposNoDisponibles) / $totalCampos) * 100;
-        @endphp
-
-        @if($camposNoDisponibles > 8)
-        <div class="aviso-informativo">
-            <div class="titulo-aviso">ℹ️ Información Limitada</div>
-            <p>Este material tiene información básica disponible ({{ round($porcentajeDisponible) }}% de campos completos). 
-            Los datos adicionales como autor, editorial, ISBN, etc. pueden no estar disponibles en el sistema de catalogación detallada. 
-            La información de existencias y disponibilidad sí está actualizada.</p>
-        </div>
-        @elseif($camposNoDisponibles > 4)
-        <div class="aviso-informativo">
-            <div class="titulo-aviso">ℹ️ Información Parcial</div>
-            <p>Este material tiene {{ round($porcentajeDisponible) }}% de información detallada disponible. 
-            Algunos campos específicos pueden estar en proceso de catalogación.</p>
-        </div>
-        @endif
-
         <!-- Tabla de Existencias -->
         <div class="mb-6">
             <div class="existencias-header">
@@ -393,47 +348,6 @@
                 </table>
             </div>
         </div>
-
-        <!-- Información adicional si hay datos relevantes -->
-        @if(($detalleMaterial->isbn_issn != 'No disponible') || 
-            ($detalleMaterial->dewey != 'No disponible') || 
-            ($detalleMaterial->catalogador != 'No disponible'))
-        <div class="mb-6">
-            <div class="existencias-header">
-                Información Técnica Adicional
-            </div>
-            
-            <div class="resumen-content">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    @if($detalleMaterial->isbn_issn != 'No disponible')
-                    <div>
-                        <span class="font-semibold texto-azul">ISBN/ISSN Completo:</span>
-                        <div class="ml-2 font-mono text-xs bg-gray-100 p-2 rounded">{{ $detalleMaterial->isbn_issn }}</div>
-                    </div>
-                    @endif
-                    
-                    @if($detalleMaterial->dewey != 'No disponible')
-                    <div>
-                        <span class="font-semibold texto-azul">Clasificación Dewey:</span>
-                        <div class="ml-2 font-mono text-xs bg-gray-100 p-2 rounded">{{ $detalleMaterial->dewey }}</div>
-                    </div>
-                    @endif
-                    
-                    @if($detalleMaterial->catalogador != 'No disponible')
-                    <div>
-                        <span class="font-semibold texto-azul">Catalogado por:</span>
-                        <div class="ml-2 text-xs">{{ $detalleMaterial->catalogador }}</div>
-                        @if($detalleMaterial->fecha_ingreso != 'No disponible')
-                        <div class="ml-2 text-xs text-gray-500">
-                            el {{ \Carbon\Carbon::parse($detalleMaterial->fecha_ingreso)->format('d/m/Y') }}
-                        </div>
-                        @endif
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endif
 
         </div>
     </div>
