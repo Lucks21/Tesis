@@ -106,6 +106,21 @@
         .texto-azul {
             color: #0066cc;
         }
+        
+        .aviso-informativo {
+            background-color: #e8f4fd;
+            border: 1px solid #bde3ff;
+            color: #1e40af;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        
+        .aviso-informativo .titulo-aviso {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -140,8 +155,14 @@
             </div>
             
             <div class="resumen-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Columna 1: Información básica -->
                     <div class="space-y-2">
+                        <div>
+                            <span class="font-semibold texto-azul">Nro. de Control :</span>
+                            <span class="ml-2">{{ $detalleMaterial->nro_control ?? 'No disponible' }}</span>
+                        </div>
+                        
                         <div>
                             <span class="font-semibold texto-azul">Nro. de Pedido :</span>
                             <span class="ml-2">{{ $detalleMaterial->nro_pedido ?? 'No disponible' }}</span>
@@ -158,30 +179,125 @@
                         </div>
                         
                         <div>
-                            <span class="font-semibold texto-azul">Edición :</span>
-                            <span class="ml-2">{{ $detalleMaterial->edicion ?? 'No disponible' }}</span>
+                            <span class="font-semibold texto-azul">Título Normalizado :</span>
+                            <span class="ml-2 text-sm text-gray-600">{{ $detalleMaterial->titulo_normalizado ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Editorial :</span>
+                            <span class="ml-2">{{ $detalleMaterial->editorial ?? 'No disponible' }}</span>
                         </div>
                     </div>
                     
+                    <!-- Columna 2: Detalles de publicación -->
                     <div class="space-y-2">
+                        <div>
+                            <span class="font-semibold texto-azul">ISBN/ISSN :</span>
+                            <span class="ml-2">{{ $detalleMaterial->isbn_issn ?? 'No disponible' }}</span>
+                        </div>
+                        
                         <div>
                             <span class="font-semibold texto-azul">Datos de Publicación :</span>
                             <span class="ml-2">{{ $detalleMaterial->datos_publicacion ?? 'No disponible' }}</span>
                         </div>
                         
                         <div>
-                            <span class="font-semibold texto-azul">Descripción :</span>
-                            <span class="ml-2">{{ $detalleMaterial->descripcion ?? 'No disponible' }}</span>
+                            <span class="font-semibold texto-azul">Tipo de Material :</span>
+                            <span class="ml-2">{{ $detalleMaterial->tipo ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Clasificación Dewey :</span>
+                            <span class="ml-2">{{ $detalleMaterial->dewey ?? 'No disponible' }}</span>
                         </div>
                         
                         <div>
                             <span class="font-semibold texto-azul">Material(s) :</span>
                             <span class="ml-2 text-blue-600 font-semibold">{{ $detalleMaterial->materiales ?? 'No disponible' }}</span>
                         </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Suscripción :</span>
+                            <span class="ml-2">{{ $detalleMaterial->suscripcion ?? 'No' }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Columna 3: Información técnica -->
+                    <div class="space-y-2">
+                        <div>
+                            <span class="font-semibold texto-azul">Copias Registradas :</span>
+                            <span class="ml-2">{{ $detalleMaterial->copias_registradas ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Catalogador :</span>
+                            <span class="ml-2">{{ $detalleMaterial->catalogador ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Fecha de Ingreso :</span>
+                            <span class="ml-2">
+                                @if(isset($detalleMaterial->fecha_ingreso) && $detalleMaterial->fecha_ingreso != 'No disponible')
+                                    {{ \Carbon\Carbon::parse($detalleMaterial->fecha_ingreso)->format('d/m/Y') }}
+                                @else
+                                    No disponible
+                                @endif
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Descripción :</span>
+                            <span class="ml-2 text-sm">{{ $detalleMaterial->descripcion ?? 'No disponible' }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Aviso informativo si muchos datos no están disponibles -->
+        @php
+            $camposNoDisponibles = 0;
+            $totalCampos = 13; // Total de campos principales mostrados
+            
+            $campos = [
+                $detalleMaterial->autor ?? 'No disponible',
+                $detalleMaterial->editorial ?? 'No disponible',
+                $detalleMaterial->isbn_issn ?? 'No disponible',
+                $detalleMaterial->datos_publicacion ?? 'No disponible',
+                $detalleMaterial->tipo ?? 'No disponible',
+                $detalleMaterial->dewey ?? 'No disponible',
+                $detalleMaterial->materiales ?? 'No disponible',
+                $detalleMaterial->copias_registradas ?? 'No disponible',
+                $detalleMaterial->catalogador ?? 'No disponible',
+                $detalleMaterial->fecha_ingreso ?? 'No disponible',
+                $detalleMaterial->descripcion ?? 'No disponible',
+                $detalleMaterial->titulo_normalizado ?? 'No disponible',
+                $detalleMaterial->suscripcion ?? 'No'
+            ];
+            
+            foreach ($campos as $campo) {
+                if ($campo === 'No disponible' || $campo === 'No') {
+                    $camposNoDisponibles++;
+                }
+            }
+            
+            $porcentajeDisponible = (($totalCampos - $camposNoDisponibles) / $totalCampos) * 100;
+        @endphp
+
+        @if($camposNoDisponibles > 8)
+        <div class="aviso-informativo">
+            <div class="titulo-aviso">ℹ️ Información Limitada</div>
+            <p>Este material tiene información básica disponible ({{ round($porcentajeDisponible) }}% de campos completos). 
+            Los datos adicionales como autor, editorial, ISBN, etc. pueden no estar disponibles en el sistema de catalogación detallada. 
+            La información de existencias y disponibilidad sí está actualizada.</p>
+        </div>
+        @elseif($camposNoDisponibles > 4)
+        <div class="aviso-informativo">
+            <div class="titulo-aviso">ℹ️ Información Parcial</div>
+            <p>Este material tiene {{ round($porcentajeDisponible) }}% de información detallada disponible. 
+            Algunos campos específicos pueden estar en proceso de catalogación.</p>
+        </div>
+        @endif
 
         <!-- Tabla de Existencias -->
         <div class="mb-6">
@@ -210,7 +326,7 @@
                             @foreach($detalleMaterial->existencias as $index => $existencia)
                                 <tr class="{{ $index % 2 == 0 ? 'fila-par' : 'fila-impar' }}">
                                     <td>
-                                        @if($existencia->nombre_tb_estado == 'DISPONIBLE')
+                                        @if(isset($existencia->nombre_tb_estado) && $existencia->nombre_tb_estado == 'DISPONIBLE')
                                             <button class="btn-reservar">
                                                 Reservar
                                             </button>
@@ -218,15 +334,39 @@
                                             <span class="text-gray-500 text-xs">No disponible</span>
                                         @endif
                                     </td>
-                                    <td>{{ $existencia->nombre_tb_campus ?? 'No disponible' }}</td>
-                                    <td>{{ $existencia->nro_volumen_existe ?? '-' }}</td>
-                                    <td>{{ $existencia->nro_parte_existe ?? '-' }}</td>
-                                    <td>{{ $existencia->nro_suplemento_existe ?? '-' }}</td>
-                                    <td>{{ $existencia->dias ?? '-' }}</td>
-                                    <td>{{ $existencia->nombre_tb_format ?? '-' }}</td>
-                                    <td>{{ $existencia->nombre_tb_estado ?? '-' }}</td>
-                                    <td>{{ $existencia->Total ?? '1' }}</td>
-                                    <td>{{ $existencia->fecha_dev ?? '-' }}</td>
+                                    <td>{{ $existencia->nombre_tb_campus ?? $existencia->ubicacion ?? 'No disponible' }}</td>
+                                    <td>{{ $existencia->nro_volumen_existe ?? $existencia->volumen ?? '-' }}</td>
+                                    <td>{{ $existencia->nro_parte_existe ?? $existencia->parte ?? '-' }}</td>
+                                    <td>{{ $existencia->nro_suplemento_existe ?? $existencia->suplemento ?? '-' }}</td>
+                                    <td>{{ $existencia->dias ?? $existencia->dias_prestamo ?? '-' }}</td>
+                                    <td>{{ $existencia->nombre_tb_format ?? $existencia->formato ?? 'Libro' }}</td>
+                                    <td>
+                                        <span class="px-2 py-1 rounded text-xs
+                                            @if(isset($existencia->nombre_tb_estado))
+                                                @if($existencia->nombre_tb_estado == 'DISPONIBLE')
+                                                    bg-green-100 text-green-800
+                                                @elseif($existencia->nombre_tb_estado == 'PRESTADO')
+                                                    bg-red-100 text-red-800
+                                                @elseif($existencia->nombre_tb_estado == 'RESERVADO')
+                                                    bg-yellow-100 text-yellow-800
+                                                @else
+                                                    bg-gray-100 text-gray-800
+                                                @endif
+                                            @else
+                                                bg-gray-100 text-gray-800
+                                            @endif
+                                        ">
+                                            {{ $existencia->nombre_tb_estado ?? $existencia->estado ?? 'Sin información' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $existencia->Total ?? $existencia->copias ?? '1' }}</td>
+                                    <td>
+                                        @if(isset($existencia->fecha_dev) && $existencia->fecha_dev != '-')
+                                            {{ \Carbon\Carbon::parse($existencia->fecha_dev)->format('d/m/Y') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         @else
@@ -240,7 +380,11 @@
                                 <td>-</td>
                                 <td>-</td>
                                 <td>Libro</td>
-                                <td>Sin información</td>
+                                <td>
+                                    <span class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800">
+                                        Sin información
+                                    </span>
+                                </td>
                                 <td>-</td>
                                 <td>-</td>
                             </tr>
@@ -249,6 +393,47 @@
                 </table>
             </div>
         </div>
+
+        <!-- Información adicional si hay datos relevantes -->
+        @if(($detalleMaterial->isbn_issn != 'No disponible') || 
+            ($detalleMaterial->dewey != 'No disponible') || 
+            ($detalleMaterial->catalogador != 'No disponible'))
+        <div class="mb-6">
+            <div class="existencias-header">
+                Información Técnica Adicional
+            </div>
+            
+            <div class="resumen-content">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    @if($detalleMaterial->isbn_issn != 'No disponible')
+                    <div>
+                        <span class="font-semibold texto-azul">ISBN/ISSN Completo:</span>
+                        <div class="ml-2 font-mono text-xs bg-gray-100 p-2 rounded">{{ $detalleMaterial->isbn_issn }}</div>
+                    </div>
+                    @endif
+                    
+                    @if($detalleMaterial->dewey != 'No disponible')
+                    <div>
+                        <span class="font-semibold texto-azul">Clasificación Dewey:</span>
+                        <div class="ml-2 font-mono text-xs bg-gray-100 p-2 rounded">{{ $detalleMaterial->dewey }}</div>
+                    </div>
+                    @endif
+                    
+                    @if($detalleMaterial->catalogador != 'No disponible')
+                    <div>
+                        <span class="font-semibold texto-azul">Catalogado por:</span>
+                        <div class="ml-2 text-xs">{{ $detalleMaterial->catalogador }}</div>
+                        @if($detalleMaterial->fecha_ingreso != 'No disponible')
+                        <div class="ml-2 text-xs text-gray-500">
+                            el {{ \Carbon\Carbon::parse($detalleMaterial->fecha_ingreso)->format('d/m/Y') }}
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
 
         </div>
     </div>
