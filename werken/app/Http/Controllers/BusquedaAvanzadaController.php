@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Models\DetalleMaterial;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -79,15 +78,7 @@ class BusquedaAvanzadaController extends Controller
                 ->leftJoin('V_DEWEY as vd', 'vt.nro_control', '=', 'vd.nro_control')
                 ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
                 ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
-                ->leftJoin('DETALLE_MATERIAL as dm', function($join) {
-                    // JOIN principal: coincidencia exacta
-                    $join->on('vt.nombre_busqueda', '=', 'dm.DSM_TITULO')
-                         // JOIN adicional: para publicaciones seriadas (tipo S), permitir coincidencia parcial
-                         ->orWhere(function($query) {
-                             $query->where('dm.DSM_TIPO_MATERIAL', '=', 'S')
-                                   ->whereRaw('dm.DSM_TITULO LIKE CONCAT(vt.nombre_busqueda, \'%\')');
-                         });
-                });
+                ->leftJoin('DETALLE_MATERIAL as dm', 'vt.nombre_busqueda', '=', 'dm.DSM_TITULO');
 
             // Aplicar criterios de búsqueda solo si tienen valores
             $orderByField = 'vt.nombre_busqueda'; // Campo por defecto para ordenar
@@ -254,40 +245,25 @@ class BusquedaAvanzadaController extends Controller
                 }
             }
 
-            // Excluir registros con campos principales vacíos para búsquedas amplias
-            // IMPORTANTE: Solo aplicar lógica especial si NO hay filtros Y NO hay criterios de búsqueda específicos
+            // Para búsquedas completamente generales (sin filtros ni criterios específicos),
+            // aplicar filtros básicos para evitar registros con campos principales vacíos
             if (empty($valorCriterio) && empty($titulo) && empty($autorFiltro) && empty($editorialFiltro) && empty($materiaFiltro) && empty($serieFiltro) && empty($campusFiltro) && empty($tipoMaterialFiltro)) {
                 switch ($criterio) {
                     case 'autor':
-                        // Solo para búsquedas completamente generales sin ningún criterio
-                        $query->where(function($q) {
-                            $q->where(function($subQ) {
-                                // Registros con autor válido
-                                $subQ->whereNotNull('va.nombre_busqueda')
-                                     ->where('va.nombre_busqueda', '!=', '');
-                            })->orWhere(function($subQ) {
-                                // O materiales tipo S (publicaciones seriadas) solo en búsquedas completamente generales
-                                $subQ->where('dm.DSM_TIPO_MATERIAL', '=', 'S');
-                            });
-                        });
+                        $query->whereNotNull('va.nombre_busqueda')
+                              ->where('va.nombre_busqueda', '!=', '');
                         break;
                     case 'editorial':
-                        $query->where(function($q) {
-                            $q->whereNotNull('ve.nombre_busqueda')
+                        $query->whereNotNull('ve.nombre_busqueda')
                               ->where('ve.nombre_busqueda', '!=', '');
-                        });
                         break;
                     case 'materia':
-                        $query->where(function($q) {
-                            $q->whereNotNull('vm.nombre_busqueda')
+                        $query->whereNotNull('vm.nombre_busqueda')
                               ->where('vm.nombre_busqueda', '!=', '');
-                        });
                         break;
                     case 'serie':
-                        $query->where(function($q) {
-                            $q->whereNotNull('vs.nombre_busqueda')
+                        $query->whereNotNull('vs.nombre_busqueda')
                               ->where('vs.nombre_busqueda', '!=', '');
-                        });
                         break;
                 }
             }
@@ -298,58 +274,69 @@ class BusquedaAvanzadaController extends Controller
             $query->orderBy('relevancia', 'desc')
                   ->orderBy($orderByField, $orden);
 
-            // Ejecutar consulta con límite aumentado pero optimizado
-            $allResults = $query->limit(5000)->get(); // Reducido temporalmente para mejorar rendimiento
+            // Ejecutar consulta principal
+            $allResults = $query->limit(10000)->get();
             
-            // Agregar búsqueda específica para materiales tipo S que no aparecieron en los resultados principales
-            // SOLO si hay criterios específicos de búsqueda Y realmente se necesitan más resultados
-            if ($criterio === 'autor' && (!empty($valorCriterio) || !empty($titulo))) {
-                $materialesTipoSExistentes = $allResults->where('tipo_material', 'S')->pluck('titulo')->toArray();
+            // SOLUCIÓN: Agregar publicaciones seriadas de DETALLE_MATERIAL que no aparecieron
+            // porque sus títulos no coinciden exactamente con V_TITULO
+            $publicacionesSeriadas = DB::table('DETALLE_MATERIAL as dm')
+                ->select(
+                    DB::raw("'S_' + CAST(ROW_NUMBER() OVER (ORDER BY dm.DSM_TITULO) AS VARCHAR) as nro_control"),
+                    'dm.DSM_TITULO as titulo',
+                    'dm.DSM_AUTOR_EDITOR as autor',
+                    'dm.DSM_EDITORIAL as editorial',
+                    DB::raw('NULL as materia'),
+                    DB::raw('NULL as serie'),
+                    DB::raw('NULL as dewey'),
+                    DB::raw('NULL as biblioteca'),
+                    'dm.DSM_TIPO_MATERIAL as tipo_material',
+                    DB::raw('0 as relevancia')
+                )
+                ->where('dm.DSM_TIPO_MATERIAL', 'S');
                 
-                // Consulta adicional para materiales tipo S que pueden haberse perdido
-                $queryTipoS = DB::table('DETALLE_MATERIAL as dm')
-                    ->leftJoin('V_AUTOR as va', function($join) {
-                        $join->whereRaw('dm.DSM_TITULO = va.nombre_busqueda OR dm.DSM_TITULO LIKE va.nombre_busqueda + \'%\'');
-                    })
-                    ->where('dm.DSM_TIPO_MATERIAL', 'S')
-                    ->whereNotIn('dm.DSM_TITULO', $materialesTipoSExistentes);
-                
-                // Aplicar los mismos filtros de búsqueda que la consulta principal - MÁS ESTRICTO
-                $hasValidCriteria = false;
-                
-                if (!empty($valorCriterio)) {
-                    $queryTipoS->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
-                    $hasValidCriteria = true;
+            // Aplicar los mismos filtros que la consulta principal
+            if (!empty($titulo)) {
+                $publicacionesSeriadas->where('dm.DSM_TITULO', 'LIKE', "%{$titulo}%");
+            }
+            
+            if (!empty($valorCriterio)) {
+                switch ($criterio) {
+                    case 'autor':
+                        $publicacionesSeriadas->where('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%");
+                        break;
+                    case 'editorial':
+                        $publicacionesSeriadas->where('dm.DSM_EDITORIAL', 'LIKE', "%{$valorCriterio}%");
+                        break;
                 }
-                
-                if (!empty($titulo)) {
-                    $queryTipoS->where('dm.DSM_TITULO', 'LIKE', "%{$titulo}%");
-                    $hasValidCriteria = true;
-                }
-                
-                // Solo ejecutar la consulta adicional si hay criterios válidos
-                if ($hasValidCriteria) {
-                    $queryTipoS->select(
-                            DB::raw('\'DM_\' + dm.DSM_TITULO + \'_S\' as nro_control'),
-                            'dm.DSM_TITULO as titulo',
-                            'va.nombre_busqueda as autor',
-                            DB::raw('NULL as editorial'),
-                            DB::raw('NULL as materia'),
-                            DB::raw('NULL as serie'),
-                            DB::raw('NULL as dewey'),
-                            DB::raw('NULL as biblioteca'),
-                            'dm.DSM_TIPO_MATERIAL as tipo_material',
-                            DB::raw('0 as relevancia')
-                        )
-                        ->limit(1000);
-                        
-                    $resultadosTipoS = $queryTipoS->get();
-                    
-                    // Combinar resultados solo si hay resultados válidos
-                    if ($resultadosTipoS->count() > 0) {
-                        $allResults = $allResults->merge($resultadosTipoS);
+            }
+            
+            if (!empty($autorFiltro) && count($autorFiltro) > 0) {
+                $publicacionesSeriadas->where(function($q) use ($autorFiltro) {
+                    foreach ($autorFiltro as $autor) {
+                        $q->orWhere('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$autor}%");
                     }
-                }
+                });
+            }
+            
+            if (!empty($editorialFiltro) && count($editorialFiltro) > 0) {
+                $publicacionesSeriadas->where(function($q) use ($editorialFiltro) {
+                    foreach ($editorialFiltro as $editorial) {
+                        $q->orWhere('dm.DSM_EDITORIAL', 'LIKE', "%{$editorial}%");
+                    }
+                });
+            }
+            
+            // Solo incluir publicaciones seriadas si no hay filtro de tipo de material 
+            // o si el filtro incluye publicaciones seriadas
+            $incluirPublicacionesSeriadas = empty($tipoMaterialFiltro) || 
+                                          in_array('Publicaciones Seriadas', $tipoMaterialFiltro) ||
+                                          in_array('S', $tipoMaterialFiltro);
+                                          
+            if ($incluirPublicacionesSeriadas) {
+                $resultadosPublicaciones = $publicacionesSeriadas->limit(2000)->get();
+                
+                // Combinar con resultados principales
+                $allResults = $allResults->merge($resultadosPublicaciones);
             }
             
             // Si no hay suficientes resultados y tenemos criterios de búsqueda, hacer búsqueda ampliada
@@ -481,9 +468,9 @@ class BusquedaAvanzadaController extends Controller
         );
 
         if ($ejecutar_nueva_consulta) {
-            // Ejecutar la consulta y almacenar en sesión
+            // Ejecutar la consulta principal y almacenar en sesión
             $query = DetalleMaterial::query()
-                ->select('DSM_TITULO')
+                ->select('DSM_TITULO', 'DSM_TIPO_MATERIAL', 'DSM_AUTOR_EDITOR', 'DSM_EDITORIAL')
                 ->where('DSM_AUTOR_EDITOR', '=', urldecode($autor));
 
             if ($titulo) {
@@ -491,6 +478,12 @@ class BusquedaAvanzadaController extends Controller
             }
 
             $titulos = $query->get();
+            
+            // Mapear tipos de material para mostrar descripciones legibles
+            $titulos = $titulos->map(function ($item) {
+                $item->tipo_material_descripcion = $this->mapearTipoMaterial($item->DSM_TIPO_MATERIAL);
+                return $item;
+            });
 
             // Almacenar en sesión tras nueva búsqueda
             session([
@@ -526,9 +519,9 @@ class BusquedaAvanzadaController extends Controller
         );
 
         if ($ejecutar_nueva_consulta) {
-            // Ejecutar la consulta y almacenar en sesión
+            // Ejecutar la consulta principal y almacenar en sesión
             $query = DetalleMaterial::query()
-                ->select('DSM_TITULO')
+                ->select('DSM_TITULO', 'DSM_TIPO_MATERIAL', 'DSM_AUTOR_EDITOR', 'DSM_EDITORIAL')
                 ->where('DSM_EDITORIAL', '=', urldecode($editorial));
 
             if ($titulo) {
@@ -536,6 +529,12 @@ class BusquedaAvanzadaController extends Controller
             }
 
             $titulos = $query->get();
+            
+            // Mapear tipos de material para mostrar descripciones legibles
+            $titulos = $titulos->map(function ($item) {
+                $item->tipo_material_descripcion = $this->mapearTipoMaterial($item->DSM_TIPO_MATERIAL);
+                return $item;
+            });
 
             // Almacenar en sesión tras nueva búsqueda
             session([
@@ -571,10 +570,11 @@ class BusquedaAvanzadaController extends Controller
         );
 
         if ($ejecutar_nueva_consulta) {
-            // Ejecutar la consulta y almacenar en sesión
+            // Ejecutar la consulta principal con JOIN a V_MATERIA
             $query = DB::table('DETALLE_MATERIAL')
                 ->join('V_MATERIA', 'DETALLE_MATERIAL.som_numero', '=', 'V_MATERIA.nro_control')
-                ->select('DETALLE_MATERIAL.DSM_TITULO')
+                ->select('DETALLE_MATERIAL.DSM_TITULO', 'DETALLE_MATERIAL.DSM_TIPO_MATERIAL', 
+                        'DETALLE_MATERIAL.DSM_AUTOR_EDITOR', 'DETALLE_MATERIAL.DSM_EDITORIAL')
                 ->where('V_MATERIA.nombre_busqueda', '=', urldecode($materia));
 
             if ($titulo) {
@@ -582,6 +582,38 @@ class BusquedaAvanzadaController extends Controller
             }
 
             $titulos = $query->get();
+            
+            // Buscar también publicaciones seriadas que puedan estar relacionadas por título o contenido
+            $publicacionesSeriadas = DB::table('DETALLE_MATERIAL')
+                ->select('DSM_TITULO', 'DSM_TIPO_MATERIAL', 'DSM_AUTOR_EDITOR', 'DSM_EDITORIAL')
+                ->where('DSM_TIPO_MATERIAL', 'S');
+                
+            if ($titulo) {
+                $publicacionesSeriadas->where('DSM_TITULO', 'LIKE', '%' . $titulo . '%');
+            }
+            
+            // Filtrar por materia en el título o contenido de las publicaciones seriadas
+            $publicacionesSeriadas->where(function($q) use ($materia) {
+                $materiaDecodificada = urldecode($materia);
+                $q->where('DSM_TITULO', 'LIKE', "%{$materiaDecodificada}%")
+                  ->orWhere('DSM_AUTOR_EDITOR', 'LIKE', "%{$materiaDecodificada}%");
+            });
+            
+            $resultadosPublicaciones = $publicacionesSeriadas->limit(500)->get();
+            
+            // Combinar resultados evitando duplicados
+            $titulosExistentes = $titulos->pluck('DSM_TITULO')->map('strtolower')->toArray();
+            $publicacionesNuevas = $resultadosPublicaciones->filter(function($item) use ($titulosExistentes) {
+                return !in_array(strtolower($item->DSM_TITULO), $titulosExistentes);
+            });
+            
+            $titulos = $titulos->merge($publicacionesNuevas);
+            
+            // Mapear tipos de material para mostrar descripciones legibles
+            $titulos = $titulos->map(function ($item) {
+                $item->tipo_material_descripcion = $this->mapearTipoMaterial($item->DSM_TIPO_MATERIAL);
+                return $item;
+            });
 
             // Almacenar en sesión tras nueva búsqueda
             session([
@@ -617,10 +649,11 @@ class BusquedaAvanzadaController extends Controller
         );
 
         if ($ejecutar_nueva_consulta) {
-            // Ejecutar la consulta y almacenar en sesión
+            // Ejecutar la consulta principal con JOIN a V_SERIE
             $query = DB::table('DETALLE_MATERIAL')
                 ->join('V_SERIE', 'DETALLE_MATERIAL.som_numero', '=', 'V_SERIE.nro_control')
-                ->select('DETALLE_MATERIAL.DSM_TITULO')
+                ->select('DETALLE_MATERIAL.DSM_TITULO', 'DETALLE_MATERIAL.DSM_TIPO_MATERIAL',
+                        'DETALLE_MATERIAL.DSM_AUTOR_EDITOR', 'DETALLE_MATERIAL.DSM_EDITORIAL')
                 ->where('V_SERIE.nombre_busqueda', '=', urldecode($serie));
 
             if ($titulo) {
@@ -628,6 +661,38 @@ class BusquedaAvanzadaController extends Controller
             }
 
             $titulos = $query->get();
+            
+            // Buscar también publicaciones seriadas que puedan estar relacionadas por título o contenido
+            $publicacionesSeriadas = DB::table('DETALLE_MATERIAL')
+                ->select('DSM_TITULO', 'DSM_TIPO_MATERIAL', 'DSM_AUTOR_EDITOR', 'DSM_EDITORIAL')
+                ->where('DSM_TIPO_MATERIAL', 'S');
+                
+            if ($titulo) {
+                $publicacionesSeriadas->where('DSM_TITULO', 'LIKE', '%' . $titulo . '%');
+            }
+            
+            // Filtrar por serie en el título o contenido de las publicaciones seriadas
+            $publicacionesSeriadas->where(function($q) use ($serie) {
+                $serieDecodificada = urldecode($serie);
+                $q->where('DSM_TITULO', 'LIKE', "%{$serieDecodificada}%")
+                  ->orWhere('DSM_AUTOR_EDITOR', 'LIKE', "%{$serieDecodificada}%");
+            });
+            
+            $resultadosPublicaciones = $publicacionesSeriadas->limit(500)->get();
+            
+            // Combinar resultados evitando duplicados
+            $titulosExistentes = $titulos->pluck('DSM_TITULO')->map('strtolower')->toArray();
+            $publicacionesNuevas = $resultadosPublicaciones->filter(function($item) use ($titulosExistentes) {
+                return !in_array(strtolower($item->DSM_TITULO), $titulosExistentes);
+            });
+            
+            $titulos = $titulos->merge($publicacionesNuevas);
+            
+            // Mapear tipos de material para mostrar descripciones legibles
+            $titulos = $titulos->map(function ($item) {
+                $item->tipo_material_descripcion = $this->mapearTipoMaterial($item->DSM_TIPO_MATERIAL);
+                return $item;
+            });
 
             // Almacenar en sesión tras nueva búsqueda
             session([
