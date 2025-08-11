@@ -480,7 +480,7 @@
             <!-- Barra de acciones -->
             <div class="actions-bar">
                 <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
-                    <a href="{{ route('busqueda-avanzada-resultados', ['titulo' => '']) }}" class="btn-action btn-back">
+                    <a href="javascript:history.back()" class="btn-action btn-back">
                         <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>Volver a resultados
                     </a>
                     <a href="{{ route('export.ris', ['nroControl' => $detalleMaterial->nro_control]) }}" 
