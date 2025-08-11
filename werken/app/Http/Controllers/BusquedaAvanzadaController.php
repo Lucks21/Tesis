@@ -414,11 +414,11 @@ class BusquedaAvanzadaController extends Controller
             // Ejecutar consulta principal
             $allResults = $query->limit(10000)->get();
             
-            // SOLUCIÓN: Agregar publicaciones seriadas de DETALLE_MATERIAL que no aparecieron
-            // porque sus títulos no coinciden exactamente con V_TITULO
-            $publicacionesSeriadas = DB::table('DETALLE_MATERIAL as dm')
+            // SOLUCIÓN AMPLIADA: Agregar materiales de DETALLE_MATERIAL que no aparecieron
+            // porque sus títulos no coinciden exactamente con V_TITULO (incluye todos los tipos, no solo seriadas)
+            $materialesAdicionales = DB::table('DETALLE_MATERIAL as dm')
                 ->select(
-                    DB::raw("'S_' + CAST(ROW_NUMBER() OVER (ORDER BY dm.DSM_TITULO) AS VARCHAR) as nro_control"),
+                    DB::raw("'DM_' + CAST(ROW_NUMBER() OVER (ORDER BY dm.DSM_TITULO) AS VARCHAR) as nro_control"),
                     'dm.DSM_TITULO as titulo',
                     'dm.DSM_AUTOR_EDITOR as autor',
                     'dm.DSM_EDITORIAL as editorial',
@@ -428,53 +428,135 @@ class BusquedaAvanzadaController extends Controller
                     DB::raw('NULL as biblioteca'),
                     'dm.DSM_TIPO_MATERIAL as tipo_material',
                     DB::raw('0 as relevancia')
-                )
-                ->where('dm.DSM_TIPO_MATERIAL', 'S');
+                );
                 
             // Aplicar los mismos filtros que la consulta principal
             if (!empty($titulo)) {
-                $publicacionesSeriadas->where('dm.DSM_TITULO', 'LIKE', "%{$titulo}%");
+                $materialesAdicionales->where('dm.DSM_TITULO', 'LIKE', "%{$titulo}%");
             }
             
             if (!empty($valorCriterio)) {
                 switch ($criterio) {
                     case 'autor':
-                        $publicacionesSeriadas->where('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%");
+                        $materialesAdicionales->where(function($q) use ($valorCriterio) {
+                            // Buscar la cadena completa primero
+                            $q->where('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$valorCriterio}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($valorCriterio);
+                            
+                            if (count($palabras) >= 2) {
+                                $q->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
+                        });
                         break;
                     case 'editorial':
-                        $publicacionesSeriadas->where('dm.DSM_EDITORIAL', 'LIKE', "%{$valorCriterio}%");
+                        $materialesAdicionales->where(function($q) use ($valorCriterio) {
+                            // Buscar la cadena completa primero
+                            $q->where('dm.DSM_EDITORIAL', 'LIKE', "%{$valorCriterio}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($valorCriterio);
+                            
+                            if (count($palabras) >= 2) {
+                                $q->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('dm.DSM_EDITORIAL', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
+                        });
                         break;
                 }
             }
             
             if (!empty($autorFiltro) && count($autorFiltro) > 0) {
-                $publicacionesSeriadas->where(function($q) use ($autorFiltro) {
+                $materialesAdicionales->where(function($q) use ($autorFiltro) {
                     foreach ($autorFiltro as $autor) {
-                        $q->orWhere('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$autor}%");
+                        $q->orWhere(function($subQ) use ($autor) {
+                            // Buscar la cadena completa primero
+                            $subQ->where('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$autor}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($autor);
+                            
+                            if (count($palabras) >= 2) {
+                                $subQ->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('dm.DSM_AUTOR_EDITOR', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
+                        });
                     }
                 });
             }
             
             if (!empty($editorialFiltro) && count($editorialFiltro) > 0) {
-                $publicacionesSeriadas->where(function($q) use ($editorialFiltro) {
+                $materialesAdicionales->where(function($q) use ($editorialFiltro) {
                     foreach ($editorialFiltro as $editorial) {
-                        $q->orWhere('dm.DSM_EDITORIAL', 'LIKE', "%{$editorial}%");
+                        $q->orWhere(function($subQ) use ($editorial) {
+                            // Buscar la cadena completa primero
+                            $subQ->where('dm.DSM_EDITORIAL', 'LIKE', "%{$editorial}%");
+                            
+                            // Si tiene 2+ palabras, buscar que contenga TODAS las palabras significativas
+                            $palabras = $this->extraerPalabrasSignificativas($editorial);
+                            
+                            if (count($palabras) >= 2) {
+                                $subQ->orWhere(function($andQ) use ($palabras) {
+                                    foreach ($palabras as $palabra) {
+                                        $andQ->where('dm.DSM_EDITORIAL', 'LIKE', "%{$palabra}%");
+                                    }
+                                });
+                            }
+                        });
                     }
                 });
             }
             
-            // Solo incluir publicaciones seriadas si no hay filtro de tipo de material 
-            // o si el filtro incluye publicaciones seriadas
-            $incluirPublicacionesSeriadas = empty($tipoMaterialFiltro) || 
-                                          in_array('Publicaciones Seriadas', $tipoMaterialFiltro) ||
-                                          in_array('S', $tipoMaterialFiltro);
-                                          
-            if ($incluirPublicacionesSeriadas) {
-                $resultadosPublicaciones = $publicacionesSeriadas->limit(2000)->get();
-                
-                // Combinar con resultados principales
-                $allResults = $allResults->merge($resultadosPublicaciones);
+            // Filtrar por tipo de material si es necesario
+            if (!empty($tipoMaterialFiltro) && count($tipoMaterialFiltro) > 0) {
+                $materialesAdicionales->where(function($q) use ($tipoMaterialFiltro) {
+                    foreach ($tipoMaterialFiltro as $descripcion) {
+                        $codigosArray = $this->obtenerCodigoTipoMaterial($descripcion);
+                        
+                        if ($codigosArray && is_array($codigosArray)) {
+                            foreach ($codigosArray as $codigo) {
+                                if ($codigo === null || $codigo === '' || $codigo === 'NULL') {
+                                    // Para "No especificado", buscar valores null, vacíos o 'NULL'
+                                    $q->orWhere(function($subQ) {
+                                        $subQ->whereNull('dm.DSM_TIPO_MATERIAL')
+                                             ->orWhere('dm.DSM_TIPO_MATERIAL', '')
+                                             ->orWhere('dm.DSM_TIPO_MATERIAL', 'NULL');
+                                    });
+                                } else {
+                                    // Para códigos específicos
+                                    $q->orWhere('dm.DSM_TIPO_MATERIAL', '=', trim($codigo));
+                                }
+                            }
+                        }
+                    }
+                });
             }
+            
+            $resultadosMateriales = $materialesAdicionales->limit(5000)->get();
+            
+            // Filtrar duplicados comparando por título y autor para evitar repetir materiales que ya están en allResults
+            $titulosExistentes = $allResults->map(function($item) {
+                return strtolower(trim($item->titulo ?? '')) . '|' . strtolower(trim($item->autor ?? ''));
+            })->toArray();
+            
+            $materialesNuevos = $resultadosMateriales->filter(function($item) use ($titulosExistentes) {
+                $clave = strtolower(trim($item->titulo ?? '')) . '|' . strtolower(trim($item->autor ?? ''));
+                return !in_array($clave, $titulosExistentes);
+            });
+            
+            // Combinar resultados
+            $allResults = $allResults->merge($materialesNuevos);
             
             // Si no hay suficientes resultados y tenemos criterios de búsqueda, hacer búsqueda ampliada
             if ($allResults->count() < 10 && (!empty($titulo) || !empty($valorCriterio))) {
