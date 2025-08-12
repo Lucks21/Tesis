@@ -407,6 +407,11 @@ class BusquedaAvanzadaController extends Controller
             
             // Aplicar DISTINCT al final para evitar duplicados
             $query->distinct();
+            
+            // FILTRAR: Solo incluir registros con nro_control numérico válido
+            $query->whereNotNull('vt.nro_control')
+                  ->whereRaw('ISNUMERIC(vt.nro_control) = 1')
+                  ->where('vt.nro_control', '>', 0);
 
             $query->orderBy('relevancia', 'desc')
                   ->orderBy($orderByField, $orden);
@@ -572,6 +577,11 @@ class BusquedaAvanzadaController extends Controller
                 $allResults = $allResults->merge($resultadosNuevos);
             }
             
+            // FILTRAR: Solo incluir resultados con nro_control numérico válido
+            $allResults = $allResults->filter(function ($item) {
+                return isset($item->nro_control) && is_numeric($item->nro_control) && $item->nro_control > 0;
+            });
+            
             // Procesar los resultados para mapear tipos de material
             $allResults = $allResults->map(function ($item) {
                 // Mapear el tipo de material a descripción legible
@@ -621,6 +631,12 @@ class BusquedaAvanzadaController extends Controller
             $allResults = collect($sessionData)->map(function ($item) {
                 return is_array($item) ? (object) $item : $item;
             });
+            
+            // FILTRAR: Solo incluir resultados con nro_control numérico válido también desde cache
+            $allResults = $allResults->filter(function ($item) {
+                return isset($item->nro_control) && is_numeric($item->nro_control) && $item->nro_control > 0;
+            });
+            
             session(['nav_pagina' => $pagina]);
         }
 

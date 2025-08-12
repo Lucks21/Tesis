@@ -1271,17 +1271,25 @@
                                             @if(is_object($resultado) && isset($resultado->nro_control))
                                             <tr class="table-row">
                                                 <td class="px-6 py-4 text-sm text-gray-900">
-                                                    <input type="checkbox" name="resource_checkbox" 
-                                                           value="{{ $resultado->nro_control ?? '' }}" 
-                                                           class="resource-checkbox"
-                                                           onchange="updateExportButton()">
+                                                    @if(is_numeric($resultado->nro_control ?? ''))
+                                                        <input type="checkbox" name="resource_checkbox" 
+                                                               value="{{ $resultado->nro_control }}" 
+                                                               class="resource-checkbox"
+                                                               onchange="updateExportButton()">
+                                                    @else
+                                                        <span class="text-gray-400">-</span>
+                                                    @endif
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 titulo-cell">
                                                     <div class="flex items-center">
-                                                        <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control ?? '']) }}" 
-                                                           class="text-blue-600 hover:text-blue-800 hover:underline titulo-enlace">
-                                                            {{ $resultado->titulo ?? 'Sin título' }}
-                                                        </a>
+                                                        @if(is_numeric($resultado->nro_control ?? ''))
+                                                            <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
+                                                               class="text-blue-600 hover:text-blue-800 hover:underline titulo-enlace">
+                                                                {{ $resultado->titulo ?? 'Sin título' }}
+                                                            </a>
+                                                        @else
+                                                            <span class="text-gray-500">{{ $resultado->titulo ?? 'Sin título' }}</span>
+                                                        @endif
                                                     </div>
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 autor-cell">{{ $resultado->autor ?? 'Sin autor' }}</td>
@@ -1299,10 +1307,14 @@
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 biblioteca-cell">{{ $resultado->biblioteca ?? 'Sin ubicación' }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">
-                                                    <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control ?? '']) }}" 
-                                                       class="ris-button">
-                                                        <i class="fas fa-file-export mr-2"></i>RIS
-                                                    </a>
+                                                    @if(is_numeric($resultado->nro_control ?? ''))
+                                                        <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 
+                                                           class="ris-button">
+                                                            <i class="fas fa-file-export mr-2"></i>RIS
+                                                        </a>
+                                                    @else
+                                                        <span class="text-gray-400">-</span>
+                                                    @endif
                                                 </td>
                                             </tr>
                                             @endif

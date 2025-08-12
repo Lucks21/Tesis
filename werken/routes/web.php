@@ -42,11 +42,11 @@ Route::get('busqueda-avanzada/titulos-materia/{materia}', [BusquedaAvanzadaContr
 Route::get('busqueda-avanzada/titulos-serie/{serie}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorSerie'])->name('mostrar-titulos-por-serie');
 Route::get('/export-ris/{nroControl}', [ExportacionController::class, 'exportRIS'])->name('export.ris');
 Route::post('/export-ris-multiple', [ExportacionController::class, 'exportMultipleRIS'])->name('export.ris.multiple');
-Route::get('/material/{numero}', [DetalleMaterialController::class, 'show'])->name('detalle-material');
-Route::get('/material/{numero}/resumen', [DetalleMaterialController::class, 'resumen'])->name('material.resumen');
-Route::get('/material/{numero}/test-busqueda', [DetalleMaterialController::class, 'testBusqueda'])->name('test.busqueda');
-Route::get('/material/{numero}/test-detalle', [DetalleMaterialController::class, 'testDetalleMaterial'])->name('test.detalle');
-Route::get('/material/{numero}/test-titulo', [DetalleMaterialController::class, 'testBusquedaPorTitulo'])->name('test.titulo');
+Route::get('/material/{numero}', [DetalleMaterialController::class, 'show'])->name('detalle-material')->where('numero', '[0-9]+');
+Route::get('/material/{numero}/resumen', [DetalleMaterialController::class, 'resumen'])->name('material.resumen')->where('numero', '[0-9]+');
+Route::get('/material/{numero}/test-busqueda', [DetalleMaterialController::class, 'testBusqueda'])->name('test.busqueda')->where('numero', '[0-9]+');
+Route::get('/material/{numero}/test-detalle', [DetalleMaterialController::class, 'testDetalleMaterial'])->name('test.detalle')->where('numero', '[0-9]+');
+Route::get('/material/{numero}/test-titulo', [DetalleMaterialController::class, 'testBusquedaPorTitulo'])->name('test.titulo')->where('numero', '[0-9]+');
 
 // manejo de cache para la busqueda avanzada
 Route::get('/busqueda-avanzada/limpiar-cache', [BusquedaAvanzadaController::class, 'limpiarCacheSession'])->name('limpiar-cache-busqueda');

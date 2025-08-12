@@ -11,6 +11,14 @@ class DetalleMaterialController extends Controller
 {
     public function show($numero)
     {
+        // Validar que el número sea numérico
+        if (!is_numeric($numero)) {
+            return redirect()->route('busqueda')->with('error', 'Número de control inválido. Debe ser un número.');
+        }
+        
+        // Convertir a entero para asegurar formato correcto
+        $numero = (int) $numero;
+        
         // Primero verificar si el número existe en V_TITULO
         $existeEnVTitulo = DB::table('V_TITULO')
             ->where('nro_control', $numero)
@@ -44,12 +52,28 @@ class DetalleMaterialController extends Controller
         
         // 1. Consultar existencias usando sp_WEB_detalle_existencias
         try {
+            \Log::info('Intentando consultar existencias para nro_control: ' . $numero);
             $existencias = DB::select("EXEC sp_WEB_detalle_existencias ?, ?", [$numero, 'con_reserva']);
+            
+            \Log::info('Resultado de sp_WEB_detalle_existencias:', [
+                'nro_control' => $numero,
+                'existencias_encontradas' => count($existencias),
+                'existencias_data' => $existencias
+            ]);
+            
             if (!empty($existencias)) {
                 $detalleMaterial->existencias = $existencias;
+            } else {
+                \Log::warning('sp_WEB_detalle_existencias devolvió un array vacío para nro_control: ' . $numero);
+                $detalleMaterial->existencias = [];
             }
         } catch (\Exception $e) {
-            // Si falla el SP, continuar con existencias vacías
+            // Si falla el SP, continuar con existencias vacías pero loggear el error
+            \Log::error('Error ejecutando sp_WEB_detalle_existencias:', [
+                'nro_control' => $numero,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             $detalleMaterial->existencias = [];
         }
         
@@ -328,6 +352,14 @@ class DetalleMaterialController extends Controller
 
     public function resumen($numero)
     {
+        // Validar que el número sea numérico
+        if (!is_numeric($numero)) {
+            return redirect()->route('busqueda')->with('error', 'Número de control inválido. Debe ser un número.');
+        }
+        
+        // Convertir a entero para asegurar formato correcto
+        $numero = (int) $numero;
+        
         // Consulta información completa del material para resumen
         $detalleMaterial = DB::table('DETALLE_MATERIAL as dm')
             ->select(
@@ -372,6 +404,14 @@ class DetalleMaterialController extends Controller
      */
     public function testBusqueda($numero)
     {
+        // Validar que el número sea numérico
+        if (!is_numeric($numero)) {
+            return response()->json(['error' => 'Número de control inválido. Debe ser un número.'], 400);
+        }
+        
+        // Convertir a entero para asegurar formato correcto
+        $numero = (int) $numero;
+        
         $textoBusqueda = session('texto_busqueda');
         $tipoBusqueda = session('tipo_busqueda');
         
@@ -432,6 +472,14 @@ class DetalleMaterialController extends Controller
      */
     public function testDetalleMaterial($numero)
     {
+        // Validar que el número sea numérico
+        if (!is_numeric($numero)) {
+            return response()->json(['error' => 'Número de control inválido. Debe ser un número.'], 400);
+        }
+        
+        // Convertir a entero para asegurar formato correcto
+        $numero = (int) $numero;
+        
         // Consulta directa a DETALLE_MATERIAL para ver qué datos existen
         $detalleMaterialRaw = DB::table('DETALLE_MATERIAL')
             ->where('SOM_NUMERO', $numero)
@@ -629,24 +677,14 @@ class DetalleMaterialController extends Controller
                         break;
                         
                     case 'isbn':
-                    case 'isbn13':
-                    case 'isbn10':
+                    case 'isbn_issn':
                         if ($detalleMaterial->isbn_issn == 'No disponible') {
                             $detalleMaterial->isbn_issn = $valor;
                         }
                         break;
                         
-                    case 'ano_publicacion':
-                    case 'fecha_publicacion':
-                    case 'year':
-                        if ($detalleMaterial->datos_publicacion == 'No disponible') {
-                            $detalleMaterial->datos_publicacion = $valor;
-                        }
-                        break;
-                        
                     case 'descripcion':
-                    case 'resumen':
-                    case 'notas':
+                    case 'observacion':
                         if ($detalleMaterial->descripcion == 'No disponible') {
                             $detalleMaterial->descripcion = $valor;
                         }
@@ -654,44 +692,32 @@ class DetalleMaterialController extends Controller
                         
                     case 'materia':
                     case 'descriptor':
-                    case 'tema':
+                    case 'materia_principal':
                         if ($detalleMaterial->materiales == 'No disponible') {
                             $detalleMaterial->materiales = $valor;
-                        }
-                        break;
-                        
-                    case 'tipo_material':
-                    case 'formato':
-                        if ($detalleMaterial->tipo == 'No disponible') {
-                            $detalleMaterial->tipo = $valor;
                         }
                         break;
                 }
             }
         }
-        
-        \Log::info("Campos mapeados desde tabla {$tabla}", [
-            'campos_procesados' => array_keys($datos),
-        ]);
     }
     
     /**
-     * Buscar información usando el título y luego filtrar por nro_control
+     * Método auxiliar para buscar por título y nro_control
      */
     private function buscarPorTituloYNroControl($titulo, $numero, &$detalleMaterial)
     {
         try {
-            // Buscar usando el título en sp_WEB_detalle_busqueda
-            $resultadoBusquedaTitulo = DB::select("EXEC sp_WEB_detalle_busqueda ?, ?", [$titulo, 3]); // 3 = búsqueda por título
+            $resultadoBusqueda = DB::select("EXEC sp_WEB_detalle_busqueda ?, ?", [$titulo, 3]); // 3 = búsqueda por título
             
-            if (!empty($resultadoBusquedaTitulo)) {
+            if (!empty($resultadoBusqueda)) {
                 \Log::info('Búsqueda por título ejecutada:', [
                     'titulo' => $titulo,
-                    'total_resultados' => count($resultadoBusquedaTitulo)
+                    'total_resultados' => count($resultadoBusqueda)
                 ]);
                 
                 // Buscar el material específico por nro_control
-                $materialEncontrado = collect($resultadoBusquedaTitulo)->first(function ($item) use ($numero) {
+                $materialEncontrado = collect($resultadoBusqueda)->first(function ($item) use ($numero) {
                     return (int) trim($item->nro_control) === (int) $numero;
                 });
                 
@@ -720,80 +746,41 @@ class DetalleMaterialController extends Controller
                 'numero' => $numero
             ]);
         }
-        
-        // Buscar información adicional en otras tablas
-        $this->buscarInformacionAdicional($numero, $detalleMaterial);
     }
     
     /**
-     * Método de prueba para verificar la búsqueda por título
+     * Método de prueba para verificar las existencias directamente  
      */
-    public function testBusquedaPorTitulo($numero)
+    public function testExistencias($numero)
     {
-        // Obtener el título de V_TITULO
-        $existeEnVTitulo = DB::table('V_TITULO')
-            ->where('nro_control', $numero)
-            ->first();
-        
-        if (!$existeEnVTitulo) {
-            return response()->json([
-                'error' => 'Material no encontrado en V_TITULO'
-            ]);
+        // Validar que el número sea numérico
+        if (!is_numeric($numero)) {
+            return response()->json(['error' => 'Número de control inválido'], 400);
         }
         
-        $titulo = $existeEnVTitulo->nombre_busqueda;
+        $numero = (int) $numero;
         
-        // Ejecutar búsqueda por título
         try {
-            $resultadoBusqueda = DB::select("EXEC sp_WEB_detalle_busqueda ?, ?", [$titulo, 3]);
+            // Ejecutar sp_WEB_detalle_existencias directamente
+            $existencias = DB::select("EXEC sp_WEB_detalle_existencias ?, ?", [$numero, 'con_reserva']);
             
-            // Buscar material específico por nro_control
-            $materialEncontrado = collect($resultadoBusqueda)->first(function ($item) use ($numero) {
-                return (int) trim($item->nro_control) === (int) $numero;
-            });
-            
-            // Probar búsqueda en tablas adicionales
-            $infoAdicional = [];
-            $tablasTest = ['TITULO', 'AUTOR', 'EDITORIAL', 'MATERIA'];
-            
-            foreach ($tablasTest as $tabla) {
-                try {
-                    $existe = DB::select("SELECT COUNT(*) as count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?", [$tabla]);
-                    
-                    if ($existe[0]->count > 0) {
-                        $resultado = DB::table($tabla)->where('nro_control', $numero)->first();
-                        $infoAdicional[$tabla] = [
-                            'existe_tabla' => true,
-                            'tiene_datos' => $resultado ? true : false,
-                            'datos' => $resultado
-                        ];
-                    } else {
-                        $infoAdicional[$tabla] = [
-                            'existe_tabla' => false
-                        ];
-                    }
-                } catch (\Exception $e) {
-                    $infoAdicional[$tabla] = [
-                        'error' => $e->getMessage()
-                    ];
-                }
-            }
-            
+            // También obtener información básica del material 
+            $existeEnVTitulo = DB::table('V_TITULO')
+                ->where('nro_control', $numero)
+                ->first();
+                
             return response()->json([
                 'numero_buscado' => $numero,
-                'titulo_usado' => $titulo,
-                'resultados_sp_total' => count($resultadoBusqueda),
-                'material_encontrado_en_sp' => $materialEncontrado ? 'SÍ' : 'NO',
-                'datos_del_sp' => $materialEncontrado,
-                'primeros_5_resultados_sp' => collect($resultadoBusqueda)->take(5)->toArray(),
-                'informacion_tablas_adicionales' => $infoAdicional
+                'existe_en_v_titulo' => $existeEnVTitulo ? 'SÍ' : 'NO',
+                'datos_v_titulo' => $existeEnVTitulo,
+                'existencias_total' => count($existencias),
+                'existencias_datos' => $existencias
             ], 200, [], JSON_PRETTY_PRINT);
             
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Error ejecutando SP: ' . $e->getMessage(),
-                'titulo_usado' => $titulo
-            ]);
+                'error' => 'Error ejecutando SP: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
