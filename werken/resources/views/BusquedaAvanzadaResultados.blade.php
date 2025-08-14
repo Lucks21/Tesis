@@ -236,6 +236,14 @@
             gap: 2rem;
         }
 
+        .institutional-links a {
+            margin-left: 2rem;
+        }
+
+        .institutional-links a:first-child {
+            margin-left: 0;
+        }
+
         /* Pagination styles */
         .pagination-info {
             background-color: #f8fafc;
@@ -747,7 +755,7 @@
 <body class="bg-gray-50">    <!-- Barra institucional -->
     <div class="institutional-bar">
         <div class="container mx-auto px-4">
-            <div class="flex justify-center space-x-8">
+            <div class="flex justify-center institutional-links">
                 <a href="#">Web UBB</a>
                 <a href="#">Intranet</a>
                 <a href="#">Correo Institucional</a>
