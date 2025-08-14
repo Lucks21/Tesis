@@ -178,6 +178,26 @@
                             <span class="font-semibold texto-azul">Material(s) :</span>
                             <span class="ml-2 text-blue-600 font-semibold">{{ $detalleMaterial->materiales ?? 'No disponible' }}</span>
                         </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Editorial :</span>
+                            <span class="ml-2">{{ $detalleMaterial->editorial ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Materia :</span>
+                            <span class="ml-2">{{ $detalleMaterial->materia ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Serie :</span>
+                            <span class="ml-2">{{ $detalleMaterial->serie ?? 'No disponible' }}</span>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Clasificación Dewey :</span>
+                            <span class="ml-2">{{ $detalleMaterial->dewey ?? 'No disponible' }}</span>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DetalleMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -40,32 +39,26 @@ class DetalleMaterialController extends Controller
             $detalleMaterial = $detalleMaterial[0];
         }
         
-        // Consulta información adicional del material desde DETALLE_MATERIAL
-        $infoAdicional = DB::table('DETALLE_MATERIAL as dm')
-            ->select(
-                'dm.DSM_CORRELATIVO as nro_pedido',
-                'dm.DSM_AUTOR_EDITOR as autor',
-                'dm.DSM_TITULO as titulo',
-                'dm.DSM_EDITORIAL as editorial',
-                'dm.DSM_ISBN_ISSN as isbn_issn',
-                'dm.DSM_PUBLICACION as datos_publicacion',
-                'dm.DSM_OBSERVACION as descripcion',
-                'dm.DSM_REPRESENTACION as materiales'
-            )
-            ->where('dm.SOM_NUMERO', $numero)
-            ->first();
-        
-        // Agregar información adicional al objeto principal
-        if ($infoAdicional) {
-            $detalleMaterial->nro_pedido = $infoAdicional->nro_pedido;
-            $detalleMaterial->autor = $infoAdicional->autor;
-            $detalleMaterial->titulo = $infoAdicional->titulo;
-            $detalleMaterial->editorial = $infoAdicional->editorial;
-            $detalleMaterial->isbn_issn = $infoAdicional->isbn_issn;
-            $detalleMaterial->datos_publicacion = $infoAdicional->datos_publicacion;
-            $detalleMaterial->descripcion = $infoAdicional->descripcion;
-            $detalleMaterial->materiales = $infoAdicional->materiales;
-        }
+        // Obtener información adicional desde las vistas principales
+        $autor = DB::table('V_AUTOR')
+            ->where('nro_control', $numero)
+            ->value('nombre_busqueda');
+            
+        $editorial = DB::table('V_EDITORIAL')
+            ->where('nro_control', $numero)
+            ->value('nombre_busqueda');
+            
+        $materia = DB::table('V_MATERIA')
+            ->where('nro_control', $numero)
+            ->value('nombre_busqueda');
+            
+        $serie = DB::table('V_SERIE')
+            ->where('nro_control', $numero)
+            ->value('nombre_busqueda');
+            
+        $dewey = DB::table('V_DEWEY')
+            ->where('nro_control', $numero)
+            ->value('nombre_busqueda');
         
         // Consulta todas las existencias para este material (solo si el SP funcionó)
         if (!empty(DB::select("EXEC sp_WEB_detalle_existencias ?, ?", [$numero, 'con_reserva']))) {
@@ -73,76 +66,22 @@ class DetalleMaterialController extends Controller
             $detalleMaterial->existencias = $existencias;
         }
         
-        // Agregar campos adicionales si no existen
-        if (!isset($detalleMaterial->nro_control)) {
-            $detalleMaterial->nro_control = $numero;
-        }
-        if (!isset($detalleMaterial->nro_pedido)) {
-            $detalleMaterial->nro_pedido = $numero;
-        }
-        if (!isset($detalleMaterial->autor)) {
-            $detalleMaterial->autor = 'No disponible';
-        }
-        if (!isset($detalleMaterial->titulo)) {
-            $detalleMaterial->titulo = $existeEnVTitulo->nombre_busqueda;
-        }
-        if (!isset($detalleMaterial->edicion)) {
-            $detalleMaterial->edicion = 'No disponible';
-        }
-        if (!isset($detalleMaterial->datos_publicacion)) {
-            $detalleMaterial->datos_publicacion = 'No disponible';
-        }
-        if (!isset($detalleMaterial->descripcion)) {
-            $detalleMaterial->descripcion = 'No disponible';
-        }
-        if (!isset($detalleMaterial->materiales)) {
-            $detalleMaterial->materiales = 'No disponible';
-        }
-        if (!isset($detalleMaterial->existencias)) {
-            $detalleMaterial->existencias = [];
-        }
+        // Agregar campos adicionales con información de las vistas
+        $detalleMaterial->nro_control = $numero;
+        $detalleMaterial->nro_pedido = $numero;
+        $detalleMaterial->titulo = $detalleMaterial->titulo ?? $existeEnVTitulo->nombre_busqueda;
+        $detalleMaterial->autor = $autor ?? $detalleMaterial->autor ?? 'No disponible';
+        $detalleMaterial->editorial = $editorial ?? $detalleMaterial->editorial ?? 'No disponible';
+        $detalleMaterial->materia = $materia ?? 'No disponible';
+        $detalleMaterial->serie = $serie ?? 'No disponible';
+        $detalleMaterial->dewey = $dewey ?? 'No disponible';
+        $detalleMaterial->edicion = $detalleMaterial->edicion ?? 'No disponible';
+        $detalleMaterial->datos_publicacion = $detalleMaterial->datos_publicacion ?? 'No disponible';
+        $detalleMaterial->descripcion = $detalleMaterial->descripcion ?? 'No disponible';
+        $detalleMaterial->materiales = $detalleMaterial->materiales ?? 'No disponible';
+        $detalleMaterial->existencias = $detalleMaterial->existencias ?? [];
         
         return view('detalle-material', [
-            'detalleMaterial' => $detalleMaterial
-        ]);
-    }
-
-    public function resumen($numero)
-    {
-        // Consulta información completa del material para resumen
-        $detalleMaterial = DB::table('DETALLE_MATERIAL as dm')
-            ->select(
-                'dm.SOM_NUMERO as nro_control',
-                'dm.DSM_CORRELATIVO as nro_pedido',
-                'dm.DSM_AUTOR_EDITOR as autor',
-                'dm.DSM_TITULO as titulo',
-                'dm.DSM_EDITORIAL as editorial',
-                'dm.DSM_ISBN_ISSN as isbn_issn',
-                'dm.DSM_PUBLICACION as datos_publicacion',
-                'dm.DSM_CANTIDAD_ORIGINAL as copias',
-                'dm.DSM_OBSERVACION as descripcion',
-                'dm.DSM_TIPO_MATERIAL as tipo_material',
-                'dm.DSM_IND_SUSCRIPCION',
-                'dm.DSM_REPRESENTACION as materiales',
-                'dm.DSM_USUARIO as catalogador',
-                'dm.DSM_FECHA as fecha_catalogacion'
-            )
-            ->where('dm.SOM_NUMERO', $numero)
-            ->first();
-
-        if (!$detalleMaterial) {
-            return redirect()->route('resultados')->with('error', 'No se encontró el material solicitado.');
-        }
-
-        // Agregar campos adicionales para compatibilidad
-        $detalleMaterial->edicion = 'No disponible';
-        $detalleMaterial->serie = null;
-        $detalleMaterial->materia = null;
-        $detalleMaterial->notas = $detalleMaterial->descripcion;
-        $detalleMaterial->clasificacion_dewey = 'No disponible';
-        $detalleMaterial->encabezamientos_materia = 'No disponible';
-        
-        return view('resumen-material', [
             'detalleMaterial' => $detalleMaterial
         ]);
     }

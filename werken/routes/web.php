@@ -43,7 +43,6 @@ Route::get('busqueda-avanzada/titulos-serie/{serie}', [BusquedaAvanzadaControlle
 Route::get('/export-ris/{nroControl}', [ExportacionController::class, 'exportRIS'])->name('export.ris');
 Route::post('/export-ris-multiple', [ExportacionController::class, 'exportMultipleRIS'])->name('export.ris.multiple');
 Route::get('/material/{numero}', [DetalleMaterialController::class, 'show'])->name('detalle-material');
-Route::get('/material/{numero}/resumen', [DetalleMaterialController::class, 'resumen'])->name('material.resumen');
 
 // manejo de cache para la busqueda avanzada
 Route::get('/busqueda-avanzada/limpiar-cache', [BusquedaAvanzadaController::class, 'limpiarCacheSession'])->name('limpiar-cache-busqueda');
