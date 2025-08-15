@@ -324,13 +324,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <div>
-                            <span class="font-semibold texto-azul">Nro. de Pedido :</span>
-                            <span class="ml-2">{{ $detalleMaterial->nro_pedido ?? 'No disponible' }}</span>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Autor :</span>
-                            <span class="ml-2">{{ $detalleMaterial->autor ?? 'No disponible' }}</span>
+                            <span class="font-semibold texto-azul">Nro. de Control :</span>
+                            <span class="ml-2">{{ $detalleMaterial->nro_control ?? 'No disponible' }}</span>
                         </div>
                         
                         <div>
@@ -339,115 +334,188 @@
                         </div>
                         
                         <div>
-                            <span class="font-semibold texto-azul">Edición :</span>
-                            <span class="ml-2">{{ $detalleMaterial->edicion ?? 'No disponible' }}</span>
+                            <span class="font-semibold texto-azul">Autor(es) :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->autores) && count($detalleMaterial->autores) > 0)
+                                    @foreach($detalleMaterial->autores as $autor)
+                                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $autor }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Editorial(es) :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->editoriales) && count($detalleMaterial->editoriales) > 0)
+                                    @foreach($detalleMaterial->editoriales as $editorial)
+                                        <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $editorial }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                     
                     <div class="space-y-2">
                         <div>
-                            <span class="font-semibold texto-azul">Datos de Publicación :</span>
-                            <span class="ml-2">{{ $detalleMaterial->datos_publicacion ?? 'No disponible' }}</span>
+                            <span class="font-semibold texto-azul">Materia(s) :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->materias) && count($detalleMaterial->materias) > 0)
+                                    @foreach($detalleMaterial->materias as $materia)
+                                        <span class="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $materia }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
                         </div>
                         
                         <div>
-                            <span class="font-semibold texto-azul">Descripción :</span>
-                            <span class="ml-2">{{ $detalleMaterial->descripcion ?? 'No disponible' }}</span>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Material(s) :</span>
-                            <span class="ml-2 text-blue-600 font-semibold">{{ $detalleMaterial->materiales ?? 'No disponible' }}</span>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Editorial :</span>
-                            <span class="ml-2">{{ $detalleMaterial->editorial ?? 'No disponible' }}</span>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Materia :</span>
-                            <span class="ml-2">{{ $detalleMaterial->materia ?? 'No disponible' }}</span>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Serie :</span>
-                            <span class="ml-2">{{ $detalleMaterial->serie ?? 'No disponible' }}</span>
+                            <span class="font-semibold texto-azul">Serie(s) :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->series) && count($detalleMaterial->series) > 0)
+                                    @foreach($detalleMaterial->series as $serie)
+                                        <span class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $serie }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
                         </div>
                         
                         <div>
                             <span class="font-semibold texto-azul">Clasificación Dewey :</span>
-                            <span class="ml-2">{{ $detalleMaterial->dewey ?? 'No disponible' }}</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->dewey) && count($detalleMaterial->dewey) > 0)
+                                    @foreach($detalleMaterial->dewey as $clasificacion)
+                                        <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $clasificacion }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Idioma(s) :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->idiomas) && count($detalleMaterial->idiomas) > 0)
+                                    @foreach($detalleMaterial->idiomas as $idioma)
+                                        <span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $idioma }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Nota(s) :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->notas) && count($detalleMaterial->notas) > 0)
+                                    @foreach($detalleMaterial->notas as $nota)
+                                        <div class="bg-orange-50 border-l-4 border-orange-400 p-2 mb-1 text-sm">
+                                            <span class="text-orange-800">{{ $nota }}</span>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Otro(s) Título(s) :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->otros_titulos) && count($detalleMaterial->otros_titulos) > 0)
+                                    @foreach($detalleMaterial->otros_titulos as $otroTitulo)
+                                        <span class="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $otroTitulo }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Edición :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->edicion))
+                                    <span class="inline-block bg-cyan-100 text-cyan-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $detalleMaterial->edicion }}</span>
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Datos de Publicación :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->datos_publicacion))
+                                    <div class="bg-pink-50 border-l-4 border-pink-400 p-2 mb-1 text-sm">
+                                        <span class="text-pink-800">{{ $detalleMaterial->datos_publicacion }}</span>
+                                    </div>
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">Descripción :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->descripcion))
+                                    <div class="bg-emerald-50 border-l-4 border-emerald-400 p-2 mb-1 text-sm">
+                                        <span class="text-emerald-800">{{ $detalleMaterial->descripcion }}</span>
+                                    </div>
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <span class="font-semibold texto-azul">ISBN :</span>
+                            <div class="ml-2">
+                                @if(!empty($detalleMaterial->isbn) && count($detalleMaterial->isbn) > 0)
+                                    @foreach($detalleMaterial->isbn as $isbn)
+                                        <span class="inline-block bg-slate-100 text-slate-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $isbn }}</span>
+                                    @endforeach
+                                @else
+                                    <span>No disponible</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tabla de Existencias -->
+        <!-- Información de Existencias -->
         <div class="mb-6">
             <div class="existencias-header">
-                Existencias
+                Información de Existencias
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="existencias-table">
-                    <thead>
-                        <tr>
-                            <th>Reserva</th>
-                            <th>Ubicación</th>
-                            <th>Volumen</th>
-                            <th>Parte</th>
-                            <th>Suplemento</th>
-                            <th>Días préstamo</th>
-                            <th>Formato</th>
-                            <th>Estado</th>
-                            <th>Copias</th>
-                            <th>Próxima devolución</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if(isset($detalleMaterial->existencias) && count($detalleMaterial->existencias) > 0)
-                            @foreach($detalleMaterial->existencias as $index => $existencia)
-                                <tr class="{{ $index % 2 == 0 ? 'fila-par' : 'fila-impar' }}">
-                                    <td>
-                                        @if($existencia->nombre_tb_estado == 'DISPONIBLE')
-                                            <button class="btn-reservar">
-                                                Reservar
-                                            </button>
-                                        @else
-                                            <span class="text-gray-500 text-xs">No disponible</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $existencia->nombre_tb_campus ?? 'No disponible' }}</td>
-                                    <td>{{ $existencia->nro_volumen_existe ?? '-' }}</td>
-                                    <td>{{ $existencia->nro_parte_existe ?? '-' }}</td>
-                                    <td>{{ $existencia->nro_suplemento_existe ?? '-' }}</td>
-                                    <td>{{ $existencia->dias ?? '-' }}</td>
-                                    <td>{{ $existencia->nombre_tb_format ?? '-' }}</td>
-                                    <td>{{ $existencia->nombre_tb_estado ?? '-' }}</td>
-                                    <td>{{ $existencia->Total ?? '1' }}</td>
-                                    <td>{{ $existencia->fecha_dev ?? '-' }}</td>
-                                </tr>
-                            @endforeach
-                        @else
-                            <tr class="fila-par">
-                                <td>
-                                    <span class="text-gray-500 text-xs">No disponible</span>
-                                </td>
-                                <td>No disponible</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>Libro</td>
-                                <td>Sin información</td>
-                                <td>-</td>
-                                <td>-</td>
-                            </tr>
-                        @endif
-                    </tbody>
-                </table>
+            <div class="resumen-content">
+                <div class="text-center py-8">
+                    <div class="text-gray-600 mb-4">
+                        <i class="fas fa-info-circle text-3xl mb-2"></i>
+                    </div>
+                    <p class="text-gray-700">
+                        Para consultar la disponibilidad y ubicación específica de este material, 
+                        por favor contacte directamente con la biblioteca correspondiente.
+                    </p>
+                    <div class="mt-4">
+                        <span class="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+                            Nro. de Control: {{ $detalleMaterial->nro_control }}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 
