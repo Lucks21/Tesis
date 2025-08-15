@@ -321,176 +321,156 @@
             </div>
             
             <div class="resumen-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <div>
-                            <span class="font-semibold texto-azul">Nro. de Control :</span>
-                            <span class="ml-2">{{ $detalleMaterial->nro_control ?? 'No disponible' }}</span>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Título :</span>
-                            <span class="ml-2">{{ $detalleMaterial->titulo ?? 'No disponible' }}</span>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Autor(es) :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->autores) && count($detalleMaterial->autores) > 0)
-                                    @foreach($detalleMaterial->autores as $autor)
-                                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $autor }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Editorial(es) :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->editoriales) && count($detalleMaterial->editoriales) > 0)
-                                    @foreach($detalleMaterial->editoriales as $editorial)
-                                        <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $editorial }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Nro. de Control :</div>
+                        <div class="col-span-9">{{ $detalleMaterial->nro_control ?? 'No disponible' }}</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Título :</div>
+                        <div class="col-span-9">{{ $detalleMaterial->titulo ?? 'No disponible' }}</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Autor(es) :</div>
+                        <div class="col-span-9">
+                            @if(!empty($detalleMaterial->autores) && count($detalleMaterial->autores) > 0)
+                                @foreach($detalleMaterial->autores as $autor)
+                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $autor }}</span>
+                                @endforeach
+                            @else
+                                <span>No disponible</span>
+                            @endif
                         </div>
                     </div>
                     
-                    <div class="space-y-2">
-                        <div>
-                            <span class="font-semibold texto-azul">Materia(s) :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->materias) && count($detalleMaterial->materias) > 0)
-                                    @foreach($detalleMaterial->materias as $materia)
-                                        <span class="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $materia }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Editorial(es) :</div>
+                        <div class="col-span-9">
+                            @if(!empty($detalleMaterial->editoriales) && count($detalleMaterial->editoriales) > 0)
+                                @foreach($detalleMaterial->editoriales as $editorial)
+                                    <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $editorial }}</span>
+                                @endforeach
+                            @else
+                                <span>No disponible</span>
+                            @endif
                         </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Serie(s) :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->series) && count($detalleMaterial->series) > 0)
-                                    @foreach($detalleMaterial->series as $serie)
-                                        <span class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $serie }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
+                    </div>
+                    
+                    @if(!empty($detalleMaterial->edicion))
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Edición :</div>
+                        <div class="col-span-9">
+                            <span class="inline-block bg-cyan-100 text-cyan-800 text-xs px-2 py-1 rounded-full">{{ $detalleMaterial->edicion }}</span>
                         </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Clasificación Dewey :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->dewey) && count($detalleMaterial->dewey) > 0)
-                                    @foreach($detalleMaterial->dewey as $clasificacion)
-                                        <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $clasificacion }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Idioma(s) :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->idiomas) && count($detalleMaterial->idiomas) > 0)
-                                    @foreach($detalleMaterial->idiomas as $idioma)
-                                        <span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $idioma }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Nota(s) :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->notas) && count($detalleMaterial->notas) > 0)
-                                    @foreach($detalleMaterial->notas as $nota)
-                                        <div class="bg-orange-50 border-l-4 border-orange-400 p-2 mb-1 text-sm">
-                                            <span class="text-orange-800">{{ $nota }}</span>
-                                        </div>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Otro(s) Título(s) :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->otros_titulos) && count($detalleMaterial->otros_titulos) > 0)
-                                    @foreach($detalleMaterial->otros_titulos as $otroTitulo)
-                                        <span class="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $otroTitulo }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Edición :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->edicion))
-                                    <span class="inline-block bg-cyan-100 text-cyan-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $detalleMaterial->edicion }}</span>
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Datos de Publicación :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->datos_publicacion))
-                                    <div class="bg-pink-50 border-l-4 border-pink-400 p-2 mb-1 text-sm">
-                                        <span class="text-pink-800">{{ $detalleMaterial->datos_publicacion }}</span>
-                                    </div>
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">Descripción :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->descripcion))
-                                    <div class="bg-emerald-50 border-l-4 border-emerald-400 p-2 mb-1 text-sm">
-                                        <span class="text-emerald-800">{{ $detalleMaterial->descripcion }}</span>
-                                    </div>
-                                @else
-                                    <span>No disponible</span>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <span class="font-semibold texto-azul">ISBN :</span>
-                            <div class="ml-2">
-                                @if(!empty($detalleMaterial->isbn) && count($detalleMaterial->isbn) > 0)
-                                    @foreach($detalleMaterial->isbn as $isbn)
-                                        <span class="inline-block bg-slate-100 text-slate-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $isbn }}</span>
-                                    @endforeach
-                                @else
-                                    <span>No disponible</span>
-                                @endif
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->datos_publicacion))
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Datos de Publicación :</div>
+                        <div class="col-span-9">
+                            <div class="bg-pink-50 border-l-4 border-pink-400 p-2 text-sm">
+                                <span class="text-pink-800">{{ $detalleMaterial->datos_publicacion }}</span>
                             </div>
                         </div>
                     </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->descripcion))
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Descripción :</div>
+                        <div class="col-span-9">
+                            <div class="bg-emerald-50 border-l-4 border-emerald-400 p-2 text-sm">
+                                <span class="text-emerald-800">{{ $detalleMaterial->descripcion }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Materia(s) :</div>
+                        <div class="col-span-9">
+                            @if(!empty($detalleMaterial->materias) && count($detalleMaterial->materias) > 0)
+                                @foreach($detalleMaterial->materias as $materia)
+                                    <span class="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $materia }}</span>
+                                @endforeach
+                            @else
+                                <span>No disponible</span>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    @if(!empty($detalleMaterial->series) && count($detalleMaterial->series) > 0)
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Serie(s) :</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->series as $serie)
+                                <span class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $serie }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Clasificación Dewey :</div>
+                        <div class="col-span-9">
+                            @if(!empty($detalleMaterial->dewey) && count($detalleMaterial->dewey) > 0)
+                                @foreach($detalleMaterial->dewey as $clasificacion)
+                                    <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $clasificacion }}</span>
+                                @endforeach
+                            @else
+                                <span>No disponible</span>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    @if(!empty($detalleMaterial->idiomas) && count($detalleMaterial->idiomas) > 0)
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Idioma(s) :</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->idiomas as $idioma)
+                                <span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $idioma }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->isbn) && count($detalleMaterial->isbn) > 0)
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">ISBN :</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->isbn as $isbn)
+                                <span class="inline-block bg-slate-100 text-slate-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $isbn }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->notas) && count($detalleMaterial->notas) > 0)
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Nota(s) :</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->notas as $nota)
+                                <div class="bg-orange-50 border-l-4 border-orange-400 p-2 mb-1 text-sm">
+                                    <span class="text-orange-800">{{ $nota }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->otros_titulos) && count($detalleMaterial->otros_titulos) > 0)
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-3 font-semibold texto-azul">Otro(s) Título(s) :</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->otros_titulos as $otroTitulo)
+                                <span class="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{{ $otroTitulo }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
