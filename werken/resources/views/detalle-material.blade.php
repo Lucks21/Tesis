@@ -495,30 +495,6 @@
             </div>
         </div>
 
-        <!-- Información de Existencias -->
-        <div class="mb-6">
-            <div class="existencias-header">
-                Información de Existencias
-            </div>
-            
-            <div class="resumen-content">
-                <div class="text-center py-8">
-                    <div class="text-gray-600 mb-4">
-                        <i class="fas fa-info-circle text-3xl mb-2"></i>
-                    </div>
-                    <p class="text-gray-700">
-                        Para consultar la disponibilidad y ubicación específica de este material, 
-                        por favor contacte directamente con la biblioteca correspondiente.
-                    </p>
-                    <div class="mt-4">
-                        <span class="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
-                            Nro. de Control: {{ $detalleMaterial->nro_control }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         </div>
     </div>
 </body>
