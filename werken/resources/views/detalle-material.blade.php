@@ -299,15 +299,13 @@
     </div>
 
     <!-- Barra de acciones -->
-    <div class="actions-bar">
+    <div class="actions-bar" style="padding: 1rem 0;">
         <div class="container mx-auto px-6">
-            <div class="flex justify-between items-center">
-                <a href="javascript:history.back()" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+            <div class="flex justify-start items-center">
+                <a href="javascript:history.back()" 
+                   class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-lg transition-colors flex items-center border-2 border-blue-400 hover:border-blue-500"
+                   style="background-color: #dbeafe; border: 2px solid #60a5fa; color: #1d4ed8; text-decoration: none;">
                     <i class="fas fa-arrow-left mr-2"></i>Volver a resultados
-                </a>
-                <a href="{{ route('export.ris', ['nroControl' => $detalleMaterial->nro_control]) }}" 
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                    <i class="fas fa-file-export mr-2"></i>Exportar RIS
                 </a>
             </div>
         </div>
