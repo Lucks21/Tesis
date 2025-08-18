@@ -302,7 +302,7 @@
     <div class="actions-bar">
         <div class="container mx-auto px-6">
             <div class="flex justify-between items-center">
-                <a href="{{ route('busqueda-avanzada-resultados', ['titulo' => '']) }}" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                <a href="javascript:history.back()" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
                     <i class="fas fa-arrow-left mr-2"></i>Volver a resultados
                 </a>
                 <a href="{{ route('export.ris', ['nroControl' => $detalleMaterial->nro_control]) }}" 
