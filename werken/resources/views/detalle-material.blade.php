@@ -428,41 +428,41 @@
             
             <div class="resumen-content">
                 <div class="space-y-6">
+                    @if(!empty($detalleMaterial->nro_control))
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Nro. de Control:</div>
-                        <div class="col-span-9 field-value">{{ $detalleMaterial->nro_control ?? 'No disponible' }}</div>
+                        <div class="col-span-9 field-value">{{ $detalleMaterial->nro_control }}</div>
                     </div>
+                    @endif
                     
+                    @if(!empty($detalleMaterial->titulo))
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Título:</div>
-                        <div class="col-span-9 field-value">{{ $detalleMaterial->titulo ?? 'No disponible' }}</div>
+                        <div class="col-span-9 field-value">{{ $detalleMaterial->titulo }}</div>
                     </div>
+                    @endif
                     
+                    @if(!empty($detalleMaterial->autores) && count($detalleMaterial->autores) > 0)
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Autor(es):</div>
                         <div class="col-span-9">
-                            @if(!empty($detalleMaterial->autores) && count($detalleMaterial->autores) > 0)
-                                @foreach($detalleMaterial->autores as $autor)
-                                    <span class="tag-text">{{ $autor }}</span>
-                                @endforeach
-                            @else
-                                <span class="field-value">No disponible</span>
-                            @endif
+                            @foreach($detalleMaterial->autores as $autor)
+                                <span class="tag-text">{{ $autor }}</span>
+                            @endforeach
                         </div>
                     </div>
+                    @endif
                     
+                    @if(!empty($detalleMaterial->editoriales) && count($detalleMaterial->editoriales) > 0)
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Editorial(es):</div>
                         <div class="col-span-9">
-                            @if(!empty($detalleMaterial->editoriales) && count($detalleMaterial->editoriales) > 0)
-                                @foreach($detalleMaterial->editoriales as $editorial)
-                                    <span class="tag-text">{{ $editorial }}</span>
-                                @endforeach
-                            @else
-                                <span class="field-value">No disponible</span>
-                            @endif
+                            @foreach($detalleMaterial->editoriales as $editorial)
+                                <span class="tag-text">{{ $editorial }}</span>
+                            @endforeach
                         </div>
                     </div>
+                    @endif
                     
                     @if(!empty($detalleMaterial->edicion))
                     <div class="grid grid-cols-12 gap-4 items-start">
@@ -491,18 +491,16 @@
                     </div>
                     @endif
                     
+                    @if(!empty($detalleMaterial->materias) && count($detalleMaterial->materias) > 0)
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Materia(s):</div>
                         <div class="col-span-9">
-                            @if(!empty($detalleMaterial->materias) && count($detalleMaterial->materias) > 0)
-                                @foreach($detalleMaterial->materias as $materia)
-                                    <span class="tag-text">{{ $materia }}</span>
-                                @endforeach
-                            @else
-                                <span class="field-value">No disponible</span>
-                            @endif
+                            @foreach($detalleMaterial->materias as $materia)
+                                <span class="tag-text">{{ $materia }}</span>
+                            @endforeach
                         </div>
                     </div>
+                    @endif
                     
                     @if(!empty($detalleMaterial->series) && count($detalleMaterial->series) > 0)
                     <div class="grid grid-cols-12 gap-4 items-start">
@@ -515,18 +513,16 @@
                     </div>
                     @endif
                     
+                    @if(!empty($detalleMaterial->dewey) && count($detalleMaterial->dewey) > 0)
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Clasificación Dewey:</div>
                         <div class="col-span-9">
-                            @if(!empty($detalleMaterial->dewey) && count($detalleMaterial->dewey) > 0)
-                                @foreach($detalleMaterial->dewey as $clasificacion)
-                                    <span class="tag-text">{{ $clasificacion }}</span>
-                                @endforeach
-                            @else
-                                <span class="field-value">No disponible</span>
-                            @endif
+                            @foreach($detalleMaterial->dewey as $clasificacion)
+                                <span class="tag-text">{{ $clasificacion }}</span>
+                            @endforeach
                         </div>
                     </div>
+                    @endif
                     
                     @if(!empty($detalleMaterial->idiomas) && count($detalleMaterial->idiomas) > 0)
                     <div class="grid grid-cols-12 gap-4 items-start">
