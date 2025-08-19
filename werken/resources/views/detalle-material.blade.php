@@ -95,179 +95,185 @@
             margin-bottom: 2rem;
         }
         
-        .btn-action {
-            border-radius: 8px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            font-family: 'Tipo-UBB', sans-serif;
+        .card-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 56, 118, 0.1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 56, 118, 0.1);
         }
         
-        .btn-back {
-            color: var(--ubb-azul-secundario);
-            background: var(--ubb-azul-claro);
-            border: 1px solid var(--ubb-azul-secundario);
-        }
-        
-        .btn-export {
-            background: var(--ubb-azul-principal);
+        .resumen-header {
+            background: linear-gradient(135deg, #003876 0%, #002b5c 100%);
             color: white;
+            padding: 20px 24px;
+            font-weight: bold;
+            font-size: 18px;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .resumen-content {
+            background-color: white;
+            padding: 32px 24px;
             border: none;
         }
         
-        .card {
+        .existencias-container {
             background: white;
-            border-radius: 16px;
-            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 56, 118, 0.1);
             overflow: hidden;
-            border: 1px solid var(--ubb-gris-medio);
+            border: 1px solid rgba(0, 56, 118, 0.1);
+            margin-top: 24px;
         }
         
-        .card-header {
-            background: var(--ubb-azul-principal);
+        .existencias-header {
+            background: linear-gradient(135deg, #003876 0%, #002b5c 100%);
             color: white;
-            padding: 1.5rem 2rem;
+            padding: 20px 24px;
             font-weight: bold;
-            font-size: 1.25rem;
-            font-family: 'Tipo-UBB', sans-serif;
-            position: relative;
-        }
-        
-        .card-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--ubb-azul-secundario);
-        }
-        
-        .card-content {
-            padding: 2rem;
-            background: white;
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .info-column {
-            space-y: 1.5rem;
-        }
-        
-        .info-item {
+            font-size: 18px;
             display: flex;
-            flex-direction: column;
-            padding: 1rem;
-            border-radius: 8px;
-            background: var(--ubb-gris-claro);
-            border-left: 4px solid var(--ubb-azul-secundario);
-        }
-        
-        .info-label {
-            font-weight: bold;
-            color: var(--ubb-azul-principal);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-            font-family: 'Tipo-UBB', sans-serif;
-        }
-        
-        .info-value {
-            color: var(--ubb-texto-oscuro);
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-        
-        .info-value.destacado {
-            color: var(--ubb-azul-secundario);
-            font-weight: 600;
+            align-items: center;
+            gap: 10px;
         }
         
         .existencias-table {
             width: 100%;
             border-collapse: collapse;
-            border-radius: 12px;
-            overflow: hidden;
+            width: 100%;
+            border: none;
+            background: white;
         }
         
         .existencias-table th {
-            background: var(--ubb-azul-principal);
-            color: white;
-            padding: 1rem 0.75rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #003876;
+            padding: 16px 20px;
             text-align: left;
-            font-size: 0.9rem;
-            font-weight: bold;
-            font-family: 'Tipo-UBB', sans-serif;
-            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 2px solid #003876;
         }
         
         .existencias-table td {
-            padding: 1rem 0.75rem;
-            font-size: 0.9rem;
-            border-bottom: 1px solid var(--ubb-gris-medio);
+            padding: 16px 20px;
+            font-size: 14px;
+            border-bottom: 1px solid #e2e8f0;
         }
         
         .fila-par {
-            background-color: #ffffff;
+            background-color: #f8fafc;
         }
         
         .fila-impar {
-            background-color: var(--ubb-gris-claro);
+            background-color: white;
         }
         
         .btn-reservar {
-            background: var(--ubb-verde);
+            background: linear-gradient(135deg, #003876 0%, #002b5c 100%);
             color: white;
-            padding: 0.5rem 1rem;
+            padding: 8px 16px;
             border: none;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 12px;
             cursor: pointer;
             font-weight: 600;
-            font-family: 'Tipo-UBB', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 56, 118, 0.2);
         }
         
-        .estado-badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
+        .btn-reservar:hover {
+            background: linear-gradient(135deg, #002b5c 0%, #001a3d 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 56, 118, 0.3);
+        }
+        
+        .texto-azul {
+            color: #003876;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-family: 'Tipo-UBB', sans-serif;
         }
         
-        .estado-disponible {
-            background: var(--ubb-verde);
-            color: white;
+        .field-label {
+            color: #003876;
+            font-weight: 600;
+            font-size: 14px;
         }
         
-        .estado-prestado {
-            background: var(--ubb-rojo);
-            color: white;
+        .field-value {
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.6;
         }
         
-        .estado-reservado {
-            background: var(--ubb-amarillo);
-            color: white;
+        .tag-text {
+            color: #374151;
+            font-size: 14px;
+            font-weight: 400;
+            margin-right: 8px;
+            display: inline;
         }
         
-        .estado-sin-info {
-            background: var(--ubb-gris-medio);
-            color: var(--ubb-texto-oscuro);
+        .tag-text:not(:last-child)::after {
+            content: ", ";
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
+        .info-box {
+            border-radius: 8px;
+            padding: 16px;
+            margin: 4px 0;
+            border-left: 4px solid;
         }
         
+        .info-box-publication {
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+            border-left-color: #ec4899;
+            color: #be185d;
+        }
+        
+        .info-box-description {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-left-color: #10b981;
+            color: #047857;
+        }
+        
+        .info-box-note {
+            background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+            border-left-color: #f97316;
+            color: #c2410c;
+        }
+        
+        .page-title {
+            color: #003876;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .back-button {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 2px solid #3b82f6;
+            color: #1d4ed8;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+        
+        .back-button:hover {
+            background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+            border-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+        }
+
         /* Institutional bar */
         .institutional-bar {
             background-color: #003876;
@@ -280,10 +286,14 @@
             text-decoration: none;
             padding: 0.5rem 1rem;
         }
+        .institutional-bar a:hover {
+            text-decoration: underline;
+        }
         
         /* Main header */
         .main-header {
             background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 1rem 0;
             text-align: center;
         }
@@ -310,6 +320,16 @@
             object-fit: contain;
         }
 
+        .logos-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            gap: 2rem;
+        }
+
         /* Navigation */
         .nav-container {
             background-color: white;
@@ -331,8 +351,12 @@
             color: #4B5563;
             text-decoration: none;
             padding: 1rem;
+            transition: color 0.2s;
             font-family: 'Tipo-UBB', sans-serif;
             font-weight: normal;
+        }
+        .nav-link:hover {
+            color: #003876;
         }
 
         .search-actions {
@@ -352,6 +376,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            transition: background-color 0.2s;
             font-family: 'Tipo-UBB', sans-serif;
             font-weight: bold;
             min-width: 160px;
@@ -362,71 +387,30 @@
             margin-right: 0.5rem;
         }
 
-        .logos-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .search-button:hover {
+            background-color: #002b5c;
+        }
+
+        /* Additional styles for container compatibility */
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 1rem;
-            gap: 2rem;
         }
-        
-        @media (max-width: 768px) {
-            .logo-group {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .nav-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .nav-links {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .search-actions {
-                flex-direction: column;
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .card-content {
-                padding: 1rem;
-            }
-            
-            .existencias-table {
-                font-size: 0.8rem;
-            }
-            
-            .existencias-table th,
-            .existencias-table td {
-                padding: 0.5rem 0.4rem;
-            }
+
+        .institutional-links a {
+            margin-left: 2rem;
         }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+
+        .institutional-links a:first-child {
+            margin-left: 0;
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-50">
     <!-- Barra institucional -->
     <div class="institutional-bar">
         <div class="container mx-auto px-4">
-            <div class="flex justify-center space-x-8">
+            <div class="flex justify-center institutional-links">
                 <a href="#">Web UBB</a>
                 <a href="#">Intranet</a>
                 <a href="#">Correo Institucional</a>
@@ -467,10 +451,27 @@
             </div>
             <div class="search-actions">
                 <a href="{{ route('busqueda') }}" class="search-button">
-                    <i class="fas fa-search"></i>Búsqueda Simple
+                    <i class="fas fa-search mr-2"></i>Búsqueda Simple
                 </a>
                 <a href="{{ route('busqueda-avanzada') }}" class="search-button">
-                    <i class="fas fa-filter"></i>Búsqueda Avanzada
+                    <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Título de la página -->
+    <div class="container mx-auto px-6 py-8">
+        <h1 class="page-title text-4xl mb-2">Detalle del Material</h1>
+        <div class="w-24 h-1 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full"></div>
+    </div>
+
+    <!-- Barra de acciones -->
+    <div class="actions-bar" style="padding: 0 0 2rem 0;">
+        <div class="container mx-auto px-6">
+            <div class="flex justify-start items-center">
+                <a href="javascript:history.back()" class="back-button">
+                    <i class="fas fa-arrow-left"></i>Volver a resultados
                 </a>
             </div>
         </div>
@@ -491,149 +492,157 @@
                 </div>
             </div>
 
-            <div>
+    <div class="container mx-auto px-6 pb-12">
         <!-- Resumen Bibliográfico -->
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-book" style="margin-right: 0.5rem;"></i>
+        <div class="card-container">
+            <div class="resumen-header">
+                <i class="fas fa-book"></i>
                 Resumen Bibliográfico
             </div>
             
-            <div class="card-content">
-                <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 800px;">
-                    <div style="display: flex; align-items: flex-start;">
-                        <span style="font-weight: bold; color: var(--ubb-azul-principal); min-width: 180px; margin-right: 1rem;">Nro. de Pedido :</span>
-                        <span style="color: var(--ubb-texto-oscuro);">{{ $detalleMaterial->nro_pedido ?? 'No disponible' }}</span>
+            <div class="resumen-content">
+                <div class="space-y-6">
+                    @if(!empty($detalleMaterial->nro_control))
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Nro. de Control:</div>
+                        <div class="col-span-9 field-value">{{ $detalleMaterial->nro_control }}</div>
                     </div>
+                    @endif
                     
-                    <div style="display: flex; align-items: flex-start;">
-                        <span style="font-weight: bold; color: var(--ubb-azul-principal); min-width: 180px; margin-right: 1rem;">Autor :</span>
-                        <span style="color: var(--ubb-texto-oscuro);">{{ $detalleMaterial->autor ?? 'No disponible' }}</span>
+                    @if(!empty($detalleMaterial->titulo))
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Título:</div>
+                        <div class="col-span-9 field-value">{{ $detalleMaterial->titulo }}</div>
                     </div>
+                    @endif
                     
-                    <div style="display: flex; align-items: flex-start;">
-                        <span style="font-weight: bold; color: var(--ubb-azul-principal); min-width: 180px; margin-right: 1rem;">Título :</span>
-                        <span style="color: var(--ubb-azul-secundario); font-weight: 600;">{{ $detalleMaterial->titulo ?? 'No disponible' }}</span>
+                    @if(!empty($detalleMaterial->autores) && count($detalleMaterial->autores) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Autor(es):</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->autores as $autor)
+                                <span class="tag-text">{{ $autor }}</span>
+                            @endforeach
+                        </div>
                     </div>
+                    @endif
                     
-                    <div style="display: flex; align-items: flex-start;">
-                        <span style="font-weight: bold; color: var(--ubb-azul-principal); min-width: 180px; margin-right: 1rem;">Edición :</span>
-                        <span style="color: var(--ubb-texto-oscuro);">{{ $detalleMaterial->edicion ?? 'No disponible' }}</span>
+                    @if(!empty($detalleMaterial->editoriales) && count($detalleMaterial->editoriales) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Editorial(es):</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->editoriales as $editorial)
+                                <span class="tag-text">{{ $editorial }}</span>
+                            @endforeach
+                        </div>
                     </div>
+                    @endif
                     
-                    <div style="display: flex; align-items: flex-start;">
-                        <span style="font-weight: bold; color: var(--ubb-azul-principal); min-width: 180px; margin-right: 1rem;">Datos de Publicación :</span>
-                        <span style="color: var(--ubb-texto-oscuro);">{{ $detalleMaterial->datos_publicacion ?? 'No disponible' }}</span>
+                    @if(!empty($detalleMaterial->edicion))
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Edición:</div>
+                        <div class="col-span-9">
+                            <span class="tag-text">{{ $detalleMaterial->edicion }}</span>
+                        </div>
                     </div>
+                    @endif
                     
-                    <div style="display: flex; align-items: flex-start;">
-                        <span style="font-weight: bold; color: var(--ubb-azul-principal); min-width: 180px; margin-right: 1rem;">Descripción :</span>
-                        <span style="color: var(--ubb-texto-oscuro);">{{ $detalleMaterial->descripcion ?? 'No disponible' }}</span>
+                    @if(!empty($detalleMaterial->datos_publicacion))
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Datos de Publicación:</div>
+                        <div class="col-span-9">
+                            <span class="field-value">{{ $detalleMaterial->datos_publicacion }}</span>
+                        </div>
                     </div>
+                    @endif
                     
-                    <div style="display: flex; align-items: flex-start;">
-                        <span style="font-weight: bold; color: var(--ubb-azul-principal); min-width: 180px; margin-right: 1rem;">Materia(s) :</span>
-                        <span style="color: var(--ubb-azul-secundario); font-weight: 600; text-transform: uppercase;">{{ $detalleMaterial->materiales ?? 'No disponible' }}</span>
+                    @if(!empty($detalleMaterial->descripcion))
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Descripción:</div>
+                        <div class="col-span-9">
+                            <span class="field-value">{{ $detalleMaterial->descripcion }}</span>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabla de Existencias -->
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-warehouse" style="margin-right: 0.5rem;"></i>
-                Existencias
-            </div>
-            
-            <div class="card-content" style="padding: 0;">
-                <div style="overflow-x: auto;">
-                    <table class="existencias-table">
-                        <thead>
-                            <tr>
-                                <th>Reserva</th>
-                                <th>Ubicación</th>
-                                <th>Volumen</th>
-                                <th>Parte</th>
-                                <th>Suplemento</th>
-                                <th>Días préstamo</th>
-                                <th>Formato</th>
-                                <th>Estado</th>
-                                <th>Copias</th>
-                                <th>Próxima devolución</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if(isset($detalleMaterial->existencias) && count($detalleMaterial->existencias) > 0)
-                                @foreach($detalleMaterial->existencias as $index => $existencia)
-                                    <tr class="{{ $index % 2 == 0 ? 'fila-par' : 'fila-impar' }}">
-                                        <td>
-                                            @if(isset($existencia->nombre_tb_estado) && $existencia->nombre_tb_estado == 'DISPONIBLE')
-                                                <button class="btn-reservar">
-                                                    <i class="fas fa-bookmark" style="margin-right: 0.3rem;"></i>
-                                                    Reservar
-                                                </button>
-                                            @else
-                                                <span style="color: #64748b; font-size: 0.8rem;">No disponible</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $existencia->nombre_tb_campus ?? $existencia->ubicacion ?? 'No disponible' }}</td>
-                                        <td>{{ $existencia->nro_volumen_existe ?? $existencia->volumen ?? '-' }}</td>
-                                        <td>{{ $existencia->nro_parte_existe ?? $existencia->parte ?? '-' }}</td>
-                                        <td>{{ $existencia->nro_suplemento_existe ?? $existencia->suplemento ?? '-' }}</td>
-                                        <td>{{ $existencia->dias ?? $existencia->dias_prestamo ?? '-' }}</td>
-                                        <td>{{ $existencia->nombre_tb_format ?? $existencia->formato ?? 'Libro' }}</td>
-                                        <td>
-                                            <span class="estado-badge
-                                                @if(isset($existencia->nombre_tb_estado))
-                                                    @if($existencia->nombre_tb_estado == 'DISPONIBLE')
-                                                        estado-disponible
-                                                    @elseif($existencia->nombre_tb_estado == 'PRESTADO')
-                                                        estado-prestado
-                                                    @elseif($existencia->nombre_tb_estado == 'RESERVADO')
-                                                        estado-reservado
-                                                    @else
-                                                        estado-sin-info
-                                                    @endif
-                                                @else
-                                                    estado-sin-info
-                                                @endif
-                                            ">
-                                                {{ $existencia->nombre_tb_estado ?? $existencia->estado ?? 'Sin información' }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $existencia->Total ?? $existencia->copias ?? '1' }}</td>
-                                        <td>
-                                            @if(isset($existencia->fecha_dev) && $existencia->fecha_dev != '-')
-                                                {{ \Carbon\Carbon::parse($existencia->fecha_dev)->format('d/m/Y') }}
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @else
-                                <tr class="fila-par">
-                                    <td>
-                                        <span style="color: #64748b; font-size: 0.8rem;">No disponible</span>
-                                    </td>
-                                    <td>No disponible</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td>Libro</td>
-                                    <td>
-                                        <span class="estado-badge estado-sin-info">
-                                            Sin información
-                                        </span>
-                                    </td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->materias) && count($detalleMaterial->materias) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Materia(s):</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->materias as $materia)
+                                <span class="tag-text">{{ $materia }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->series) && count($detalleMaterial->series) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Serie(s):</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->series as $serie)
+                                <span class="tag-text">{{ $serie }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->dewey) && count($detalleMaterial->dewey) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Clasificación Dewey:</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->dewey as $clasificacion)
+                                <span class="tag-text">{{ $clasificacion }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->idiomas) && count($detalleMaterial->idiomas) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Idioma(s):</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->idiomas as $idioma)
+                                <span class="tag-text">{{ $idioma }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->isbn) && count($detalleMaterial->isbn) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">ISBN:</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->isbn as $isbn)
+                                <span class="tag-text">{{ $isbn }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->notas) && count($detalleMaterial->notas) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Nota(s):</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->notas as $nota)
+                                <div class="field-value mb-2">
+                                    {{ $nota }}
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if(!empty($detalleMaterial->otros_titulos) && count($detalleMaterial->otros_titulos) > 0)
+                    <div class="grid grid-cols-12 gap-4 items-start">
+                        <div class="col-span-3 field-label">Otro(s) Título(s):</div>
+                        <div class="col-span-9">
+                            @foreach($detalleMaterial->otros_titulos as $otroTitulo)
+                                <span class="tag-text">{{ $otroTitulo }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
