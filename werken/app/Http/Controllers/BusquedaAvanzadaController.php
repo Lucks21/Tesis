@@ -505,7 +505,6 @@ class BusquedaAvanzadaController extends Controller
             'materias',
             'series',
             'campuses'
-            'campuses'
         ));
     }
 
