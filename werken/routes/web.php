@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BusquedaSimpleController;
 use App\Http\Controllers\BusquedaAvanzadaController;
+use App\Http\Controllers\BusquedaSimplificada;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportacionController;
@@ -36,6 +37,10 @@ Route::get('/busqueda-avanzada', function () {
 })->name('busqueda-avanzada');
 
 Route::get('/busqueda-avanzada/resultados', [BusquedaAvanzadaController::class, 'buscar'])->name('busqueda-avanzada-resultados');
+
+// RUTA DE PRUEBA PARA LÓGICA SIMPLIFICADA
+Route::get('/busqueda-test', [BusquedaSimplificada::class, 'buscarConFiltros'])->name('busqueda-test');
+
 Route::get('busqueda-avanzada/titulos/{autor}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorAutor'])->name('mostrar-titulos-por-autor');
 Route::get('busqueda-avanzada/titulos-editorial/{editorial}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorEditorial'])->name('mostrar-titulos-por-editorial');
 Route::get('busqueda-avanzada/titulos-materia/{materia}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorMateria'])->name('mostrar-titulos-por-materia');
@@ -48,3 +53,22 @@ Route::get('/material/{numero}', [DetalleMaterialController::class, 'show'])->na
 Route::get('/busqueda-avanzada/limpiar-cache', [BusquedaAvanzadaController::class, 'limpiarCacheSession'])->name('limpiar-cache-busqueda');
 Route::get('/busqueda-avanzada/estadisticas-cache', [BusquedaAvanzadaController::class, 'obtenerEstadisticasCache'])->name('estadisticas-cache-busqueda');
 Route::get('/busqueda-avanzada/test-cache', [BusquedaAvanzadaController::class, 'testSessionCache'])->name('test-cache-busqueda');
+
+// RUTA PARA LIMPIAR SESIÓN COMPLETAMENTE
+Route::get('/limpiar-sesion-completa', function() {
+    session()->flush();
+    return response()->json(['success' => true, 'message' => 'Sesión limpiada completamente']);
+})->name('limpiar-sesion-completa');
+
+// RUTA DE PRUEBA PARA FILTROS SIN CACHÉ
+Route::get('/test-filtros', function() {
+    $controller = new App\Http\Controllers\BusquedaAvanzadaController();
+    $resultados = $controller->buscar(request());
+    
+    if ($resultados instanceof \Illuminate\Http\RedirectResponse) {
+        return $resultados;
+    }
+    
+    $data = $resultados->getData();
+    return view('test-filtros', $data);
+})->name('test-filtros');

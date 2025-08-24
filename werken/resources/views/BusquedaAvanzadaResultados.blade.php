@@ -527,11 +527,57 @@
                     <input type="hidden" name="criterio" value="{{ request('criterio') }}">
                     <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
                     <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', array_filter(request('autor'), function($v) { return !empty(trim($v)); })) : request('autor') }}">
-                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', array_filter(request('editorial'), function($v) { return !empty(trim($v)); })) : request('editorial') }}">
-                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', array_filter(request('campus'), function($v) { return !empty(trim($v)); })) : request('campus') }}">
-                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', array_filter(request('materia'), function($v) { return !empty(trim($v)); })) : request('materia') }}">
-                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', array_filter(request('serie'), function($v) { return !empty(trim($v)); })) : request('serie') }}">
+                    
+                    {{-- MANTENER FILTROS COMO ARRAYS --}}
+                    @if(request('autor'))
+                        @if(is_array(request('autor')))
+                            @foreach(array_filter(request('autor'), function($v) { return !empty(trim($v)); }) as $autor)
+                                <input type="hidden" name="autor[]" value="{{ $autor }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="autor[]" value="{{ request('autor') }}">
+                        @endif
+                    @endif
+                    
+                    @if(request('editorial'))
+                        @if(is_array(request('editorial')))
+                            @foreach(array_filter(request('editorial'), function($v) { return !empty(trim($v)); }) as $editorial)
+                                <input type="hidden" name="editorial[]" value="{{ $editorial }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="editorial[]" value="{{ request('editorial') }}">
+                        @endif
+                    @endif
+                    
+                    @if(request('campus'))
+                        @if(is_array(request('campus')))
+                            @foreach(array_filter(request('campus'), function($v) { return !empty(trim($v)); }) as $campus)
+                                <input type="hidden" name="campus[]" value="{{ $campus }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="campus[]" value="{{ request('campus') }}">
+                        @endif
+                    @endif
+                    
+                    @if(request('materia'))
+                        @if(is_array(request('materia')))
+                            @foreach(array_filter(request('materia'), function($v) { return !empty(trim($v)); }) as $materia)
+                                <input type="hidden" name="materia[]" value="{{ $materia }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="materia[]" value="{{ request('materia') }}">
+                        @endif
+                    @endif
+                    
+                    @if(request('serie'))
+                        @if(is_array(request('serie')))
+                            @foreach(array_filter(request('serie'), function($v) { return !empty(trim($v)); }) as $serie)
+                                <input type="hidden" name="serie[]" value="{{ $serie }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="serie[]" value="{{ request('serie') }}">
+                        @endif
+                    @endif
 
                     <label for="orden" class="text-gray-700 font-semibold">
                         <i class="fas fa-sort mr-2"></i>Ordenar:
@@ -548,7 +594,7 @@
 
             <div class="flex flex-col lg:flex-row gap-3">
                 {{-- Incluir filtros desde archivo separado --}}
-                @include('partials.filtros.filtros-busqueda')
+                @include('partials.filtros.filtros-busqueda-unificado')
 
                 <!-- Resultados -->
                 <div class="results-main">
@@ -716,17 +762,12 @@
 
     {{-- Scripts específicos de la vista --}}
     <script>
+        // FORZAR RECARGA ANTI-CACHE
         document.addEventListener('DOMContentLoaded', function() {
-            // Debug para enlaces de título
-            console.log('DOM loaded, looking for titulo-enlace elements...');
             const enlaces = document.querySelectorAll('.titulo-enlace');
-            console.log('Found', enlaces.length, 'titulo-enlace elements');
             
             enlaces.forEach(function(enlace, index) {
-                console.log('Setting up link', index, ':', enlace.href);
                 enlace.addEventListener('click', function(e) {
-                    console.log('Link clicked:', this.href);
-                    console.log('Event:', e);
                     // Permitir navegación normal
                     return true;
                 });
@@ -742,7 +783,6 @@
                 navigator.clipboard.writeText(deweyNumber).then(function() {
                     // Feedback visual de éxito
                     showCopyFeedback(element, '✓ Copiado');
-                    console.log('Número de Dewey copiado al portapapeles:', deweyNumber);
                 }).catch(function(err) {
                     // Si falla, usar el método de fallback
                     fallbackCopyText(element, deweyNumber);
@@ -771,10 +811,8 @@
                 const successful = document.execCommand('copy');
                 if (successful) {
                     showCopyFeedback(element, '✓ Copiado');
-                    console.log('Número de Dewey copiado al portapapeles (fallback):', text);
                 } else {
                     showCopyFeedback(element, '✗ Error', true);
-                    console.error('Error al copiar el número de Dewey');
                 }
             } catch (err) {
                 showCopyFeedback(element, '✗ Error', true);

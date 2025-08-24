@@ -1,49 +1,21 @@
 {{-- 
-    Scripts JavaScript para funcionalidad de filtros
-    Este archivo contiene todas las funciones JS relacionadas con:
-    - Filtrado de opciones
-    - Toggle de filtros colapsables
-    - Exportación múltiple
-    - Manejo de checkboxes
+Scripts JavaScript para funcionalidad de filtros
+Este archivo contiene todas las funciones JS relacionadas con:
+- Filtrado de opciones
+- Toggle de filtros colapsables  
+- Exportación múltiple
+- Manejo de checkboxes
 --}}
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Inicializando filtros...');
-        
         // Toggle collapsible filters
         document.querySelectorAll('.collapsible-header').forEach(header => {
             header.addEventListener('click', function() {
                 const filter = this.closest('.collapsible-filter');
                 filter.classList.toggle('expanded');
-            });
-        });
-
-        // Verificar que existen los campos de búsqueda
-        const filterTypes = ['autor', 'editorial', 'campus', 'materia', 'serie'];
-        filterTypes.forEach(type => {
-            const searchInput = document.getElementById(`search-${type}`);
-            const optionsContainer = document.getElementById(`options-${type}`);
-            const noResultsMessage = document.getElementById(`no-results-${type}`);
-            
-            console.log(`Filtro ${type}:`, {
-                searchInput: !!searchInput,
-                optionsContainer: !!optionsContainer, 
-                noResultsMessage: !!noResultsMessage
-            });
-            
-            if (searchInput) {
-                // Guardar placeholder original
-                const originalPlaceholder = searchInput.getAttribute('placeholder');
-                searchInput.setAttribute('data-original-placeholder', originalPlaceholder);
-                console.log(`Placeholder guardado para ${type}: ${originalPlaceholder}`);
-            }
-        });
-
-        // Enfocar automáticamente el campo de búsqueda cuando se abre un filtro
-        document.querySelectorAll('.collapsible-header').forEach(header => {
-            header.addEventListener('click', function() {
-                const filter = this.closest('.collapsible-filter');
+                
+                // Enfocar automáticamente el campo de búsqueda cuando se abre un filtro
                 setTimeout(() => {
                     if (filter.classList.contains('expanded')) {
                         const searchInput = filter.querySelector('.filter-search-input');
@@ -51,8 +23,19 @@
                             searchInput.focus();
                         }
                     }
-                }, 300); // Esperar a que termine la animación de expansión
+                }, 300);
             });
+        });
+
+        // Inicializar campos de búsqueda
+        const filterTypes = ['autor', 'editorial', 'campus', 'materia', 'serie'];
+        filterTypes.forEach(type => {
+            const searchInput = document.getElementById(`search-${type}`);
+            if (searchInput) {
+                // Guardar placeholder original
+                const originalPlaceholder = searchInput.getAttribute('placeholder');
+                searchInput.setAttribute('data-original-placeholder', originalPlaceholder);
+            }
         });
 
         // Permitir usar Enter para buscar
@@ -60,14 +43,10 @@
             input.addEventListener('keydown', function(event) {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    // El filtrado ya se aplica automáticamente con onkeyup
                 }
             });
-        });
-
-        // Mostrar contador de opciones visibles en tiempo real
-        document.querySelectorAll('.filter-search-input').forEach(input => {
-            // Guardar placeholder original
+            
+            // Mostrar contador de opciones visibles en tiempo real
             const originalPlaceholder = input.getAttribute('placeholder');
             input.setAttribute('data-original-placeholder', originalPlaceholder);
             
@@ -77,7 +56,6 @@
                 if (optionsContainer) {
                     const visibleCount = optionsContainer.querySelectorAll('.filter-option:not(.hidden)').length;
                     
-                    // Actualizar el placeholder dinámicamente
                     if (this.value.trim() !== '') {
                         this.setAttribute('placeholder', `${visibleCount} resultado(s) encontrado(s)`);
                     } else {
@@ -86,6 +64,17 @@
                 }
             });
         });
+
+        // Inicializar checkboxes para aplicación automática
+        const form = document.getElementById('filtros-form');
+        if (form) {
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    setTimeout(aplicarFiltrosAutomatico, 300);
+                });
+            });
+        }
 
         // Event listeners para exportación múltiple
         const selectAllCheckbox = document.getElementById('selectAll');
@@ -101,8 +90,6 @@
         
         // Inicializar estado del botón
         updateExportButton();
-        
-        console.log('Filtros inicializados correctamente');
     });
 
     // Función para normalizar texto (UTF-8 safe)
@@ -161,11 +148,16 @@
         } else {
             noResultsMessage.style.display = 'none';
         }
-        
-        // Debug para ayudar con troubleshooting
-        console.log(`Filtro ${filterType}: buscando "${searchValue}", encontrados ${visibleCount} resultados`);
     }
 
+    // Función para aplicar filtros automáticamente al cambiar checkboxes
+    function aplicarFiltrosAutomatico() {
+        const form = document.getElementById('filtros-form');
+        if (form) {
+            form.submit();
+        }
+    }
+    
     // Función para limpiar todas las búsquedas de filtros
     function clearAllFilterSearches() {
         const filterTypes = ['autor', 'editorial', 'campus', 'materia', 'serie'];
@@ -183,51 +175,22 @@
         });
     }
 
-    // Función para mostrar estadísticas de filtros (UTF-8 safe)
-    function showFilterStats() {
-        const filterTypes = ['autor', 'editorial', 'campus', 'materia', 'serie'];
-        let stats = 'Estadísticas de filtros:\n\n';
+    // Función para contar filtros activos
+    function contarFiltrosActivos() {
+        const form = document.getElementById('filtros-form');
+        if (!form) return 0;
         
-        filterTypes.forEach(filterType => {
-            const optionsContainer = document.getElementById(`options-${filterType}`);
-            if (optionsContainer) {
-                const totalOptions = optionsContainer.querySelectorAll('.filter-option').length;
-                const visibleOptions = optionsContainer.querySelectorAll('.filter-option:not(.hidden)').length;
-                const checkedOptions = optionsContainer.querySelectorAll('.filter-option input[type="checkbox"]:checked').length;
-                
-                stats += `${filterType.charAt(0).toUpperCase() + filterType.slice(1)}:\n`;
-                stats += `  - Total: ${totalOptions}\n`;
-                stats += `  - Visibles: ${visibleOptions}\n`;
-                stats += `  - Seleccionados: ${checkedOptions}\n\n`;
-            }
-        });
-        
-        alert(stats);
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
+        return checkboxes.length;
     }
-
-    // Función de debug para verificar texto de opciones
-    function debugFilterOptions(filterType) {
-        const optionsContainer = document.getElementById(`options-${filterType}`);
-        const options = optionsContainer.querySelectorAll('.filter-option');
-        
-        console.log(`Debug para filtro: ${filterType}`);
-        options.forEach((option, index) => {
-            // Adaptado a la nueva estructura
-            let labelElement = option.querySelector('.filter-checkbox-label');
-            if (!labelElement) {
-                labelElement = option.querySelector('label');
-            }
-            
-            let text = 'Sin texto';
-            if (labelElement) {
-                text = labelElement.textContent.trim();
-            } else {
-                text = option.textContent.trim().replace(/^\s*\[\s*\]\s*/, '').trim();
-            }
-            
-            const normalized = normalizeText(text);
-            console.log(`${index + 1}. Original: "${text}" | Normalizado: "${normalized}"`);
-        });
+    
+    // Función para mostrar confirmación antes de limpiar filtros
+    function confirmarLimpiarFiltros() {
+        const totalActivos = contarFiltrosActivos();
+        if (totalActivos > 0) {
+            return confirm(`¿Estás seguro de que quieres limpiar los ${totalActivos} filtro(s) activo(s)?`);
+        }
+        return true;
     }
 
     // Función para mostrar u ocultar filtros en dispositivos móviles
@@ -318,14 +281,9 @@
         
         return true;
     }
-</script>cripts JavaScript para funcionalidad de filtros
-    Este archivo contiene todas las funciones JS relacionadas con:
-    - Filtrado de opciones
-    - Toggle de filtros colapsables
-    - Exportación múltiple
-    - Manejo de checkboxes
---}}
+</script>
 
+{{-- Las funciones JavaScript de filtros se moverán aquí en el siguiente paso --}}
 <script>
-    // Las funciones JavaScript de filtros se moverán aquí en el siguiente paso
+    // Funcionalidad adicional de filtros se puede agregar aquí
 </script>
