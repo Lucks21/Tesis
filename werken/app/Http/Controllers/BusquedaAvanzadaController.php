@@ -33,15 +33,6 @@ class BusquedaAvanzadaController extends Controller
         $materiaFiltro = $this->procesarFiltro($materiaFiltro);
         $serieFiltro = $this->procesarFiltro($serieFiltro);
 
-        // Debug: logging temporal para verificar filtros (remover en producción)
-        Log::info('Filtros procesados:', [
-            'autor' => $autorFiltro,
-            'editorial' => $editorialFiltro,
-            'campus' => $campusFiltro,
-            'materia' => $materiaFiltro,
-            'serie' => $serieFiltro
-        ]);
-
         // Procesar los parámetros de entrada para crear un texto procesado
         $filtros = [
             'autor' => $autorFiltro,
@@ -65,17 +56,14 @@ class BusquedaAvanzadaController extends Controller
             // Configurar timeout para la consulta
             $this->configurarTimeoutBD();
 
-            // Ejecutar la consulta y almacenar en sesión
-            $bindings = [$titulo, "%$titulo%", $valorCriterio, "%$valorCriterio%"];
-
             $query = DB::table('V_TITULO as vt')
                 ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
                 ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
                 ->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
                 ->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
+                ->leftJoin('V_DEWEY as vd', 'vt.nro_control', '=', 'vd.nro_control')
                 ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
-                ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus')
-                ->distinct();
+                ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus');
 
             // Aplicar criterios de búsqueda solo si tienen valores
             $orderByField = 'vt.nombre_busqueda'; // Campo por defecto para ordenar
@@ -110,7 +98,7 @@ class BusquedaAvanzadaController extends Controller
                     break;
             }
 
-            // Ahora definimos el select después de todos los joins e incluimos el campo de ordenamiento
+            // Definir campos de selección con cálculo de relevancia
             $selectFields = [
                 'vt.nro_control',
                 'vt.nombre_busqueda as titulo',
@@ -118,14 +106,21 @@ class BusquedaAvanzadaController extends Controller
                 've.nombre_busqueda as editorial',
                 'vm.nombre_busqueda as materia',
                 'vs.nombre_busqueda as serie',
-                'tc.nombre_tb_campus as biblioteca',
-                DB::raw("(
-                    (CASE WHEN vt.nombre_busqueda = ? THEN 5 ELSE 0 END) +
-                    (CASE WHEN vt.nombre_busqueda LIKE ? THEN 3 ELSE 0 END) +
-                    (CASE WHEN va.nombre_busqueda = ? THEN 4 ELSE 0 END) +
-                    (CASE WHEN va.nombre_busqueda LIKE ? THEN 2 ELSE 0 END)
-                ) as relevancia")
+                'vd.nombre_busqueda as dewey',
+                'tc.nombre_tb_campus as biblioteca'
             ];
+
+            // Solo agregar cálculo de relevancia si hay criterios de búsqueda
+            if (!empty($titulo) || !empty($valorCriterio)) {
+                $selectFields[] = DB::raw("(
+                    (CASE WHEN vt.nombre_busqueda = '{$titulo}' THEN 5 ELSE 0 END) +
+                    (CASE WHEN vt.nombre_busqueda LIKE '%{$titulo}%' THEN 3 ELSE 0 END) +
+                    (CASE WHEN va.nombre_busqueda = '{$valorCriterio}' THEN 4 ELSE 0 END) +
+                    (CASE WHEN va.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 2 ELSE 0 END)
+                ) as relevancia");
+            } else {
+                $selectFields[] = DB::raw("0 as relevancia");
+            }
 
             // Agregar campos específicos según el criterio para poder ordenar
             if ($criterio === 'materia') {
@@ -136,29 +131,69 @@ class BusquedaAvanzadaController extends Controller
 
             $query->select($selectFields);
 
-            // Filtros adicionales
+            // Filtros adicionales - usar comparación más robusta
             if (!empty($titulo)) {
                 $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
             }
 
             if (!empty($autorFiltro) && count($autorFiltro) > 0) {
-                $query->whereIn('va.nombre_busqueda', $autorFiltro);
+                $query->where(function($q) use ($autorFiltro) {
+                    foreach ($autorFiltro as $autor) {
+                        $q->orWhere(function($subQ) use ($autor) {
+                            $subQ->where('va.nombre_busqueda', '=', trim($autor))
+                                 ->orWhereRaw('TRIM(va.nombre_busqueda) = ?', [trim($autor)])
+                                 ->whereNotNull('va.nombre_busqueda');
+                        });
+                    }
+                });
             }
 
             if (!empty($editorialFiltro) && count($editorialFiltro) > 0) {
-                $query->whereIn('ve.nombre_busqueda', $editorialFiltro);
+                $query->where(function($q) use ($editorialFiltro) {
+                    foreach ($editorialFiltro as $editorial) {
+                        $q->orWhere(function($subQ) use ($editorial) {
+                            $subQ->where('ve.nombre_busqueda', '=', trim($editorial))
+                                 ->orWhereRaw('TRIM(ve.nombre_busqueda) = ?', [trim($editorial)])
+                                 ->whereNotNull('ve.nombre_busqueda');
+                        });
+                    }
+                });
             }
 
             if (!empty($materiaFiltro) && count($materiaFiltro) > 0) {
-                $query->whereIn('vm.nombre_busqueda', $materiaFiltro);
+                $query->where(function($q) use ($materiaFiltro) {
+                    foreach ($materiaFiltro as $materia) {
+                        $q->orWhere(function($subQ) use ($materia) {
+                            $subQ->where('vm.nombre_busqueda', '=', trim($materia))
+                                 ->orWhereRaw('TRIM(vm.nombre_busqueda) = ?', [trim($materia)])
+                                 ->whereNotNull('vm.nombre_busqueda');
+                        });
+                    }
+                });
             }
 
             if (!empty($serieFiltro) && count($serieFiltro) > 0) {
-                $query->whereIn('vs.nombre_busqueda', $serieFiltro);
+                $query->where(function($q) use ($serieFiltro) {
+                    foreach ($serieFiltro as $serie) {
+                        $q->orWhere(function($subQ) use ($serie) {
+                            $subQ->where('vs.nombre_busqueda', '=', trim($serie))
+                                 ->orWhereRaw('TRIM(vs.nombre_busqueda) = ?', [trim($serie)])
+                                 ->whereNotNull('vs.nombre_busqueda');
+                        });
+                    }
+                });
             }
 
             if (!empty($campusFiltro) && count($campusFiltro) > 0) {
-                $query->whereIn('tc.nombre_tb_campus', $campusFiltro);
+                $query->where(function($q) use ($campusFiltro) {
+                    foreach ($campusFiltro as $campus) {
+                        $q->orWhere(function($subQ) use ($campus) {
+                            $subQ->where('tc.nombre_tb_campus', '=', trim($campus))
+                                 ->orWhereRaw('TRIM(tc.nombre_tb_campus) = ?', [trim($campus)])
+                                 ->whereNotNull('tc.nombre_tb_campus');
+                        });
+                    }
+                });
             }
 
             // Excluir registros con campos principales vacíos para búsquedas amplias
@@ -183,40 +218,14 @@ class BusquedaAvanzadaController extends Controller
                 }
             }
 
+            // Aplicar DISTINCT al final para evitar duplicados
+            $query->distinct();
+
             $query->orderBy('relevancia', 'desc')
                   ->orderBy($orderByField, $orden);
 
-            // Debug: logging de la consulta SQL
-            Log::info('Consulta SQL generada:', [
-                'sql' => $query->toSql(),
-                'bindings' => array_merge($bindings, $query->getBindings()),
-                'criterio' => $criterio,
-                'valor_criterio' => $valorCriterio,
-                'titulo' => $titulo,
-                'filtros_activos' => [
-                    'autor' => $autorFiltro,
-                    'editorial' => $editorialFiltro,
-                    'campus' => $campusFiltro,
-                    'materia' => $materiaFiltro,
-                    'serie' => $serieFiltro
-                ]
-            ]);
-
-            // Limitar la consulta para evitar timeout - aumentamos el límite para búsquedas amplias
-            $allResults = (clone $query)->addBinding($bindings, 'select')->limit(5000)->get();
-
-            // Debug: logging de resultados
-            Log::info('Resultados de la consulta:', [
-                'total_resultados' => $allResults->count(),
-                'primeros_3_resultados' => $allResults->take(3)->toArray(),
-                'filtros_aplicados' => [
-                    'autor_count' => count($autorFiltro),
-                    'editorial_count' => count($editorialFiltro),
-                    'campus_count' => count($campusFiltro),
-                    'materia_count' => count($materiaFiltro),
-                    'serie_count' => count($serieFiltro)
-                ]
-            ]);
+            // Ejecutar consulta
+            $allResults = $query->limit(5000)->get();
 
             // Almacenar en sesión tras nueva búsqueda
             session([
@@ -580,65 +589,25 @@ class BusquedaAvanzadaController extends Controller
         }
 
         if (is_array($filtro)) {
-            // Si ya es un array, filtrar valores vacíos y retornar
-            return array_filter($filtro, function($valor) {
-                return !empty(trim($valor));
+            // Si ya es un array, filtrar valores vacíos y limpiar
+            $resultado = array_filter($filtro, function($valor) {
+                return !empty(trim($valor)) && $valor !== null;
             });
+            // Limpiar espacios y normalizar
+            return array_values(array_map(function($valor) {
+                return trim($valor);
+            }, $resultado));
         }
 
         if (is_string($filtro)) {
             // Si es un string, dividir por comas y filtrar valores vacíos
             $valores = explode(',', $filtro);
-            return array_filter(array_map('trim', $valores), function($valor) {
-                return !empty($valor);
+            $resultado = array_filter(array_map('trim', $valores), function($valor) {
+                return !empty($valor) && $valor !== null;
             });
+            return array_values($resultado);
         }
 
         return [];
-    }
-
-    /**
-     * Método de debug para verificar el estado de los filtros
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function debugFiltros(Request $request)
-    {
-        $autorFiltro = $request->input('autor', []);
-        $editorialFiltro = $request->input('editorial', []);
-        $campusFiltro = $request->input('campus', []);
-        $materiaFiltro = $request->input('materia', []);
-        $serieFiltro = $request->input('serie', []);
-
-        $autorProcesado = $this->procesarFiltro($autorFiltro);
-        $editorialProcesado = $this->procesarFiltro($editorialFiltro);
-        $campusProcesado = $this->procesarFiltro($campusFiltro);
-        $materiaProcesado = $this->procesarFiltro($materiaFiltro);
-        $serieProcesado = $this->procesarFiltro($serieFiltro);
-
-        return response()->json([
-            'filtros_originales' => [
-                'autor' => $autorFiltro,
-                'editorial' => $editorialFiltro,
-                'campus' => $campusFiltro,
-                'materia' => $materiaFiltro,
-                'serie' => $serieFiltro
-            ],
-            'filtros_procesados' => [
-                'autor' => $autorProcesado,
-                'editorial' => $editorialProcesado,
-                'campus' => $campusProcesado,
-                'materia' => $materiaProcesado,
-                'serie' => $serieProcesado
-            ],
-            'tipos_originales' => [
-                'autor' => gettype($autorFiltro),
-                'editorial' => gettype($editorialFiltro),
-                'campus' => gettype($campusFiltro),
-                'materia' => gettype($materiaFiltro),
-                'serie' => gettype($serieFiltro)
-            ],
-            'request_all' => $request->all()
-        ]);
     }
 }

@@ -24,6 +24,13 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
+    // Configuracion para el cache de la busqueda avanzada
+    'cache_ttl' => env('CACHE_TTL', 1800), // 30 min
+    'cache_filters_ttl' => env('CACHE_FILTERS_TTL', 3600), // 1 hora para filtros
+    'cache_max_results' => env('CACHE_MAX_RESULTS', 5000), // resultados maximos a cachear
+    'cache_enabled' => env('CACHE_ENABLED', true), // habilitar o deshabilitar el cache
+    'cache_version' => env('CACHE_VERSION', '1.1'), // version del cache
+
     'providers' => [
 
         /*
