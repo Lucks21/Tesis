@@ -58,36 +58,44 @@ class BusquedaSimpleController extends Controller
         }
         
         try {
-            // CASO 1: Clic en "Ver títulos" - viene con termino, tipo y ver_titulos
-            if (($verTitulos && $termino && $tipo) || ($termino && $tipo && !$textoBusqueda)) {
-                \Log::info('Ejecutando mostrarTitulosAsociados');
-                return $this->mostrarTitulosAsociados($termino, $tipo, $request);
-            }
-            
-            // Si hay un valor seleccionado, mostrar títulos asociados
-            if ($valorSeleccionado) {
-                \Log::info('Ejecutando mostrarTitulosAsociados con valor seleccionado');
-                return $this->mostrarTitulosAsociados($valorSeleccionado, $tipoBusqueda, $request);
-            }
-            
             // Usar textoBusqueda si no hay termino específico
             $busquedaFinal = $termino ?: $textoBusqueda;
             $tipoFinal = $tipo ?: $tipoBusqueda;
             
             \Log::info('Parámetros finales', [
                 'busquedaFinal' => $busquedaFinal,
-                'tipoFinal' => $tipoFinal
+                'tipoFinal' => $tipoFinal,
+                'verTitulos' => $verTitulos,
+                'valorSeleccionado' => $valorSeleccionado
             ]);
             
-            // Si es búsqueda por título (tipo 3), usar el SP directamente
-            if ($tipoFinal == 3) {
-                \Log::info('Ejecutando buscarTitulos (tipo 3)');
+            // CASO 1: Si es búsqueda por título (tipo 3) y es búsqueda inicial, mostrar títulos directamente
+            if ($tipoFinal == 3 && !$verTitulos && !$valorSeleccionado) {
+                \Log::info('Ejecutando buscarTitulos (tipo 3) - búsqueda inicial por título');
                 return $this->buscarTitulos($busquedaFinal, $tipoFinal, $request);
             }
             
-            // Para otros tipos (autor, materia, editorial, serie, dewey), buscar elementos
-            \Log::info('Ejecutando buscarElementos');
-            return $this->buscarElementos($busquedaFinal, $tipoFinal, $request);
+            // CASO 2: Clic en "Ver títulos" - viene con termino, tipo y ver_titulos
+            if (($verTitulos && $termino && $tipo) || ($termino && $tipo && !$textoBusqueda && $valorSeleccionado)) {
+                \Log::info('Ejecutando mostrarTitulosAsociados - clic en ver títulos');
+                return $this->mostrarTitulosAsociados($termino, $tipo, $request);
+            }
+            
+            // CASO 3: Si hay un valor seleccionado, mostrar títulos asociados
+            if ($valorSeleccionado && !$verTitulos) {
+                \Log::info('Ejecutando mostrarTitulosAsociados con valor seleccionado');
+                return $this->mostrarTitulosAsociados($valorSeleccionado, $tipoBusqueda, $request);
+            }
+            
+            // CASO 4: Para otros tipos (autor, materia, editorial, serie, dewey), buscar elementos primero
+            if ($tipoFinal != 3) {
+                \Log::info('Ejecutando buscarElementos - tipos 1,2,4,5,6');
+                return $this->buscarElementos($busquedaFinal, $tipoFinal, $request);
+            }
+            
+            // CASO 5: Fallback para título si algo sale mal
+            \Log::info('Fallback: Ejecutando buscarTitulos');
+            return $this->buscarTitulos($busquedaFinal, $tipoFinal, $request);
 
         } catch (\Exception $e) {
             \Log::error('Error en buscarConStoredProcedure', [
@@ -109,11 +117,97 @@ class BusquedaSimpleController extends Controller
         $pagina = $request->input('page', 1);
         $porPagina = 10;
         
-        // Ejecutar el stored procedure para títulos
+        \Log::info('buscarTitulos: Intentando SP primero', [
+            'textoBusqueda' => $textoBusqueda,
+            'tipoBusqueda' => $tipoBusqueda
+        ]);
+        
+        // Primero intentar el stored procedure
         $resultadosBrutos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
             $textoBusqueda,
             $tipoBusqueda
         ]);
+        
+        \Log::info('buscarTitulos: Resultados del SP', [
+            'count' => count($resultadosBrutos)
+        ]);
+        
+        // Si el SP no devuelve resultados, usar consulta directa para títulos
+        if (empty($resultadosBrutos) && $tipoBusqueda == 3) {
+            \Log::info('buscarTitulos: SP vacío, usando consulta directa');
+            
+            // Buscar directamente en la vista V_TITULO
+            $palabras = explode(' ', trim($textoBusqueda));
+            $condiciones = [];
+            $parametros = [];
+            
+            foreach ($palabras as $palabra) {
+                if (strlen(trim($palabra)) > 2) {
+                    $condiciones[] = "nombre_busqueda LIKE ?";
+                    $parametros[] = "%{$palabra}%";
+                }
+            }
+            
+            if (empty($condiciones)) {
+                $condiciones[] = "nombre_busqueda LIKE ?";
+                $parametros[] = "%{$textoBusqueda}%";
+            }
+            
+            // Primero obtener los nro_control que coinciden
+            $sqlTitulos = "
+                SELECT nro_control, nombre_busqueda 
+                FROM V_TITULO 
+                WHERE " . implode(' AND ', $condiciones) . " 
+                ORDER BY nombre_busqueda
+            ";
+            
+            try {
+                $titulosEncontrados = DB::select($sqlTitulos, $parametros);
+                \Log::info('buscarTitulos: Títulos encontrados', [
+                    'count' => count($titulosEncontrados)
+                ]);
+                
+                // Ahora obtener detalles completos usando el SP para cada título encontrado
+                $resultadosBrutos = [];
+                foreach ($titulosEncontrados as $titulo) {
+                    // Intentar obtener detalles con el SP usando el nombre exacto del título
+                    $detalles = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
+                        $titulo->nombre_busqueda,
+                        3
+                    ]);
+                    
+                    if (!empty($detalles)) {
+                        $resultadosBrutos = array_merge($resultadosBrutos, $detalles);
+                    } else {
+                        // Si el SP no funciona, crear un registro básico
+                        $registroBasico = new \stdClass();
+                        $registroBasico->nro_control = $titulo->nro_control;
+                        $registroBasico->nombre_busqueda = $titulo->nombre_busqueda;
+                        $registroBasico->autor = null;
+                        $registroBasico->editorial = null;
+                        $registroBasico->materia = null;
+                        $registroBasico->serie = null;
+                        $registroBasico->biblioteca = null;
+                        $registroBasico->publicacion = null;
+                        $registroBasico->tipo = null;
+                        $registroBasico->isbn = null;
+                        $registroBasico->signatura = null;
+                        
+                        $resultadosBrutos[] = $registroBasico;
+                    }
+                }
+                
+                \Log::info('buscarTitulos: Resultados finales procesados', [
+                    'count' => count($resultadosBrutos)
+                ]);
+                
+            } catch (\Exception $e) {
+                \Log::error('buscarTitulos: Error en consulta directa', [
+                    'error' => $e->getMessage()
+                ]);
+                $resultadosBrutos = [];
+            }
+        }
 
         // Procesar los resultados para el formato esperado por la vista
         $resultadosProcesados = collect($resultadosBrutos)->map(function ($item) {
