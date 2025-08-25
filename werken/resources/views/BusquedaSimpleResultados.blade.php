@@ -540,6 +540,9 @@
                             </div>
                             <div class="collapsible-inner">
                                 <form method="GET" action="{{ route('busqueda.sp') }}" class="space-y-3">
+                                    <!-- Campos ocultos para mantener contexto de búsqueda -->
+                                    <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                    <input type="hidden" name="tipo_busqueda" value="{{ request('tipo_busqueda') }}">
                                     <input type="hidden" name="termino" value="{{ request('termino') }}">
                                     <input type="hidden" name="tipo" value="{{ request('tipo') }}">
                                     <input type="hidden" name="ver_titulos" value="{{ request('ver_titulos') }}">
@@ -606,6 +609,9 @@
                             </div>
                             <div class="collapsible-inner">
                                 <form method="GET" action="{{ route('busqueda.sp') }}" class="space-y-3">
+                                    <!-- Campos ocultos para mantener contexto de búsqueda -->
+                                    <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                    <input type="hidden" name="tipo_busqueda" value="{{ request('tipo_busqueda') }}">
                                     <input type="hidden" name="termino" value="{{ request('termino') }}">
                                     <input type="hidden" name="tipo" value="{{ request('tipo') }}">
                                     <input type="hidden" name="ver_titulos" value="{{ request('ver_titulos') }}">
@@ -672,6 +678,9 @@
                             </div>
                             <div class="collapsible-inner">
                                 <form method="GET" action="{{ route('busqueda.sp') }}" class="space-y-3">
+                                    <!-- Campos ocultos para mantener contexto de búsqueda -->
+                                    <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                    <input type="hidden" name="tipo_busqueda" value="{{ request('tipo_busqueda') }}">
                                     <input type="hidden" name="termino" value="{{ request('termino') }}">
                                     <input type="hidden" name="tipo" value="{{ request('tipo') }}">
                                     <input type="hidden" name="ver_titulos" value="{{ request('ver_titulos') }}">
@@ -738,6 +747,9 @@
                             </div>
                             <div class="collapsible-inner">
                                 <form method="GET" action="{{ route('busqueda.sp') }}" class="space-y-3">
+                                    <!-- Campos ocultos para mantener contexto de búsqueda -->
+                                    <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                    <input type="hidden" name="tipo_busqueda" value="{{ request('tipo_busqueda') }}">
                                     <input type="hidden" name="termino" value="{{ request('termino') }}">
                                     <input type="hidden" name="tipo" value="{{ request('tipo') }}">
                                     <input type="hidden" name="ver_titulos" value="{{ request('ver_titulos') }}">
@@ -768,6 +780,75 @@
                                         </button>
                                         @if(request()->filled('serie'))
                                             <a href="{{ route('busqueda.sp', array_merge(request()->except('serie'), ['termino' => request('termino'), 'tipo' => request('tipo'), 'ver_titulos' => request('ver_titulos')])) }}"
+                                               class="remove-filter w-full text-center block mt-2">
+                                                <i class="fas fa-times mr-2"></i>Quitar Filtro
+                                            </a>
+                                        @endif
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(count($campuses) > 0)
+                    <!-- Filtrar por Campus/Biblioteca -->
+                    <div class="collapsible-filter {{ request()->filled('campus') ? 'has-active-filter expanded' : '' }}">
+                        <div class="collapsible-header">
+                            <h2>
+                                <i class="fas fa-map-marker-alt mr-2"></i>Filtrar por Campus/Biblioteca
+                                <span class="filter-count">({{ count($campuses) }} opciones)</span>
+                                @if(request()->filled('campus'))
+                                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {{ count((array) request('campus')) }} activo(s)
+                                    </span>
+                                @endif
+                            </h2>
+                            <i class="fas fa-chevron-down collapsible-toggle"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="filter-search-container">
+                                <input type="text" 
+                                       class="filter-search-input" 
+                                       placeholder="Buscar campus..." 
+                                       id="search-campus"
+                                       onkeyup="filterOptions('campus', this.value)">
+                            </div>
+                            <div class="collapsible-inner">
+                                <form method="GET" action="{{ route('busqueda.sp') }}" class="space-y-3">
+                                    <!-- Campos ocultos para mantener contexto de búsqueda -->
+                                    <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+                                    <input type="hidden" name="tipo_busqueda" value="{{ request('tipo_busqueda') }}">
+                                    <input type="hidden" name="termino" value="{{ request('termino') }}">
+                                    <input type="hidden" name="tipo" value="{{ request('tipo') }}">
+                                    <input type="hidden" name="ver_titulos" value="{{ request('ver_titulos') }}">
+                                    <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+
+                                    <div class="filter-options-container" id="options-campus">
+                                        @foreach ($campuses as $campus)
+                                            <div class="filter-option" data-value="{{ strtolower($campus) }}">
+                                                <input type="checkbox" name="campus[]" id="campus_{{ $loop->index }}"
+                                                       value="{{ $campus }}" {{ is_array(request('campus')) && in_array($campus, request('campus')) ? 'checked' : '' }}
+                                                       class="form-checkbox rounded">
+                                                <label for="campus_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
+                                                    {{ $campus }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                        <div class="no-results-message" id="no-results-campus" style="display: none;">
+                                            No se encontraron campus con ese criterio.
+                                        </div>
+                                    </div>
+                                    <div class="pt-2 border-t border-gray-200">
+                                        <button type="submit" class="filter-button w-full">
+                                            <i class="fas fa-check mr-2"></i>Aplicar Filtro
+                                        </button>
+                                        @if(request()->filled('campus'))
+                                            <a href="{{ route('busqueda.sp', array_merge(request()->except('campus'), ['termino' => request('termino'), 'tipo' => request('tipo'), 'ver_titulos' => request('ver_titulos')])) }}"
                                                class="remove-filter w-full text-center block mt-2">
                                                 <i class="fas fa-times mr-2"></i>Quitar Filtro
                                             </a>
@@ -825,6 +906,9 @@
                                     <thead class="table-header">
                                         <tr>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white">
+                                                <i class="fas fa-check mr-2"></i>Sel.
+                                            </th>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white">
                                                 <i class="fas fa-book mr-2"></i>Título
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white">
@@ -851,24 +935,42 @@
                                         @foreach($resultados as $resultado)
                                             <tr class="table-row">
                                                 <td class="px-6 py-4 text-sm text-gray-900">
+                                                    @if(isset($resultado->nro_control) && is_numeric($resultado->nro_control))
+                                                        <input type="checkbox" name="resource_checkbox" 
+                                                               value="{{ $resultado->nro_control }}" 
+                                                               class="resource-checkbox form-checkbox"
+                                                               onchange="updateExportButton()">
+                                                    @else
+                                                        <span class="text-gray-400">-</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">
                                                     <div class="flex items-center">
                                                         <i class="fas fa-book mr-2 text-blue-600"></i>
-                                                        <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
-                                                           class="text-blue-600 hover:text-blue-800 hover:underline titulo-enlace">
-                                                            {{ $resultado->titulo }}
-                                                        </a>
+                                                        @if(isset($resultado->nro_control) && is_numeric($resultado->nro_control))
+                                                            <a href="{{ route('detalle-material', ['numero' => $resultado->nro_control]) }}" 
+                                                               class="text-blue-600 hover:text-blue-800 hover:underline titulo-enlace">
+                                                                {{ $resultado->titulo ?? 'Sin título' }}
+                                                            </a>
+                                                        @else
+                                                            <span class="text-gray-500">{{ $resultado->titulo ?? 'Sin título' }}</span>
+                                                        @endif
                                                     </div>
                                                 </td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_autor }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_editorial }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_materia }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_serie }}</td>
-                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->biblioteca }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_autor ?? 'Sin autor' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_editorial ?? 'Sin editorial' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_materia ?? 'Sin materia' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->nombre_serie ?? 'Sin serie' }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">{{ $resultado->biblioteca ?? 'Sin ubicación' }}</td>
                                                 <td class="px-6 py-4 text-sm text-gray-900">
-                                                    <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 
-                                                       class="filter-button inline-flex items-center py-1 px-3 text-sm">
-                                                        <i class="fas fa-file-export mr-2"></i>RIS
-                                                    </a>
+                                                    @if(isset($resultado->nro_control) && is_numeric($resultado->nro_control))
+                                                        <a href="{{ route('export.ris', ['nroControl' => $resultado->nro_control]) }}" 
+                                                           class="filter-button inline-flex items-center py-1 px-3 text-sm">
+                                                            <i class="fas fa-file-export mr-2"></i>RIS
+                                                        </a>
+                                                    @else
+                                                        <span class="text-gray-400">-</span>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach

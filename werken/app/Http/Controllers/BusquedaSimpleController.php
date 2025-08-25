@@ -132,6 +132,25 @@ class BusquedaSimpleController extends Controller
             'count' => count($resultadosBrutos)
         ]);
         
+        // Enriquecer los datos si vienen del SP
+        if (!empty($resultadosBrutos)) {
+            \Log::info('buscarTitulos: Enriqueciendo datos del SP');
+            $resultadosEnriquecidos = [];
+            foreach ($resultadosBrutos as $resultado) {
+                \Log::info('buscarTitulos: Antes de enriquecer', [
+                    'nro_control' => $resultado->nro_control ?? 'null',
+                    'editorial' => $resultado->editorial ?? 'null'
+                ]);
+                $enriquecido = $this->enriquecerDatosDetalle($resultado);
+                \Log::info('buscarTitulos: Después de enriquecer', [
+                    'nro_control' => $enriquecido->nro_control ?? 'null',
+                    'editorial' => $enriquecido->editorial ?? 'null'
+                ]);
+                $resultadosEnriquecidos[] = $enriquecido;
+            }
+            $resultadosBrutos = $resultadosEnriquecidos;
+        }
+        
         // Si el SP no devuelve resultados, usar consulta directa para títulos
         if (empty($resultadosBrutos) && $tipoBusqueda == 3) {
             \Log::info('buscarTitulos: SP vacío, usando consulta directa');
@@ -177,9 +196,13 @@ class BusquedaSimpleController extends Controller
                     ]);
                     
                     if (!empty($detalles)) {
-                        $resultadosBrutos = array_merge($resultadosBrutos, $detalles);
+                        // Enriquecer los datos con información adicional de las vistas
+                        foreach ($detalles as $detalle) {
+                            $detalleEnriquecido = $this->enriquecerDatosDetalle($detalle);
+                            $resultadosBrutos[] = $detalleEnriquecido;
+                        }
                     } else {
-                        // Si el SP no funciona, crear un registro básico
+                        // Si el SP no funciona, crear un registro básico y enriquecerlo
                         $registroBasico = new \stdClass();
                         $registroBasico->nro_control = $titulo->nro_control;
                         $registroBasico->nombre_busqueda = $titulo->nombre_busqueda;
@@ -193,7 +216,8 @@ class BusquedaSimpleController extends Controller
                         $registroBasico->isbn = null;
                         $registroBasico->signatura = null;
                         
-                        $resultadosBrutos[] = $registroBasico;
+                        $registroEnriquecido = $this->enriquecerDatosDetalle($registroBasico);
+                        $resultadosBrutos[] = $registroEnriquecido;
                     }
                 }
                 
@@ -235,7 +259,14 @@ class BusquedaSimpleController extends Controller
         $editoriales = collect($resultadosBrutos)->pluck('editorial')->filter()->unique()->sort()->values();
         $materias = collect($resultadosBrutos)->pluck('materia')->filter()->unique()->sort()->values();
         $series = collect($resultadosBrutos)->pluck('serie')->filter()->unique()->sort()->values();      
-        $campuses = collect();    
+        $campuses = collect($resultadosBrutos)->pluck('biblioteca')->filter()->unique()->sort()->values();
+
+        // Aplicar filtros si están presentes
+        $resultadosProcesados = $this->aplicarFiltros($resultadosProcesados, $request);
+
+        // Aplicar ordenamiento
+        $orden = $request->input('orden', 'titulo_asc');
+        $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
 
         // Crear paginación
         $totalResultados = $resultadosProcesados->count();
@@ -380,6 +411,24 @@ class BusquedaSimpleController extends Controller
                 ]);
             }
             
+            // Enriquecer los datos del SP con información adicional
+            if (!empty($resultadosBrutos)) {
+                \Log::info('mostrarTitulosAsociados: Enriqueciendo datos del SP');
+                foreach ($resultadosBrutos as &$resultado) {
+                    \Log::info('mostrarTitulosAsociados: Antes de enriquecer', [
+                        'nro_control' => $resultado->nro_control ?? 'null',
+                        'editorial' => $resultado->editorial ?? 'null'
+                    ]);
+                    $enriquecido = $this->enriquecerDatosDetalle($resultado);
+                    \Log::info('mostrarTitulosAsociados: Después de enriquecer', [
+                        'nro_control' => $enriquecido->nro_control ?? 'null',
+                        'editorial' => $enriquecido->editorial ?? 'null'
+                    ]);
+                    $resultado = $enriquecido;
+                }
+                unset($resultado); // Romper la referencia
+            }
+            
             $resultadosProcesados = collect($resultadosBrutos)->map(function ($item) {
                 return (object) [
                     'nro_control' => $this->getValue($item, ['nro_control', 'numero_control']),
@@ -396,28 +445,12 @@ class BusquedaSimpleController extends Controller
                 ];
             });
 
-            // Obtener datos únicos para filtros
-            $autores = collect($resultadosBrutos)->map(function($item) {
-                return property_exists($item, 'autor') ? $item->autor : 
-                       (property_exists($item, 'nombre_autor') ? $item->nombre_autor : null);
-            })->filter()->unique()->sort()->values();
-            
-            $editoriales = collect($resultadosBrutos)->map(function($item) {
-                return property_exists($item, 'editorial') ? $item->editorial : 
-                       (property_exists($item, 'nombre_editorial') ? $item->nombre_editorial : null);
-            })->filter()->unique()->sort()->values();
-            
-            $materias = collect($resultadosBrutos)->map(function($item) {
-                return property_exists($item, 'materia') ? $item->materia : 
-                       (property_exists($item, 'nombre_materia') ? $item->nombre_materia : null);
-            })->filter()->unique()->sort()->values();
-            
-            $series = collect($resultadosBrutos)->map(function($item) {
-                return property_exists($item, 'serie') ? $item->serie : 
-                       (property_exists($item, 'nombre_serie') ? $item->nombre_serie : null);
-            })->filter()->unique()->sort()->values();
-            
-            $campuses = collect();
+            // Obtener datos únicos para filtros desde los datos enriquecidos
+            $autores = collect($resultadosBrutos)->pluck('autor')->filter()->unique()->sort()->values();
+            $editoriales = collect($resultadosBrutos)->pluck('editorial')->filter()->unique()->sort()->values();
+            $materias = collect($resultadosBrutos)->pluck('materia')->filter()->unique()->sort()->values();
+            $series = collect($resultadosBrutos)->pluck('serie')->filter()->unique()->sort()->values();
+            $campuses = collect($resultadosBrutos)->pluck('biblioteca')->filter()->unique()->sort()->values();
 
             // Aplicar filtros si están presentes
             $resultadosProcesados = $this->aplicarFiltros($resultadosProcesados, $request);
@@ -497,46 +530,68 @@ class BusquedaSimpleController extends Controller
     {
         $filtrados = $resultados;
 
+        // Procesar filtros para manejar tanto arrays como strings separadas por comas
+        $autorFiltro = $this->procesarFiltro($request->input('autor', []));
+        $editorialFiltro = $this->procesarFiltro($request->input('editorial', []));
+        $materiaFiltro = $this->procesarFiltro($request->input('materia', []));
+        $serieFiltro = $this->procesarFiltro($request->input('serie', []));
+        $campusFiltro = $this->procesarFiltro($request->input('campus', []));
+
+        \Log::info('aplicarFiltros: Filtros recibidos', [
+            'autor' => $autorFiltro,
+            'editorial' => $editorialFiltro,
+            'materia' => $materiaFiltro,
+            'serie' => $serieFiltro,
+            'campus' => $campusFiltro,
+            'total_antes' => $resultados->count()
+        ]);
+
         // Filtrar por autor
-        if ($request->filled('autor')) {
-            $autoresFiltro = is_array($request->input('autor')) ? $request->input('autor') : [$request->input('autor')];
-            $filtrados = $filtrados->filter(function ($item) use ($autoresFiltro) {
-                return in_array($item->nombre_autor, $autoresFiltro);
+        if (!empty($autorFiltro) && count($autorFiltro) > 0) {
+            $filtrados = $filtrados->filter(function ($item) use ($autorFiltro) {
+                // Intentar tanto nombre_autor como autor
+                $autor = $item->nombre_autor ?? $item->autor ?? null;
+                return $autor && in_array(trim($autor), array_map('trim', $autorFiltro));
             });
         }
 
         // Filtrar por editorial
-        if ($request->filled('editorial')) {
-            $editorialesFiltro = is_array($request->input('editorial')) ? $request->input('editorial') : [$request->input('editorial')];
-            $filtrados = $filtrados->filter(function ($item) use ($editorialesFiltro) {
-                return $item->nombre_editorial && in_array($item->nombre_editorial, $editorialesFiltro);
+        if (!empty($editorialFiltro) && count($editorialFiltro) > 0) {
+            $filtrados = $filtrados->filter(function ($item) use ($editorialFiltro) {
+                // Intentar tanto nombre_editorial como editorial
+                $editorial = $item->nombre_editorial ?? $item->editorial ?? null;
+                return $editorial && in_array(trim($editorial), array_map('trim', $editorialFiltro));
             });
         }
 
         // Filtrar por materia
-        if ($request->filled('materia')) {
-            $materiasFiltro = is_array($request->input('materia')) ? $request->input('materia') : [$request->input('materia')];
-            $filtrados = $filtrados->filter(function ($item) use ($materiasFiltro) {
-                return $item->nombre_materia && in_array($item->nombre_materia, $materiasFiltro);
+        if (!empty($materiaFiltro) && count($materiaFiltro) > 0) {
+            $filtrados = $filtrados->filter(function ($item) use ($materiaFiltro) {
+                // Intentar tanto nombre_materia como materia
+                $materia = $item->nombre_materia ?? $item->materia ?? null;
+                return $materia && in_array(trim($materia), array_map('trim', $materiaFiltro));
             });
         }
 
         // Filtrar por serie
-        // Filtrar por serie
-        if ($request->filled('serie')) {
-            $seriesFiltro = is_array($request->input('serie')) ? $request->input('serie') : [$request->input('serie')];
-            $filtrados = $filtrados->filter(function ($item) use ($seriesFiltro) {
-                return $item->nombre_serie && in_array($item->nombre_serie, $seriesFiltro);
+        if (!empty($serieFiltro) && count($serieFiltro) > 0) {
+            $filtrados = $filtrados->filter(function ($item) use ($serieFiltro) {
+                // Intentar tanto nombre_serie como serie
+                $serie = $item->nombre_serie ?? $item->serie ?? null;
+                return $serie && in_array(trim($serie), array_map('trim', $serieFiltro));
             });
         }
 
         // Filtrar por campus/biblioteca
-        if ($request->filled('campus')) {
-            $campusFiltro = is_array($request->input('campus')) ? $request->input('campus') : [$request->input('campus')];
+        if (!empty($campusFiltro) && count($campusFiltro) > 0) {
             $filtrados = $filtrados->filter(function ($item) use ($campusFiltro) {
-                return $item->biblioteca && in_array($item->biblioteca, $campusFiltro);
+                return $item->biblioteca && in_array(trim($item->biblioteca), array_map('trim', $campusFiltro));
             });
         }
+
+        \Log::info('aplicarFiltros: Resultado', [
+            'total_despues' => $filtrados->count()
+        ]);
 
         return $filtrados;
     }
@@ -691,6 +746,111 @@ class BusquedaSimpleController extends Controller
                 return $resultados->sortByDesc('anio_publicacion');
             default:
                 return $resultados->sortBy('titulo');
+        }
+    }
+
+    /**
+     * Procesa un filtro que puede venir como array o string separado por comas
+     * @param mixed $filtro El filtro a procesar
+     * @return array Array con los valores del filtro
+     */
+    private function procesarFiltro($filtro)
+    {
+        if (empty($filtro)) {
+            return [];
+        }
+
+        if (is_array($filtro)) {
+            // Si ya es un array, filtrar valores vacíos y limpiar
+            $resultado = array_filter($filtro, function($valor) {
+                return !empty(trim($valor)) && $valor !== null;
+            });
+            // Limpiar espacios y normalizar
+            return array_values(array_map(function($valor) {
+                return trim($valor);
+            }, $resultado));
+        }
+
+        if (is_string($filtro)) {
+            // Si es un string, dividir por comas y filtrar valores vacíos
+            $valores = explode(',', $filtro);
+            $resultado = array_filter(array_map('trim', $valores), function($valor) {
+                return !empty($valor) && $valor !== null;
+            });
+            return array_values($resultado);
+        }
+
+        return [];
+    }
+
+    /**
+     * Enriquecer datos del detalle con información adicional de las vistas
+     */
+    private function enriquecerDatosDetalle($detalle)
+    {
+        if (!isset($detalle->nro_control)) {
+            \Log::warning('enriquecerDatosDetalle: detalle sin nro_control');
+            return $detalle;
+        }
+
+        try {
+            $nroControl = $detalle->nro_control;
+            
+            \Log::info('enriquecerDatosDetalle: Procesando', [
+                'nro_control' => $nroControl,
+                'editorial_antes' => $detalle->editorial ?? 'null',
+                'materia_antes' => $detalle->materia ?? 'null',
+                'serie_antes' => $detalle->serie ?? 'null',
+                'biblioteca_antes' => $detalle->biblioteca ?? 'null'
+            ]);
+            
+            // Obtener datos adicionales si no están presentes
+            if (empty($detalle->editorial)) {
+                $editorial = DB::select("SELECT TOP 1 nombre_busqueda FROM V_EDITORIAL WHERE nro_control = ?", [$nroControl]);
+                $detalle->editorial = !empty($editorial) ? $editorial[0]->nombre_busqueda : null;
+                \Log::info('enriquecerDatosDetalle: Editorial obtenida', ['editorial' => $detalle->editorial]);
+            }
+            
+            if (empty($detalle->materia)) {
+                $materia = DB::select("SELECT TOP 1 nombre_busqueda FROM V_MATERIA WHERE nro_control = ?", [$nroControl]);
+                $detalle->materia = !empty($materia) ? $materia[0]->nombre_busqueda : null;
+                \Log::info('enriquecerDatosDetalle: Materia obtenida', ['materia' => $detalle->materia]);
+            }
+            
+            if (empty($detalle->serie)) {
+                $serie = DB::select("SELECT TOP 1 nombre_busqueda FROM V_SERIE WHERE nro_control = ?", [$nroControl]);
+                $detalle->serie = !empty($serie) ? $serie[0]->nombre_busqueda : null;
+                \Log::info('enriquecerDatosDetalle: Serie obtenida', ['serie' => $detalle->serie]);
+            }
+            
+            if (empty($detalle->biblioteca)) {
+                $biblioteca = DB::select("
+                    SELECT TOP 1 tc.nombre_tb_campus 
+                    FROM EXISTENCIA e 
+                    INNER JOIN TB_CAMPUS tc ON e.campus_tb_campus = tc.campus_tb_campus 
+                    WHERE e.nro_control = ?
+                ", [$nroControl]);
+                $detalle->biblioteca = !empty($biblioteca) ? $biblioteca[0]->nombre_tb_campus : null;
+                \Log::info('enriquecerDatosDetalle: Biblioteca obtenida', ['biblioteca' => $detalle->biblioteca]);
+            }
+            
+            \Log::info('enriquecerDatosDetalle: Completado', [
+                'nro_control' => $nroControl,
+                'editorial_despues' => $detalle->editorial,
+                'materia_despues' => $detalle->materia,
+                'serie_despues' => $detalle->serie,
+                'biblioteca_despues' => $detalle->biblioteca
+            ]);
+            
+            return $detalle;
+            
+        } catch (\Exception $e) {
+            \Log::error('Error enriqueciendo datos del detalle', [
+                'nro_control' => $detalle->nro_control ?? 'null',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $detalle;
         }
     }
 }
