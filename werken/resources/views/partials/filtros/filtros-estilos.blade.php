@@ -8,6 +8,55 @@
 --}}
 
 <style>
+    /* ESTILOS PRIORITARIOS CON !important PARA FILTROS */
+    .filters-sidebar .collapsible-filter {
+        border: 1px solid rgba(0, 56, 118, 0.1) !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
+        background: #ffffff !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    .filters-sidebar .collapsible-header {
+        background: #003876 !important;
+        color: white !important;
+        padding: 1rem !important;
+        cursor: pointer !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        transition: background-color 0.2s !important;
+        user-select: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .filters-sidebar .collapsible-header:hover {
+        background: #002b5c !important;
+    }
+
+    .filters-sidebar .collapsible-header h2 {
+        margin: 0 !important;
+        font-family: 'Tipo-UBB', sans-serif !important;
+        font-weight: bold !important;
+        font-size: 1.125rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        color: white !important;
+    }
+
+    .filters-sidebar .collapsible-header h2 i {
+        color: white !important;
+        margin-right: 0.5rem !important;
+    }
+
+    .filters-sidebar .collapsible-toggle {
+        transition: transform 0.3s ease !important;
+        font-size: 1.2rem !important;
+        color: white !important;
+    }
+
     /* Filter section base styles */
     .filter-section {
         background: #ffffff;
@@ -83,11 +132,12 @@
         border-radius: 0.5rem;
         overflow: hidden;
         background: #ffffff;
+        margin-bottom: 0.75rem;
     }
 
     .collapsible-header {
-        background: #003876;
-        color: white;
+        background: #003876 !important;
+        color: white !important;
         padding: 1rem;
         cursor: pointer;
         display: flex;
@@ -95,10 +145,12 @@
         align-items: center;
         transition: background-color 0.2s;
         user-select: none;
+        border: none;
+        box-shadow: none;
     }
 
     .collapsible-header:hover {
-        background: #002b5c;
+        background: #002b5c !important;
     }
 
     .collapsible-header h2 {
@@ -109,11 +161,18 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: white !important;
+    }
+
+    .collapsible-header h2 i {
+        color: white !important;
+        margin-right: 0.5rem;
     }
 
     .collapsible-toggle {
         transition: transform 0.3s ease;
         font-size: 1.2rem;
+        color: white !important;
     }
 
     .collapsible-content {
@@ -138,11 +197,11 @@
 
     /* Active filter indicator */
     .collapsible-filter.has-active-filter .collapsible-header {
-        background: #1d4ed8;
+        background: #1d4ed8 !important;
     }
 
     .collapsible-filter.has-active-filter .collapsible-header:hover {
-        background: #1e40af;
+        background: #1e40af !important;
     }
 
     /* Filter search styles */

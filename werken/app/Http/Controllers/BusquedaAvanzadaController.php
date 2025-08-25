@@ -265,6 +265,9 @@ class BusquedaAvanzadaController extends Controller
             ]
         );
 
+        // Definir la ruta de acción para los filtros
+        $filtros_action_route = 'busqueda-avanzada-resultados';
+
         return view('BusquedaAvanzadaResultados', compact(
             'resultados',
             'criterio',
@@ -275,7 +278,8 @@ class BusquedaAvanzadaController extends Controller
             'editoriales',
             'materias',
             'series',
-            'campuses'
+            'campuses',
+            'filtros_action_route'
         ));
     }
 

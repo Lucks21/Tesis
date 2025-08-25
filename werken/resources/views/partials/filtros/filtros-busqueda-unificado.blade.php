@@ -8,11 +8,12 @@
     - $materias (Collection)
     - $series (Collection)
     - $campuses (Collection)
+    - $filtros_action_route (string) - Ruta de acción del formulario
 --}}
 
 <div class="filters-sidebar space-y-3">
     {{-- UN SOLO FORMULARIO PARA TODOS LOS FILTROS --}}
-    <form method="GET" action="{{ route('busqueda-avanzada-resultados') }}" id="filtros-form" class="space-y-3">
+    <form method="GET" action="{{ $filtros_action_route ?? route('busqueda-avanzada-resultados') }}" id="filtros-form" class="space-y-3">
         {{-- Campos hidden para mantener parámetros de búsqueda --}}
         <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
         <input type="hidden" name="criterio" value="{{ request('criterio') }}">
@@ -21,9 +22,9 @@
 
         {{-- Filtro por Autor --}}
         <div class="collapsible-filter {{ request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
-            <div class="collapsible-header">
-                <h2>
-                    <i class="fas fa-user-edit mr-2"></i>Filtrar por Autor
+            <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
+                <h2 style="color: white !important; margin: 0;">
+                    <i class="fas fa-user-edit mr-2" style="color: white !important;"></i>Filtrar por Autor
                     @if(request()->filled('autor'))
                         @php
                             $autorActivos = is_array(request('autor')) 
@@ -37,7 +38,7 @@
                         </span>
                     @endif
                 </h2>
-                <i class="fas fa-chevron-down collapsible-toggle"></i>
+                <i class="fas fa-chevron-down collapsible-toggle" style="color: white !important;"></i>
             </div>
             <div class="collapsible-content">
                 <div class="filter-search-container">
@@ -69,9 +70,9 @@
 
         {{-- Filtro por Editorial --}}
         <div class="collapsible-filter {{ request()->filled('editorial') ? 'has-active-filter expanded' : '' }}">
-            <div class="collapsible-header">
-                <h2>
-                    <i class="fas fa-building mr-2"></i>Filtrar por Editorial
+            <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
+                <h2 style="color: white !important; margin: 0;">
+                    <i class="fas fa-building mr-2" style="color: white !important;"></i>Filtrar por Editorial
                     @if(request()->filled('editorial'))
                         @php
                             $editorialActivos = is_array(request('editorial')) 
@@ -85,7 +86,7 @@
                         </span>
                     @endif
                 </h2>
-                <i class="fas fa-chevron-down collapsible-toggle"></i>
+                <i class="fas fa-chevron-down collapsible-toggle" style="color: white !important;"></i>
             </div>
             <div class="collapsible-content">
                 <div class="filter-search-container">
@@ -117,9 +118,9 @@
 
         {{-- Filtro por Campus --}}
         <div class="collapsible-filter {{ request()->filled('campus') ? 'has-active-filter expanded' : '' }}">
-            <div class="collapsible-header">
-                <h2>
-                    <i class="fas fa-university mr-2"></i>Filtrar por Campus
+            <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
+                <h2 style="color: white !important; margin: 0;">
+                    <i class="fas fa-university mr-2" style="color: white !important;"></i>Filtrar por Campus
                     @if(request()->filled('campus'))
                         @php
                             $campusActivos = is_array(request('campus')) 
@@ -133,7 +134,7 @@
                         </span>
                     @endif
                 </h2>
-                <i class="fas fa-chevron-down collapsible-toggle"></i>
+                <i class="fas fa-chevron-down collapsible-toggle" style="color: white !important;"></i>
             </div>
             <div class="collapsible-content">
                 <div class="filter-search-container">
@@ -165,9 +166,9 @@
 
         {{-- Filtro por Materia --}}
         <div class="collapsible-filter {{ request()->filled('materia') ? 'has-active-filter expanded' : '' }}">
-            <div class="collapsible-header">
-                <h2>
-                    <i class="fas fa-book mr-2"></i>Filtrar por Materia
+            <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
+                <h2 style="color: white !important; margin: 0;">
+                    <i class="fas fa-book mr-2" style="color: white !important;"></i>Filtrar por Materia
                     @if(request()->filled('materia'))
                         @php
                             $materiaActivos = is_array(request('materia')) 
@@ -181,7 +182,7 @@
                         </span>
                     @endif
                 </h2>
-                <i class="fas fa-chevron-down collapsible-toggle"></i>
+                <i class="fas fa-chevron-down collapsible-toggle" style="color: white !important;"></i>
             </div>
             <div class="collapsible-content">
                 <div class="filter-search-container">
@@ -213,9 +214,9 @@
 
         {{-- Filtro por Serie --}}
         <div class="collapsible-filter {{ request()->filled('serie') ? 'has-active-filter expanded' : '' }}">
-            <div class="collapsible-header">
-                <h2>
-                    <i class="fas fa-layer-group mr-2"></i>Filtrar por Serie
+            <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
+                <h2 style="color: white !important; margin: 0;">
+                    <i class="fas fa-layer-group mr-2" style="color: white !important;"></i>Filtrar por Serie
                     @if(request()->filled('serie'))
                         @php
                             $serieActivos = is_array(request('serie')) 
@@ -229,7 +230,7 @@
                         </span>
                     @endif
                 </h2>
-                <i class="fas fa-chevron-down collapsible-toggle"></i>
+                <i class="fas fa-chevron-down collapsible-toggle" style="color: white !important;"></i>
             </div>
             <div class="collapsible-content">
                 <div class="filter-search-container">
@@ -264,7 +265,7 @@
             <div class="pt-4 border-t border-gray-200 space-y-3">
                 
                 
-                <button type="submit" class="filter-button w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                <button type="submit" class="filter-button w-full text-white font-semibold py-2 px-4 rounded-lg transition-colors" style="background-color: #003876 !important;">
                     <i class="fas fa-search mr-2"></i>Aplicar Filtros
                 </button>
                 

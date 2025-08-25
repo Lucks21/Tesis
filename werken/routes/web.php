@@ -2,7 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BusquedaSimpleController;
 use App\Http\Controllers\BusquedaAvanzadaController;
-use App\Http\Controllers\BusquedaSimplificada;
+// use App\Http\Controllers\BusquedaSimplificada;
 use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportacionController;
@@ -29,6 +29,7 @@ Route::get('/busqueda', function () {
 
 Route::get('/buscar-titulo', [BusquedaSimpleController::class, 'buscarPorTitulo'])->name('buscar.titulo');
 Route::get('/resultados', [BusquedaSimpleController::class, 'buscar'])->name('resultados');
+Route::get('/busqueda-sp', [BusquedaSimpleController::class, 'buscarConStoredProcedure'])->name('busqueda.sp');
 Route::get('/recursos-asociados/{criterio}/{valor}', [BusquedaSimpleController::class, 'recursosAsociados'])
      ->name('recursos.asociados');
 
@@ -39,7 +40,7 @@ Route::get('/busqueda-avanzada', function () {
 Route::get('/busqueda-avanzada/resultados', [BusquedaAvanzadaController::class, 'buscar'])->name('busqueda-avanzada-resultados');
 
 // RUTA DE PRUEBA PARA LÓGICA SIMPLIFICADA
-Route::get('/busqueda-test', [BusquedaSimplificada::class, 'buscarConFiltros'])->name('busqueda-test');
+// Route::get('/busqueda-test', [BusquedaSimplificada::class, 'buscarConFiltros'])->name('busqueda-test');
 
 Route::get('busqueda-avanzada/titulos/{autor}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorAutor'])->name('mostrar-titulos-por-autor');
 Route::get('busqueda-avanzada/titulos-editorial/{editorial}', [BusquedaAvanzadaController::class, 'mostrarTitulosPorEditorial'])->name('mostrar-titulos-por-editorial');
