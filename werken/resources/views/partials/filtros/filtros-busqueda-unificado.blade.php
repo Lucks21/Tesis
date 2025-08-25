@@ -16,9 +16,31 @@
     <form method="GET" action="{{ $filtros_action_route ?? route('busqueda-avanzada-resultados') }}" id="filtros-form" class="space-y-3">
         {{-- Campos hidden para mantener parámetros de búsqueda --}}
         <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
-        <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-        <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-        <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+        
+        {{-- Para búsqueda simple --}}
+        @if(request('busqueda'))
+            <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
+        @endif
+        @if(request('tipo_busqueda'))
+            <input type="hidden" name="tipo_busqueda" value="{{ request('tipo_busqueda') }}">
+        @endif
+        @if(request('termino'))
+            <input type="hidden" name="termino" value="{{ request('termino') }}">
+        @endif
+        @if(request('tipo'))
+            <input type="hidden" name="tipo" value="{{ request('tipo') }}">
+        @endif
+        
+        {{-- Para búsqueda avanzada --}}
+        @if(request('criterio'))
+            <input type="hidden" name="criterio" value="{{ request('criterio') }}">
+        @endif
+        @if(request('valor_criterio'))
+            <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
+        @endif
+        @if(request('titulo'))
+            <input type="hidden" name="titulo" value="{{ request('titulo') }}">
+        @endif
 
         {{-- Filtro por Autor --}}
         <div class="collapsible-filter {{ request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
