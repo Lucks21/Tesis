@@ -517,79 +517,12 @@
                 <p class="text-gray-700">
                     <i class="fas fa-filter mr-2"></i>
                     Resultados para "{{ request('criterio') }}" que contienen "{{ request('valor_criterio') }}"
-                    @if(request('titulo')) y título que contiene "{{ request('titulo') }}" @endif
+                                        @if(request('titulo')) y título que contiene "{{ request('titulo') }}" @endif
                 </p>
             </div>
 
-            <!-- Control de ordenación -->
-            <div class="mb-6 bg-blue-50 p-4 rounded-lg">
-                <form action="{{ route('busqueda-avanzada-resultados') }}" method="GET" class="flex items-center space-x-4">
-                    <input type="hidden" name="criterio" value="{{ request('criterio') }}">
-                    <input type="hidden" name="valor_criterio" value="{{ request('valor_criterio') }}">
-                    <input type="hidden" name="titulo" value="{{ request('titulo') }}">
-                    
-                    {{-- MANTENER FILTROS COMO ARRAYS --}}
-                    @if(request('autor'))
-                        @if(is_array(request('autor')))
-                            @foreach(array_filter(request('autor'), function($v) { return !empty(trim($v)); }) as $autor)
-                                <input type="hidden" name="autor[]" value="{{ $autor }}">
-                            @endforeach
-                        @else
-                            <input type="hidden" name="autor[]" value="{{ request('autor') }}">
-                        @endif
-                    @endif
-                    
-                    @if(request('editorial'))
-                        @if(is_array(request('editorial')))
-                            @foreach(array_filter(request('editorial'), function($v) { return !empty(trim($v)); }) as $editorial)
-                                <input type="hidden" name="editorial[]" value="{{ $editorial }}">
-                            @endforeach
-                        @else
-                            <input type="hidden" name="editorial[]" value="{{ request('editorial') }}">
-                        @endif
-                    @endif
-                    
-                    @if(request('campus'))
-                        @if(is_array(request('campus')))
-                            @foreach(array_filter(request('campus'), function($v) { return !empty(trim($v)); }) as $campus)
-                                <input type="hidden" name="campus[]" value="{{ $campus }}">
-                            @endforeach
-                        @else
-                            <input type="hidden" name="campus[]" value="{{ request('campus') }}">
-                        @endif
-                    @endif
-                    
-                    @if(request('materia'))
-                        @if(is_array(request('materia')))
-                            @foreach(array_filter(request('materia'), function($v) { return !empty(trim($v)); }) as $materia)
-                                <input type="hidden" name="materia[]" value="{{ $materia }}">
-                            @endforeach
-                        @else
-                            <input type="hidden" name="materia[]" value="{{ request('materia') }}">
-                        @endif
-                    @endif
-                    
-                    @if(request('serie'))
-                        @if(is_array(request('serie')))
-                            @foreach(array_filter(request('serie'), function($v) { return !empty(trim($v)); }) as $serie)
-                                <input type="hidden" name="serie[]" value="{{ $serie }}">
-                            @endforeach
-                        @else
-                            <input type="hidden" name="serie[]" value="{{ request('serie') }}">
-                        @endif
-                    @endif
-
-                    <label for="orden" class="text-gray-700 font-semibold">
-                        <i class="fas fa-sort mr-2"></i>Ordenar:
-                    </label>
-                    <select name="orden" id="orden" class="rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="asc" {{ request('orden') == 'asc' ? 'selected' : '' }}>Ascendente</option>
-                        <option value="desc" {{ request('orden') == 'desc' ? 'selected' : '' }}>Descendente</option>
-                    </select>
-                    <button type="submit" class="filter-button">
-                        Aplicar
-                    </button>
-                </form>
+            <div class="flex flex-col lg:flex-row gap-3">
+                </p>
             </div>
 
             <div class="flex flex-col lg:flex-row gap-3">

@@ -17,7 +17,6 @@ class BusquedaAvanzadaController extends Controller
         $criterio = $request->input('criterio');
         $valorCriterio = $request->input('valor_criterio');
         $titulo = $request->input('titulo');
-        $orden = $request->input('orden', 'asc');
         $pagina = $request->input('page', 1);
 
         $autorFiltro = $request->input('autor', []);
@@ -39,8 +38,7 @@ class BusquedaAvanzadaController extends Controller
             'editorial' => $editorialFiltro,
             'campus' => $campusFiltro,
             'materia' => $materiaFiltro,
-            'serie' => $serieFiltro,
-            'orden' => $orden
+            'serie' => $serieFiltro
         ];
         $texto_procesado = $titulo . '|' . $valorCriterio . '|' . serialize($filtros);
 
@@ -66,35 +64,28 @@ class BusquedaAvanzadaController extends Controller
                 ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus');
 
             // Aplicar criterios de búsqueda solo si tienen valores
-            $orderByField = 'vt.nombre_busqueda'; // Campo por defecto para ordenar
-            
             switch ($criterio) {
                 case 'autor':
                     if (!empty($valorCriterio)) {
                         $query->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $orderByField = 'va.nombre_busqueda';
                     break;
                 case 'editorial':
                     if (!empty($valorCriterio)) {
                         $query->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $orderByField = 've.nombre_busqueda';
                     break;
                 case 'materia':
                     if (!empty($valorCriterio)) {
                         $query->where('vm.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $orderByField = 'vm.nombre_busqueda';
                     break;
                 case 'serie':
                     if (!empty($valorCriterio)) {
                         $query->where('vs.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
                     }
-                    $orderByField = 'vs.nombre_busqueda';
                     break;
                 default:
-                    $orderByField = 'vt.nombre_busqueda';
                     break;
             }
 
@@ -120,13 +111,6 @@ class BusquedaAvanzadaController extends Controller
                 ) as relevancia");
             } else {
                 $selectFields[] = DB::raw("0 as relevancia");
-            }
-
-            // Agregar campos específicos según el criterio para poder ordenar
-            if ($criterio === 'materia') {
-                $selectFields[] = 'vm.nombre_busqueda as materia_orden';
-            } elseif ($criterio === 'serie') {
-                $selectFields[] = 'vs.nombre_busqueda as serie_orden';
             }
 
             $query->select($selectFields);
@@ -221,8 +205,8 @@ class BusquedaAvanzadaController extends Controller
             // Aplicar DISTINCT al final para evitar duplicados
             $query->distinct();
 
-            $query->orderBy('relevancia', 'desc')
-                  ->orderBy($orderByField, $orden);
+            // Ordenar por relevancia como estaba originalmente
+            $query->orderBy('relevancia', 'desc');
 
             // Ejecutar consulta
             $allResults = $query->limit(5000)->get();
@@ -266,14 +250,13 @@ class BusquedaAvanzadaController extends Controller
         );
 
         // Definir la ruta de acción para los filtros
-        $filtros_action_route = 'busqueda-avanzada-resultados';
+        $filtros_action_route = route('busqueda-avanzada-resultados');
 
         return view('BusquedaAvanzadaResultados', compact(
             'resultados',
             'criterio',
             'valorCriterio',
             'titulo',
-            'orden',
             'autores',
             'editoriales',
             'materias',

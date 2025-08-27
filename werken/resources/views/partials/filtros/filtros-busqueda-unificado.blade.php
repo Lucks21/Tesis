@@ -15,7 +15,6 @@
     {{-- UN SOLO FORMULARIO PARA TODOS LOS FILTROS --}}
     <form method="GET" action="{{ $filtros_action_route ?? route('busqueda-avanzada-resultados') }}" id="filtros-form" class="space-y-3">
         {{-- Campos hidden para mantener parámetros de búsqueda --}}
-        <input type="hidden" name="orden" value="{{ request('orden', 'asc') }}">
         
         {{-- Para búsqueda simple --}}
         @if(request('busqueda'))

@@ -762,14 +762,8 @@
                                     <i class="fas fa-sort mr-2"></i>Ordenar:
                                 </label>
                                 <select name="orden" id="orden" class="rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="titulo_asc" {{ request('orden') == 'titulo_asc' ? 'selected' : '' }}>Título A-Z</option>
-                                    <option value="titulo_desc" {{ request('orden') == 'titulo_desc' ? 'selected' : '' }}>Título Z-A</option>
-                                    <option value="autor_asc" {{ request('orden') == 'autor_asc' ? 'selected' : '' }}>Autor A-Z</option>
-                                    <option value="autor_desc" {{ request('orden') == 'autor_desc' ? 'selected' : '' }}>Autor Z-A</option>
-                                    <option value="editorial_asc" {{ request('orden') == 'editorial_asc' ? 'selected' : '' }}>Editorial A-Z</option>
-                                    <option value="editorial_desc" {{ request('orden') == 'editorial_desc' ? 'selected' : '' }}>Editorial Z-A</option>
-                                    <option value="anio_desc" {{ request('orden') == 'anio_desc' ? 'selected' : '' }}>Año más reciente</option>
-                                    <option value="anio_asc" {{ request('orden') == 'anio_asc' ? 'selected' : '' }}>Año más antiguo</option>
+                                    <option value="asc" {{ request('orden') == 'asc' || request('orden') == 'titulo_asc' || request('orden') == '' ? 'selected' : '' }}>Ascendente</option>
+                                    <option value="desc" {{ request('orden') == 'desc' || request('orden') == 'titulo_desc' ? 'selected' : '' }}>Descendente</option>
                                 </select>
                                 <button type="submit" class="filter-button">
                                     Aplicar

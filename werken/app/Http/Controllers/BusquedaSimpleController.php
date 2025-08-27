@@ -124,19 +124,6 @@ class BusquedaSimpleController extends Controller
         $materiaFiltro = $this->procesarFiltro($request->input('materia', []));
         $serieFiltro = $this->procesarFiltro($request->input('serie', []));
         
-        \Log::info('buscarTitulos: Filtros procesados', [
-            'autor' => $autorFiltro,
-            'editorial' => $editorialFiltro,
-            'campus' => $campusFiltro,
-            'materia' => $materiaFiltro,
-            'serie' => $serieFiltro
-        ]);
-        
-        \Log::info('buscarTitulos: Intentando SP primero', [
-            'textoBusqueda' => $textoBusqueda,
-            'tipoBusqueda' => $tipoBusqueda
-        ]);
-        
         // Primero intentar el stored procedure
         $resultadosBrutos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
             $textoBusqueda,
@@ -152,15 +139,7 @@ class BusquedaSimpleController extends Controller
             \Log::info('buscarTitulos: Enriqueciendo datos del SP');
             $resultadosEnriquecidos = [];
             foreach ($resultadosBrutos as $resultado) {
-                \Log::info('buscarTitulos: Antes de enriquecer', [
-                    'nro_control' => $resultado->nro_control ?? 'null',
-                    'editorial' => $resultado->editorial ?? 'null'
-                ]);
                 $enriquecido = $this->enriquecerDatosDetalle($resultado);
-                \Log::info('buscarTitulos: Después de enriquecer', [
-                    'nro_control' => $enriquecido->nro_control ?? 'null',
-                    'editorial' => $enriquecido->editorial ?? 'null'
-                ]);
                 $resultadosEnriquecidos[] = $enriquecido;
             }
             $resultadosBrutos = $resultadosEnriquecidos;
@@ -168,7 +147,6 @@ class BusquedaSimpleController extends Controller
         
         // Si el SP no devuelve resultados, usar consulta directa para títulos
         if (empty($resultadosBrutos) && $tipoBusqueda == 3) {
-            \Log::info('buscarTitulos: SP vacío, usando consulta directa');
             
             // Buscar directamente en la vista V_TITULO
             $palabras = explode(' ', trim($textoBusqueda));
@@ -291,7 +269,7 @@ class BusquedaSimpleController extends Controller
         $resultadosProcesados = $this->aplicarFiltros($resultadosProcesados, $request);
 
         // Aplicar ordenamiento
-        $orden = $request->input('orden', 'titulo_asc');
+        $orden = $request->input('orden', 'asc');
         $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
 
         // Crear paginación
@@ -314,7 +292,7 @@ class BusquedaSimpleController extends Controller
         $criterio = 'busqueda_simple';
         $valorCriterio = $textoBusqueda;
         $titulo = $textoBusqueda;
-        $orden = $request->input('orden', 'titulo_asc');
+        $orden = $request->input('orden', 'asc');
         $filtros_action_route = route('busqueda.sp');
 
         return view('BusquedaSimpleResultados', compact(
@@ -484,7 +462,7 @@ class BusquedaSimpleController extends Controller
             $resultadosProcesados = $this->aplicarFiltros($resultadosProcesados, $request);
 
             // Aplicar ordenamiento
-            $orden = $request->input('orden', 'titulo_asc');
+            $orden = $request->input('orden', 'asc');
             $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
 
             // Crear paginación
@@ -507,7 +485,7 @@ class BusquedaSimpleController extends Controller
             $criterio = 'busqueda_simple';
             $valorCriterio = $valorSeleccionado;
             $titulo = $valorSeleccionado;
-            $orden = $request->input('orden', 'titulo_asc');
+            $orden = $request->input('orden', 'asc');
             $filtros_action_route = route('busqueda.sp');
 
             return view('BusquedaSimpleResultados', compact(
@@ -685,7 +663,7 @@ class BusquedaSimpleController extends Controller
         $criterio = $this->getTipoBusquedaNombre($tipoBusqueda);
         $valorCriterio = $textoBusqueda;
         $titulo = $textoBusqueda;
-        $orden = 'titulo_asc';
+        $orden = 'asc';
         $autores = collect();
         $editoriales = collect();
         $materias = collect();
@@ -794,25 +772,12 @@ class BusquedaSimpleController extends Controller
      */
     private function aplicarOrdenamiento($resultados, $orden)
     {
-        switch ($orden) {
-            case 'titulo_asc':
-                return $resultados->sortBy('titulo');
-            case 'titulo_desc':
-                return $resultados->sortByDesc('titulo');
-            case 'autor_asc':
-                return $resultados->sortBy('nombre_autor');
-            case 'autor_desc':
-                return $resultados->sortByDesc('nombre_autor');
-            case 'editorial_asc':
-                return $resultados->sortBy('nombre_editorial');
-            case 'editorial_desc':
-                return $resultados->sortByDesc('nombre_editorial');
-            case 'año_asc':
-                return $resultados->sortBy('anio_publicacion');
-            case 'año_desc':
-                return $resultados->sortByDesc('anio_publicacion');
-            default:
-                return $resultados->sortBy('titulo');
+        // Simplificado: solo ordenamiento por título
+        if ($orden === 'desc' || $orden === 'titulo_desc') {
+            return $resultados->sortByDesc('titulo');
+        } else {
+            // Por defecto: ascendente (asc, titulo_asc, o cualquier otro valor)
+            return $resultados->sortBy('titulo');
         }
     }
 
