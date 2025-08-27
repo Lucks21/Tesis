@@ -798,6 +798,28 @@
                                 <p class="text-gray-500 text-xl">No se encontraron resultados.</p>
                             </div>
                         @else
+                            <!-- Controles de exportación -->
+                            <div class="export-controls">
+                                <div class="select-all-container">
+                                    <input type="checkbox" id="selectAll" class="select-all-checkbox">
+                                    <label for="selectAll" class="select-all-label">
+                                        <i class="fas fa-check-square mr-2"></i>Seleccionar todos
+                                    </label>
+                                </div>
+                                
+                                <div class="selection-counter">
+                                    <i class="fas fa-list-check mr-2"></i>
+                                    <span id="selectedCount">0</span> recursos seleccionados
+                                </div>
+                                
+                                <form id="exportForm" method="POST" action="{{ route('export.ris.multiple') }}">
+                                    @csrf
+                                    <button type="submit" id="exportButton" class="export-button">
+                                        <i class="fas fa-download"></i>Exportar seleccionados
+                                    </button>
+                                </form>
+                            </div>
+
                             <div class="overflow-x-auto rounded-lg border border-gray-200">
                                 <table class="min-w-full divide-y divide-gray-200 results-table">
                                     <thead class="table-header">
