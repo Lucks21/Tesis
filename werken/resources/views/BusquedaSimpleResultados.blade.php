@@ -820,6 +820,9 @@
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-serie">
                                                 <i class="fas fa-list-ol mr-2"></i>Serie
                                             </th>
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-dewey">
+                                                <i class="fas fa-sort-numeric-up mr-2"></i>Dewey
+                                            </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-biblioteca">
                                                 <i class="fas fa-university mr-2"></i>Biblioteca
                                             </th>
@@ -862,6 +865,15 @@
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 serie-cell">
                                                     {{ $resultado->nombre_serie ?? 'Sin serie' }}
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-900 dewey-cell">
+                                                    @if(isset($resultado->dewey) && !empty($resultado->dewey))
+                                                        <span class="dewey-number text-gray-700" onclick="selectDeweyText(this)" title="Haz clic para copiar el número de Dewey al portapapeles">
+                                                            {{ $resultado->dewey }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-gray-400 italic">Sin clasificación</span>
+                                                    @endif
                                                 </td>
                                                 <td class="px-6 py-4 text-sm text-gray-900 biblioteca-cell">
                                                     {{ $resultado->biblioteca ?? 'Sin ubicación' }}

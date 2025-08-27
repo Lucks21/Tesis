@@ -235,6 +235,7 @@ class BusquedaSimpleController extends Controller
                 'nombre_editorial' => $item->editorial ?? null,
                 'nombre_materia' => $item->materia ?? null,
                 'nombre_serie' => $item->serie ?? null,
+                'dewey' => $item->dewey ?? null,
                 'biblioteca' => $item->biblioteca ?? null,
                 'anio_publicacion' => $item->publicacion,
                 'tipo_material' => $item->tipo,
@@ -443,6 +444,7 @@ class BusquedaSimpleController extends Controller
                     'nombre_editorial' => $this->getValue($item, ['editorial', 'nombre_editorial']),
                     'nombre_materia' => $this->getValue($item, ['materia', 'nombre_materia']),
                     'nombre_serie' => $this->getValue($item, ['serie', 'nombre_serie']),
+                    'dewey' => $this->getValue($item, ['dewey', 'numero_dewey']),
                     'biblioteca' => $this->getValue($item, ['biblioteca', 'nombre_biblioteca']),
                     'anio_publicacion' => $this->getValue($item, ['publicacion', 'anio_publicacion', 'año_publicacion']),
                     'tipo_material' => $this->getValue($item, ['tipo', 'tipo_material']),
@@ -841,6 +843,7 @@ class BusquedaSimpleController extends Controller
                 'editorial_antes' => $detalle->editorial ?? 'null',
                 'materia_antes' => $detalle->materia ?? 'null',
                 'serie_antes' => $detalle->serie ?? 'null',
+                'dewey_antes' => $detalle->dewey ?? 'null',
                 'biblioteca_antes' => $detalle->biblioteca ?? 'null'
             ]);
             
@@ -863,6 +866,12 @@ class BusquedaSimpleController extends Controller
                 \Log::info('enriquecerDatosDetalle: Serie obtenida', ['serie' => $detalle->serie]);
             }
             
+            if (empty($detalle->dewey)) {
+                $dewey = DB::select("SELECT TOP 1 nombre_busqueda FROM V_DEWEY WHERE nro_control = ?", [$nroControl]);
+                $detalle->dewey = !empty($dewey) ? $dewey[0]->nombre_busqueda : null;
+                \Log::info('enriquecerDatosDetalle: Dewey obtenido', ['dewey' => $detalle->dewey]);
+            }
+            
             if (empty($detalle->biblioteca)) {
                 $biblioteca = DB::select("
                     SELECT TOP 1 tc.nombre_tb_campus 
@@ -879,6 +888,7 @@ class BusquedaSimpleController extends Controller
                 'editorial_despues' => $detalle->editorial,
                 'materia_despues' => $detalle->materia,
                 'serie_despues' => $detalle->serie,
+                'dewey_despues' => $detalle->dewey,
                 'biblioteca_despues' => $detalle->biblioteca
             ]);
             
