@@ -37,6 +37,15 @@
             font-display: swap;
         }
 
+        /* Preload critical fonts */
+        head {
+            link[rel=preload][as=font] {
+                href: url('{{ asset('fonts/Tipo-UBB-Regular_Condensed.otf') }}');
+                type: 'font/otf';
+                crossorigin: 'anonymous';
+            }
+        }
+
         /* Base styles */
         body {
             margin: 0;
@@ -44,7 +53,6 @@
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            background-color: #f8fafc;
         }
 
         /* Institutional bar */
@@ -66,21 +74,49 @@
         /* Main header */
         .main-header {
             background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 1rem 0;
             text-align: center;
         }
 
+        /* Navigation */
         .nav-container {
             background-color: white;
             border-bottom: 1px solid #e5e7eb;
         }
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-link {
+            color: #4B5563;
+            text-decoration: none;
+            padding: 1rem;
+            transition: color 0.2s;
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: normal;
+        }
+        .nav-link:hover {
+            color: #003876;
+        }
 
         .results-container {
             background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
+            border-radius: 8px;
+        }
+        .table-header {
+            background: #003876;
+            color: white;
+        }
+        .table-row:hover {
+            background-color: #f0f7ff;
         }
 
         .filter-section {
@@ -138,6 +174,22 @@
         .search-button:hover, .filter-button:hover {
             background-color: #002b5c;
         }
+        
+        /* Main content styles */
+        .results-container h1 {
+            font-family: 'Tipo-UBB', sans-serif;
+            font-weight: 900;
+        }
+
+        .logos-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            gap: 2rem;
+        }
         .remove-filter {
             background-color: #dc2626;
             color: white;
@@ -180,16 +232,6 @@
             justify-content: space-between;
             cursor: pointer;
         }
-
-        .logos-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-            gap: 2rem;
-        }
         .logo-group {
             display: flex;
             align-items: center;
@@ -197,12 +239,14 @@
             height: 64px;
             padding: 1rem;
         }
+
         .direccion-wrapper {
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%;
         }
+
         .direccion-img {
             height: 100%;
             width: auto;
@@ -212,12 +256,12 @@
 
         /* Responsive column widths for better space distribution */
         .col-titulo {
-            width: 35%;
+            width: 51%;
             min-width: 200px;
         }
 
         .col-autor {
-            width: 18%;
+            width: 20%;
             min-width: 150px;
         }
 
@@ -227,22 +271,22 @@
         }
 
         .col-materia {
-            width: 11%;
+            width: 12%;
             min-width: 120px;
         }
 
         .col-serie {
-            width: 5%;
-            min-width: 80px;
+            width: 4%;
+            min-width: 70px;
         }
 
         .col-dewey {
-            width: 9%;
-            min-width: 60px;
+            width: 3%;
+            min-width: 40px;
         }
 
         .col-biblioteca {
-            width: 14%;
+            width: 15%;
             min-width: 120px;
         }
 
@@ -277,7 +321,7 @@
         }
 
         .results-table tbody tr:hover {
-            background-color: #f0f7ff;
+            background-color: #ffffff;
         }
 
         /* Better text wrapping and spacing */
@@ -436,26 +480,12 @@
             }
         }
 
-        /* Filtros sidebar */
-        .filters-sidebar {
-            width: 100%;
-            max-width: 300px;
-            min-width: 280px;
-        }
-
-        @media (min-width: 1024px) {
-            .filters-sidebar {
-                width: 280px;
-                flex-shrink: 0;
-            }
-        }
-
         .table-header {
             background-color: #003876;
         }
 
         .table-row:hover {
-            background-color: #f8fafc;
+            background-color: #f0f7ff;
         }
 
         /* Collapsible filters */
@@ -643,34 +673,12 @@
         .mr-2 {
             margin-right: 0.5rem;
         }
-
-        .nav-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-        .nav-link {
-            color: #4B5563;
-            text-decoration: none;
-            padding: 1rem;
-            transition: color 0.2s;
-        }
-        .nav-link:hover {
-            color: #003876;
-        }
     </style>
     
     {{-- Incluir estilos específicos de filtros --}}
     @include('partials.filtros.filtros-estilos')
 </head>
-<body>
+<body class="bg-gray-50">
     <!-- Barra institucional -->
     <div class="institutional-bar">
         <div class="container mx-auto px-4">
@@ -917,8 +925,105 @@
     {{-- Scripts de filtros unificados --}}
     @include('partials.filtros.filtros-scripts')
 
+    {{-- Scripts específicos de la vista --}}
     <script>
-        // Script adicional para funcionalidades específicas si es necesario
+        // FORZAR RECARGA ANTI-CACHE
+        document.addEventListener('DOMContentLoaded', function() {
+            const enlaces = document.querySelectorAll('.titulo-enlace');
+            
+            enlaces.forEach(function(enlace, index) {
+                enlace.addEventListener('click', function(e) {
+                    // Permitir navegación normal
+                    return true;
+                });
+            });
+        });
+
+        // Función para copiar el número de Dewey al portapapeles al hacer clic
+        function selectDeweyText(element) {
+            const deweyNumber = element.textContent.trim();
+            
+            // Intentar copiar usando la API moderna del portapapeles
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(deweyNumber).then(function() {
+                    // Feedback visual de éxito
+                    showCopyFeedback(element, '✓ Copiado');
+                }).catch(function(err) {
+                    // Si falla, usar el método de fallback
+                    fallbackCopyText(element, deweyNumber);
+                });
+            } else {
+                // Usar método de fallback para navegadores más antiguos o contextos no seguros
+                fallbackCopyText(element, deweyNumber);
+            }
+        }
+
+        // Función de fallback para copiar texto
+        function fallbackCopyText(element, text) {
+            // Crear un elemento temporal para la selección
+            const tempInput = document.createElement('textarea');
+            tempInput.style.position = 'absolute';
+            tempInput.style.left = '-9999px';
+            tempInput.style.top = '0';
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            
+            // Seleccionar y copiar
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999); // Para móviles
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyFeedback(element, '✓ Copiado');
+                } else {
+                    showCopyFeedback(element, '✗ Error', true);
+                }
+            } catch (err) {
+                showCopyFeedback(element, '✗ Error', true);
+                console.error('Error al copiar:', err);
+            }
+            
+            // Limpiar el elemento temporal
+            document.body.removeChild(tempInput);
+        }
+
+        // Función para mostrar feedback visual
+        function showCopyFeedback(element, message, isError = false) {
+            // Crear elemento de feedback más sutil
+            const feedback = document.createElement('span');
+            feedback.textContent = message;
+            feedback.style.position = 'absolute';
+            feedback.style.background = isError ? '#dc2626' : '#16a34a';
+            feedback.style.color = 'white';
+            feedback.style.padding = '3px 8px';
+            feedback.style.borderRadius = '4px';
+            feedback.style.fontSize = '0.75em';
+            feedback.style.fontWeight = '500';
+            feedback.style.marginLeft = '8px';
+            feedback.style.zIndex = '1000';
+            feedback.style.opacity = '0';
+            feedback.style.transition = 'opacity 0.2s ease';
+            
+            element.parentNode.style.position = 'relative';
+            element.parentNode.appendChild(feedback);
+            
+            // Mostrar feedback con animación suave
+            setTimeout(() => {
+                feedback.style.opacity = '1';
+            }, 10);
+            
+            // Ocultar feedback
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                
+                setTimeout(() => {
+                    if (feedback.parentNode) {
+                        feedback.parentNode.removeChild(feedback);
+                    }
+                }, 200);
+            }, 1200);
+        }
     </script>
 </body>
 </html>
