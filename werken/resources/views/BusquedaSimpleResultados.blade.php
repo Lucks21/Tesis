@@ -749,14 +749,27 @@
                     <div class="bg-white rounded-xl p-6">
                         <div class="mb-6 bg-blue-50 p-4 rounded-lg">
                             <form action="{{ route('busqueda.sp') }}" method="GET" class="flex items-center space-x-4">
+                                <input type="hidden" name="busqueda" value="{{ request('busqueda') }}">
                                 <input type="hidden" name="termino" value="{{ request('termino') }}">
                                 <input type="hidden" name="tipo" value="{{ request('tipo') }}">
+                                <input type="hidden" name="tipo_busqueda" value="{{ request('tipo_busqueda') }}">
                                 <input type="hidden" name="ver_titulos" value="{{ request('ver_titulos') }}">
-                                <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
-                                <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
-                                <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
-                                <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
-                                <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                <input type="hidden" name="valor_seleccionado" value="{{ request('valor_seleccionado') }}">
+                                @if(request()->filled('autor'))
+                                    <input type="hidden" name="autor" value="{{ is_array(request('autor')) ? implode(',', request('autor')) : request('autor') }}">
+                                @endif
+                                @if(request()->filled('editorial'))
+                                    <input type="hidden" name="editorial" value="{{ is_array(request('editorial')) ? implode(',', request('editorial')) : request('editorial') }}">
+                                @endif
+                                @if(request()->filled('campus'))
+                                    <input type="hidden" name="campus" value="{{ is_array(request('campus')) ? implode(',', request('campus')) : request('campus') }}">
+                                @endif
+                                @if(request()->filled('materia'))
+                                    <input type="hidden" name="materia" value="{{ is_array(request('materia')) ? implode(',', request('materia')) : request('materia') }}">
+                                @endif
+                                @if(request()->filled('serie'))
+                                    <input type="hidden" name="serie" value="{{ is_array(request('serie')) ? implode(',', request('serie')) : request('serie') }}">
+                                @endif
 
                                 <label for="orden" class="text-gray-700 font-semibold">
                                     <i class="fas fa-sort mr-2"></i>Ordenar:

@@ -29,6 +29,15 @@
         @if(request('tipo'))
             <input type="hidden" name="tipo" value="{{ request('tipo') }}">
         @endif
+        @if(request('valor_seleccionado'))
+            <input type="hidden" name="valor_seleccionado" value="{{ request('valor_seleccionado') }}">
+        @endif
+        @if(request('ver_titulos'))
+            <input type="hidden" name="ver_titulos" value="{{ request('ver_titulos') }}">
+        @endif
+        @if(request('orden'))
+            <input type="hidden" name="orden" value="{{ request('orden') }}">
+        @endif
         
         {{-- Para búsqueda avanzada --}}
         @if(request('criterio'))
@@ -290,8 +299,40 @@
                     <i class="fas fa-search mr-2"></i>Aplicar Filtros
                 </button>
                 
-                @if(request()->hasAny(['autor', 'editorial', 'campus', 'materia', 'serie']))
-                    <a href="{{ route('busqueda-avanzada-resultados', array_merge(request()->except(['autor', 'editorial', 'campus', 'materia', 'serie']))) }}"
+                @php
+                    // Verificar si hay filtros reales aplicados (no vacíos)
+                    $hayFiltrosActivos = false;
+                    
+                    $procesarFiltroVerificacion = function($filtro) {
+                        if (empty($filtro)) return false;
+                        
+                        if (is_array($filtro)) {
+                            $filtroLimpio = array_filter($filtro, function($valor) {
+                                return !empty(trim($valor)) && $valor !== null;
+                            });
+                            return count($filtroLimpio) > 0;
+                        }
+                        
+                        if (is_string($filtro)) {
+                            $valores = explode(',', $filtro);
+                            $valoresLimpios = array_filter(array_map('trim', $valores), function($valor) {
+                                return !empty($valor) && $valor !== null;
+                            });
+                            return count($valoresLimpios) > 0;
+                        }
+                        
+                        return false;
+                    };
+                    
+                    $hayFiltrosActivos = $procesarFiltroVerificacion(request('autor')) ||
+                                       $procesarFiltroVerificacion(request('editorial')) ||
+                                       $procesarFiltroVerificacion(request('campus')) ||
+                                       $procesarFiltroVerificacion(request('materia')) ||
+                                       $procesarFiltroVerificacion(request('serie'));
+                @endphp
+                
+                @if($hayFiltrosActivos)
+                    <a href="{{ ($filtros_action_route ?? route('busqueda-avanzada-resultados')) }}?{{ http_build_query(request()->except(['autor', 'editorial', 'campus', 'materia', 'serie'])) }}"
                        class="remove-filter w-full text-center block bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
                         <i class="fas fa-times mr-2"></i>Limpiar Todos los Filtros
                     </a>
@@ -300,11 +341,32 @@
                 <div class="text-center text-sm text-gray-600">
                     @php
                         $totalFiltrosActivos = 0;
-                        if(request()->filled('autor')) $totalFiltrosActivos += count(request('autor', []));
-                        if(request()->filled('editorial')) $totalFiltrosActivos += count(request('editorial', []));
-                        if(request()->filled('campus')) $totalFiltrosActivos += count(request('campus', []));
-                        if(request()->filled('materia')) $totalFiltrosActivos += count(request('materia', []));
-                        if(request()->filled('serie')) $totalFiltrosActivos += count(request('serie', []));
+                        
+                        // Función para procesar filtros como en el controlador
+                        $procesarFiltro = function($filtro) {
+                            if (empty($filtro)) return [];
+                            
+                            if (is_array($filtro)) {
+                                return array_filter($filtro, function($valor) {
+                                    return !empty(trim($valor)) && $valor !== null;
+                                });
+                            }
+                            
+                            if (is_string($filtro)) {
+                                $valores = explode(',', $filtro);
+                                return array_filter(array_map('trim', $valores), function($valor) {
+                                    return !empty($valor) && $valor !== null;
+                                });
+                            }
+                            
+                            return [];
+                        };
+                        
+                        if(request()->filled('autor')) $totalFiltrosActivos += count($procesarFiltro(request('autor', [])));
+                        if(request()->filled('editorial')) $totalFiltrosActivos += count($procesarFiltro(request('editorial', [])));
+                        if(request()->filled('campus')) $totalFiltrosActivos += count($procesarFiltro(request('campus', [])));
+                        if(request()->filled('materia')) $totalFiltrosActivos += count($procesarFiltro(request('materia', [])));
+                        if(request()->filled('serie')) $totalFiltrosActivos += count($procesarFiltro(request('serie', [])));
                     @endphp
                     
                     @if($totalFiltrosActivos > 0)

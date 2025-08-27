@@ -505,6 +505,8 @@ class BusquedaSimpleController extends Controller
             // Crear vista de error simple
             $criterio = $this->getTipoBusquedaNombre($tipoBusqueda);
             $valorCriterio = $valorSeleccionado;
+            $titulo = $valorSeleccionado;
+            $orden = $request->input('orden', 'asc');
             $resultados = collect();
             $autores = collect();
             $editoriales = collect();
@@ -513,6 +515,7 @@ class BusquedaSimpleController extends Controller
             $años = collect();
             $tipos = collect();
             $campuses = collect();
+            $filtros_action_route = route('busqueda.sp');
             
             session()->flash('error', 'Error en la búsqueda: ' . $e->getMessage());
             
@@ -526,7 +529,10 @@ class BusquedaSimpleController extends Controller
                 'tipos',
                 'campuses',
                 'criterio',
-                'valorCriterio'
+                'valorCriterio',
+                'titulo',
+                'orden',
+                'filtros_action_route'
             ));
         }
     }
@@ -663,12 +669,13 @@ class BusquedaSimpleController extends Controller
         $criterio = $this->getTipoBusquedaNombre($tipoBusqueda);
         $valorCriterio = $textoBusqueda;
         $titulo = $textoBusqueda;
-        $orden = 'asc';
+        $orden = $request->input('orden', 'asc');
         $autores = collect();
         $editoriales = collect();
         $materias = collect();
         $series = collect();
         $campuses = collect();
+        $filtros_action_route = route('busqueda.sp');
 
         session()->flash('error', 'Error en la búsqueda: ' . $mensaje);
 
@@ -682,7 +689,8 @@ class BusquedaSimpleController extends Controller
             'editoriales',
             'materias',
             'series',
-            'campuses'
+            'campuses',
+            'filtros_action_route'
         ));
     }
 
