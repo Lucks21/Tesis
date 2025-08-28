@@ -64,6 +64,9 @@ class ExportacionController extends Controller
             return response()->json(['error' => 'No se seleccionaron recursos para exportar'], 400);
         }
 
+        // Eliminar duplicados por nro_control
+        $nroControles = array_unique($nroControles);
+
         // Crear un archivo temporal para el ZIP
         $zipFileName = 'referencias_' . date('Y-m-d_H-i-s') . '.zip';
         $zipPath = storage_path('app/temp/' . $zipFileName);
