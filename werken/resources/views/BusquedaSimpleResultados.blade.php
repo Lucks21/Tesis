@@ -828,7 +828,7 @@
                                                 <i class="fas fa-sort-numeric-up mr-2"></i>Dewey
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-biblioteca">
-                                                <i class="fas fa-university mr-2"></i>Biblioteca
+                                                <i class="fas fa-building mr-2"></i>Biblioteca
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-exportar">
                                                 <i class="fas fa-file-export mr-2"></i>Exportar

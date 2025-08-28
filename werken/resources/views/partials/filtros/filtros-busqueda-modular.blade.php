@@ -20,10 +20,10 @@
         'seleccionados' => request('editorial', [])
     ])
 
-    {{-- Filtro de Campus --}}
+    {{-- Filtro de Biblioteca --}}
     @include('partials.components.filtro-individual', [
         'tipo' => 'campus',
-        'titulo' => 'Filtrar por Campus',
+        'titulo' => 'Filtrar por Biblioteca',
         'opciones' => $campuses,
         'seleccionados' => request('campus', [])
     ])

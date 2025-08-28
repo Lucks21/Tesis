@@ -154,11 +154,11 @@
         </div>
     </div>
 
-    <!-- Filtrar por Campus -->
+    <!-- Filtrar por Biblioteca -->
     <div class="collapsible-filter {{ request()->filled('campus') ? 'has-active-filter expanded' : '' }}">
         <div class="collapsible-header">
             <h2>
-                <i class="fas fa-university mr-2"></i>Filtrar por Campus
+                <i class="fas fa-building mr-2"></i>Filtrar por Biblioteca
                 @if(request()->filled('campus'))
                     @php
                         $campusActivos = is_array(request('campus')) 
@@ -178,7 +178,7 @@
             <div class="filter-search-container">
                 <input type="text" 
                        class="filter-search-input" 
-                       placeholder="Buscar campus..." 
+                       placeholder="Buscar biblioteca..." 
                        id="search-campus"
                        onkeyup="filterOptions('campus', this.value)">
             </div>
