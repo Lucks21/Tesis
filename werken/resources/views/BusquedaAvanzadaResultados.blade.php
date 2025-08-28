@@ -511,20 +511,8 @@
     <!-- Contenido principal -->
     <main class="results-main-container py-8">
         <div class="results-container p-6">
-            <h1 class="text-3xl font-bold text-gray-800 mb-6">Resultados de la Búsqueda</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">Resultados de la Búsqueda Avanzada</h1>
             
-            <div class="bg-blue-50 rounded-lg p-4 mb-6">
-                <p class="text-gray-700">
-                    <i class="fas fa-filter mr-2"></i>
-                    Resultados para "{{ request('criterio') }}" que contienen "{{ request('valor_criterio') }}"
-                                        @if(request('titulo')) y título que contiene "{{ request('titulo') }}" @endif
-                </p>
-            </div>
-
-            <div class="flex flex-col lg:flex-row gap-3">
-                </p>
-            </div>
-
             <div class="flex flex-col lg:flex-row gap-3">
                 {{-- Incluir filtros desde archivo separado --}}
                 @include('partials.filtros.filtros-busqueda-unificado')

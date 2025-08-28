@@ -212,13 +212,6 @@
             background-color: #b91c1c;
         }
 
-        .results-container h1 {
-            color: #1f2937;
-            font-size: 1.875rem;
-            font-weight: bold;
-            margin-bottom: 1.5rem;
-        }
-
         .filter-section h2 {
             color: #374151;
             font-size: 1.125rem;
@@ -728,10 +721,6 @@
                 <a href="{{ route('busqueda-avanzada') }}" class="search-button">
                     <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
                 </a>
-                <a href="{{ route('perfil') }}" class="search-button" title="Cuenta personal">
-                    <i class="fas fa-user-circle mr-2"></i>
-                    Perfil{{ session('rut_usuario') ? ' (' . session('rut_usuario') . ')' : '' }}
-                </a>
             </div>
         </div>
     </nav>
@@ -741,13 +730,6 @@
         <div class="results-container p-6">
             <h1 class="text-3xl font-bold text-gray-800 mb-6">Resultados de la Búsqueda Simple</h1>
             
-            <div class="bg-blue-50 rounded-lg p-4 mb-6">
-                <p class="text-gray-700">
-                    <i class="fas fa-filter mr-2"></i>
-                    Resultados para "{{ $criterio }}" que contienen "{{ $valorCriterio }}"
-                </p>
-            </div>
-
             <div class="flex flex-col lg:flex-row gap-3">
                 {{-- Incluir filtros unificados desde archivo separado --}}
                 @include('partials.filtros.filtros-busqueda-unificado')
@@ -931,8 +913,8 @@
                                             resultados
                                         </p>
                                         <p class="text-xs text-gray-500 mt-1">
-                                            <i class="fas fa-filter mr-1"></i>
-                                            Resultados filtrados y paginados para mejor rendimiento
+                                            <i class="fas fa-file-alt mr-1 text-blue-500"></i>
+                                            Página {{ $resultados->currentPage() }} de {{ $resultados->lastPage() }}
                                         </p>
                                     </div>
                                     

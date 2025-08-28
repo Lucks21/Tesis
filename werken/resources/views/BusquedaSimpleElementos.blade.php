@@ -59,10 +59,6 @@
                 <a href="{{ route('busqueda-avanzada') }}" class="search-button">
                     <i class="fas fa-filter mr-2"></i>Búsqueda Avanzada
                 </a>
-                <a href="{{ route('perfil') }}" class="search-button" title="Cuenta personal">
-                    <i class="fas fa-user-circle mr-2"></i>
-                    Perfil{{ session('rut_usuario') ? ' (' . session('rut_usuario') . ')' : '' }}
-                </a>
             </div>
         </div>
     </nav>
