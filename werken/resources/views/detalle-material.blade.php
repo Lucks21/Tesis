@@ -460,37 +460,19 @@
         </div>
     </nav>
 
-    <!-- Título de la página -->
-    <div class="container mx-auto px-6 py-8">
-        <h1 class="page-title text-4xl mb-2">Detalle del Material</h1>
-        <div class="w-24 h-1 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full"></div>
-    </div>
+
 
     <!-- Barra de acciones -->
-    <div class="actions-bar" style="padding: 0 0 2rem 0;">
-        <div class="container mx-auto px-6">
-            <div class="flex justify-start items-center">
-                <a href="javascript:history.back()" class="back-button">
-                    <i class="fas fa-arrow-left"></i>Volver a resultados
-                </a>
-            </div>
+    <div class="container mx-auto px-6 pb-4">
+        <div class="flex justify-start items-center">
+            <a href="javascript:history.back()" class="back-button">
+                <i class="fas fa-arrow-left"></i>Volver a resultados
+            </a>
         </div>
-    </nav>
+    </div>
     <!-- Contenido principal -->
     <main class="py-8">
         <div class="container">
-            <!-- Barra de acciones -->
-            <div class="actions-bar">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
-                    <a href="javascript:history.back()" class="btn-action btn-back">
-                        <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>Volver a resultados
-                    </a>
-                    <a href="{{ route('export.ris', ['nroControl' => $detalleMaterial->nro_control]) }}" 
-                       class="btn-action btn-export">
-                        <i class="fas fa-file-export" style="margin-right: 0.5rem;"></i>Exportar RIS
-                    </a>
-                </div>
-            </div>
 
     <div class="container mx-auto px-6 pb-12">
         <!-- Resumen Bibliográfico -->
