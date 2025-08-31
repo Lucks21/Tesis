@@ -404,6 +404,35 @@
         .institutional-links a:first-child {
             margin-left: 0;
         }
+
+        /* Estilos para expandir/contraer texto */
+        .expandable-text {
+            position: relative;
+        }
+
+        .expand-btn {
+            color: #003876;
+            background: none;
+            border: none;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 0;
+            margin-left: 4px;
+        }
+
+        .expand-btn:hover {
+            color: #002b5c;
+        }
+
+        .text-expanded {
+            display: block;
+        }
+
+        .text-collapsed {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -494,7 +523,17 @@
                     @if(!empty($detalleMaterial->titulo))
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Título:</div>
-                        <div class="col-span-9 field-value">{{ $detalleMaterial->titulo }}</div>
+                        <div class="col-span-9 field-value">
+                            @if(strlen($detalleMaterial->titulo) > 200)
+                                <div class="expandable-text">
+                                    <span class="text-preview">{{ Str::limit($detalleMaterial->titulo, 200, '') }}</span>
+                                    <span class="text-full text-collapsed">{{ $detalleMaterial->titulo }}</span>
+                                    <button class="expand-btn" onclick="toggleText(this)">... Ver más</button>
+                                </div>
+                            @else
+                                {{ $detalleMaterial->titulo }}
+                            @endif
+                        </div>
                     </div>
                     @endif
                     
@@ -533,7 +572,15 @@
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Datos de Publicación:</div>
                         <div class="col-span-9">
-                            <span class="field-value">{{ $detalleMaterial->datos_publicacion }}</span>
+                            @if(strlen($detalleMaterial->datos_publicacion) > 200)
+                                <div class="expandable-text">
+                                    <span class="text-preview field-value">{{ Str::limit($detalleMaterial->datos_publicacion, 200, '') }}</span>
+                                    <span class="text-full text-collapsed field-value">{{ $detalleMaterial->datos_publicacion }}</span>
+                                    <button class="expand-btn" onclick="toggleText(this)">... Ver más</button>
+                                </div>
+                            @else
+                                <span class="field-value">{{ $detalleMaterial->datos_publicacion }}</span>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -542,7 +589,15 @@
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Descripción:</div>
                         <div class="col-span-9">
-                            <span class="field-value">{{ $detalleMaterial->descripcion }}</span>
+                            @if(strlen($detalleMaterial->descripcion) > 200)
+                                <div class="expandable-text">
+                                    <span class="text-preview field-value">{{ Str::limit($detalleMaterial->descripcion, 200, '') }}</span>
+                                    <span class="text-full text-collapsed field-value">{{ $detalleMaterial->descripcion }}</span>
+                                    <button class="expand-btn" onclick="toggleText(this)">... Ver más</button>
+                                </div>
+                            @else
+                                <span class="field-value">{{ $detalleMaterial->descripcion }}</span>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -606,9 +661,17 @@
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Nota(s):</div>
                         <div class="col-span-9">
-                            @foreach($detalleMaterial->notas as $nota)
+                            @foreach($detalleMaterial->notas as $index => $nota)
                                 <div class="field-value mb-2">
-                                    {{ $nota }}
+                                    @if(strlen($nota) > 200)
+                                        <div class="expandable-text">
+                                            <span class="text-preview">{{ Str::limit($nota, 200, '') }}</span>
+                                            <span class="text-full text-collapsed">{{ $nota }}</span>
+                                            <button class="expand-btn" onclick="toggleText(this)">... Ver más</button>
+                                        </div>
+                                    @else
+                                        {{ $nota }}
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -619,8 +682,16 @@
                     <div class="grid grid-cols-12 gap-4 items-start">
                         <div class="col-span-3 field-label">Otro(s) Título(s):</div>
                         <div class="col-span-9">
-                            @foreach($detalleMaterial->otros_titulos as $otroTitulo)
-                                <span class="tag-text">{{ $otroTitulo }}</span>
+                            @foreach($detalleMaterial->otros_titulos as $index => $otroTitulo)
+                                @if(strlen($otroTitulo) > 200)
+                                    <div class="expandable-text">
+                                        <span class="text-preview tag-text">{{ Str::limit($otroTitulo, 200, '') }}</span>
+                                        <span class="text-full text-collapsed tag-text">{{ $otroTitulo }}</span>
+                                        <button class="expand-btn" onclick="toggleText(this)">... Ver más</button>
+                                    </div>
+                                @else
+                                    <span class="tag-text">{{ $otroTitulo }}</span>
+                                @endif
                             @endforeach
                         </div>
                     </div>
@@ -631,5 +702,27 @@
 
         </div>
     </main>
+
+    <script>
+        function toggleText(button) {
+            const container = button.parentElement;
+            const preview = container.querySelector('.text-preview');
+            const full = container.querySelector('.text-full');
+            
+            if (full.classList.contains('text-collapsed')) {
+                // Expandir
+                preview.style.display = 'none';
+                full.classList.remove('text-collapsed');
+                full.classList.add('text-expanded');
+                button.textContent = ' Ver menos';
+            } else {
+                // Contraer
+                preview.style.display = 'inline';
+                full.classList.remove('text-expanded');
+                full.classList.add('text-collapsed');
+                button.textContent = '... Ver más';
+            }
+        }
+    </script>
 </body>
 </html>
