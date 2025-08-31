@@ -454,6 +454,59 @@
                 padding: 0 2rem;
             }
         }
+
+        /* Sortable table headers */
+        .sortable-header {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            user-select: none;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sortable-header:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sort-icon {
+            margin-left: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .sortable-header:hover .sort-icon {
+            opacity: 1;
+        }
+
+        .sort-icon.active {
+            opacity: 1;
+            color: #fbbf24;
+        }
+
+        .sort-icon-container {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+
+        .sort-icon-up,
+        .sort-icon-down {
+            font-size: 0.6rem;
+            height: 0.5rem;
+            display: block;
+        }
+
+        /* Feedback visual para ordenamiento activo */
+        .header-sorted-asc {
+            background-color: rgba(59, 130, 246, 0.15);
+        }
+
+        .header-sorted-desc {
+            background-color: rgba(59, 130, 246, 0.15);
+        }
     </style>
     
     {{-- Incluir estilos específicos de filtros --}}
@@ -526,6 +579,35 @@
                                 <p class="text-gray-500 text-xl">No se encontraron resultados.</p>
                             </div>
                         @else
+                            {{-- Indicador de ordenamiento activo --}}
+                            @if($sortBy !== 'relevancia' && in_array($sortBy, ['titulo', 'autor']))
+                                <div class="mb-4 px-2 py-1 bg-blue-50 border border-blue-200 rounded inline-block">
+                                    <div class="flex items-center">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-sort text-blue-600 mr-2"></i>
+                                            <span class="text-sm text-blue-800">
+                                                Ordenado por <strong>{{ ucfirst($sortBy) }}</strong> 
+                                                <span class="inline-flex items-center ml-1">
+                                                    @if($sortDirection === 'asc')
+                                                        <i class="fas fa-sort-up text-blue-600" title="Ascendente"></i>
+                                                        <span class="ml-1">(A-Z)</span>
+                                                    @else
+                                                        <i class="fas fa-sort-down text-blue-600" title="Descendente"></i>
+                                                        <span class="ml-1">(Z-A)</span>
+                                                    @endif
+                                                </span>
+                                            </span>
+                                        </div>
+                                        <div class="ml-4">
+                                            <a href="{{ url()->current() }}?{{ http_build_query(array_merge(request()->except(['sort_by', 'sort_direction', 'page']), ['page' => 1])) }}" 
+                                               class="text-sm text-blue-600 hover:text-blue-800 underline">
+                                                <i class="fas fa-times mr-1"></i> Quitar ordenamiento
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
                             <!-- Controles de exportación -->
                             <div class="export-controls">
                                 <div class="select-all-container">
@@ -555,11 +637,29 @@
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-checkbox">
                                                 <i class="fas fa-check mr-2"></i>Sel.
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-titulo">
-                                                <i class="fas fa-book mr-2"></i>Título
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-titulo 
+                                                {{ $sortBy === 'titulo' ? ($sortDirection === 'asc' ? 'header-sorted-asc' : 'header-sorted-desc') : '' }}">
+                                                <div class="sortable-header" onclick="sortTable('titulo')">
+                                                    <span>
+                                                        <i class="fas fa-book mr-2"></i>Título
+                                                    </span>
+                                                    <div class="sort-icon-container">
+                                                        <i class="fas fa-chevron-up sort-icon-up {{ $sortBy === 'titulo' && $sortDirection === 'asc' ? 'sort-icon active' : 'sort-icon' }}"></i>
+                                                        <i class="fas fa-chevron-down sort-icon-down {{ $sortBy === 'titulo' && $sortDirection === 'desc' ? 'sort-icon active' : 'sort-icon' }}"></i>
+                                                    </div>
+                                                </div>
                                             </th>
-                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-autor">
-                                                <i class="fas fa-user mr-2"></i>Autor
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-white col-autor
+                                                {{ $sortBy === 'autor' ? ($sortDirection === 'asc' ? 'header-sorted-asc' : 'header-sorted-desc') : '' }}">
+                                                <div class="sortable-header" onclick="sortTable('autor')">
+                                                    <span>
+                                                        <i class="fas fa-user mr-2"></i>Autor
+                                                    </span>
+                                                    <div class="sort-icon-container">
+                                                        <i class="fas fa-chevron-up sort-icon-up {{ $sortBy === 'autor' && $sortDirection === 'asc' ? 'sort-icon active' : 'sort-icon' }}"></i>
+                                                        <i class="fas fa-chevron-down sort-icon-down {{ $sortBy === 'autor' && $sortDirection === 'desc' ? 'sort-icon active' : 'sort-icon' }}"></i>
+                                                    </div>
+                                                </div>
                                             </th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-white col-editorial">
                                                 <i class="fas fa-building mr-2"></i>Editorial
@@ -780,6 +880,97 @@
                 }, 200);
             }, 1200);
         }
+
+        // Función para ordenar la tabla
+        function sortTable(column) {
+            // Validar que solo se permita ordenamiento por título y autor
+            if (!['titulo', 'autor'].includes(column)) {
+                console.warn('Ordenamiento solo permitido para título y autor');
+                return;
+            }
+            
+            // Obtener parámetros actuales de la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Determinar dirección de ordenamiento
+            let newDirection = 'asc';
+            const currentSort = '{{ $sortBy }}';
+            const currentDirection = '{{ $sortDirection }}';
+            
+            // Si se hace clic en la misma columna, cambiar dirección
+            if (column === currentSort) {
+                newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            }
+            
+            // Actualizar parámetros de ordenamiento
+            urlParams.set('sort_by', column);
+            urlParams.set('sort_direction', newDirection);
+            
+            // Resetear a primera página al cambiar ordenamiento
+            urlParams.set('page', '1');
+            
+            // Crear nueva URL y navegar
+            const newUrl = window.location.pathname + '?' + urlParams.toString();
+            
+            // Mostrar indicador de carga
+            showSortingIndicator(column, newDirection);
+            
+            // Navegar a la nueva URL
+            window.location.href = newUrl;
+        }
+
+        // Función para mostrar indicador de carga durante ordenamiento
+        function showSortingIndicator(column, direction) {
+            // Encontrar el header correspondiente
+            const headers = document.querySelectorAll('.sortable-header');
+            headers.forEach(header => {
+                const headerParent = header.closest('th');
+                if (headerParent) {
+                    // Agregar clase de loading
+                    headerParent.style.opacity = '0.6';
+                    
+                    // Agregar spinner de carga
+                    const spinner = document.createElement('i');
+                    spinner.className = 'fas fa-spinner fa-spin sort-loading';
+                    spinner.style.marginLeft = '0.5rem';
+                    spinner.style.color = '#fbbf24';
+                    
+                    header.appendChild(spinner);
+                }
+            });
+        }
+
+        // Función para obtener la URL de ordenamiento (helper para depuración)
+        function getSortUrl(column, direction) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('sort_by', column);
+            urlParams.set('sort_direction', direction);
+            urlParams.set('page', '1');
+            return window.location.pathname + '?' + urlParams.toString();
+        }
+
+        // Agregar eventos de teclado para accesibilidad
+        document.addEventListener('DOMContentLoaded', function() {
+            const sortableHeaders = document.querySelectorAll('.sortable-header');
+            
+            sortableHeaders.forEach(header => {
+                // Hacer que los headers sean accesibles por teclado
+                header.setAttribute('tabindex', '0');
+                header.setAttribute('role', 'button');
+                
+                // Agregar evento de teclado
+                header.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+                
+                // Agregar descripción aria
+                const columnName = this.querySelector('span').textContent.trim().split(' ').pop();
+                header.setAttribute('aria-label', `Ordenar por ${columnName}`);
+            });
+        });
     </script>
 </body>
 </html>

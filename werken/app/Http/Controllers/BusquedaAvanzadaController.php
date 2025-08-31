@@ -19,6 +19,10 @@ class BusquedaAvanzadaController extends Controller
         $titulo = $request->input('titulo');
         $pagina = $request->input('page', 1);
 
+        // Parámetros de ordenamiento
+        $sortBy = $request->input('sort_by', 'relevancia');
+        $sortDirection = $request->input('sort_direction', 'desc');
+
         $autorFiltro = $request->input('autor', []);
         $editorialFiltro = $request->input('editorial', []);
         $campusFiltro = $request->input('campus', []);
@@ -38,7 +42,9 @@ class BusquedaAvanzadaController extends Controller
             'editorial' => $editorialFiltro,
             'campus' => $campusFiltro,
             'materia' => $materiaFiltro,
-            'serie' => $serieFiltro
+            'serie' => $serieFiltro,
+            'sort_by' => $sortBy,
+            'sort_direction' => $sortDirection
         ];
         $texto_procesado = $titulo . '|' . $valorCriterio . '|' . serialize($filtros);
 
@@ -205,8 +211,8 @@ class BusquedaAvanzadaController extends Controller
             // Aplicar DISTINCT al final para evitar duplicados
             $query->distinct();
 
-            // Ordenar por relevancia como estaba originalmente
-            $query->orderBy('relevancia', 'desc');
+            // Aplicar ordenamiento
+            $this->aplicarOrdenamiento($query, $sortBy, $sortDirection, $titulo, $valorCriterio);
 
             // Ejecutar consulta
             $allResults = $query->limit(5000)->get();
@@ -218,11 +224,29 @@ class BusquedaAvanzadaController extends Controller
                 'texto_busqueda' => $texto_procesado,
                 'nav_pagina' => $pagina,
                 'busq_numrows' => $allResults->count(),
-                'ind_busqueda' => 'avanzada'
+                'ind_busqueda' => 'avanzada',
+                'sort_by' => $sortBy,
+                'sort_direction' => $sortDirection
             ]);
         } else {
             // Recuperar datos desde sesión
             $allResults = collect(session('busqueda', []));
+            
+            // Aplicar ordenamiento a los datos de sesión si es diferente al anterior
+            $sessionSortBy = session('sort_by', 'relevancia');
+            $sessionSortDirection = session('sort_direction', 'desc');
+            
+            if ($sortBy !== $sessionSortBy || $sortDirection !== $sessionSortDirection) {
+                $allResults = $this->aplicarOrdenamientoColeccion($allResults, $sortBy, $sortDirection);
+                
+                // Actualizar sesión con nuevo ordenamiento
+                session([
+                    'busqueda' => $allResults->toArray(),
+                    'sort_by' => $sortBy,
+                    'sort_direction' => $sortDirection
+                ]);
+            }
+            
             session(['nav_pagina' => $pagina]);
         }
 
@@ -262,7 +286,9 @@ class BusquedaAvanzadaController extends Controller
             'materias',
             'series',
             'campuses',
-            'filtros_action_route'
+            'filtros_action_route',
+            'sortBy',
+            'sortDirection'
         ));
     }
 
@@ -596,5 +622,103 @@ class BusquedaAvanzadaController extends Controller
         }
 
         return [];
+    }
+
+    /**
+     * Aplica ordenamiento a la query de base de datos
+     * @param \Illuminate\Database\Query\Builder $query
+     * @param string $sortBy
+     * @param string $sortDirection
+     * @param string $titulo
+     * @param string $valorCriterio
+     */
+    private function aplicarOrdenamiento($query, $sortBy, $sortDirection, $titulo = '', $valorCriterio = '')
+    {
+        // Validar dirección de ordenamiento
+        $sortDirection = in_array(strtolower($sortDirection), ['asc', 'desc']) ? strtolower($sortDirection) : 'desc';
+        
+        // Definir los campos válidos para ordenamiento (solo título y autor)
+        $camposValidos = [
+            'titulo' => 'vt.nombre_busqueda',
+            'autor' => 'va.nombre_busqueda',
+            'relevancia' => 'relevancia'
+        ];
+
+        // Si se ordena por relevancia y hay criterios de búsqueda, usar relevancia
+        if ($sortBy === 'relevancia' && (!empty($titulo) || !empty($valorCriterio))) {
+            $query->orderBy('relevancia', $sortDirection);
+        } 
+        // Si se ordena por título o autor
+        elseif (in_array($sortBy, ['titulo', 'autor']) && array_key_exists($sortBy, $camposValidos)) {
+            $campo = $camposValidos[$sortBy];
+            $query->orderBy($campo, $sortDirection);
+            
+            // Agregar ordenamiento secundario por título para consistencia (si no se está ordenando por título)
+            if ($sortBy !== 'titulo') {
+                $query->orderBy('vt.nombre_busqueda', 'asc');
+            }
+        }
+        // Fallback al ordenamiento por relevancia si no hay campo válido
+        else {
+            if (!empty($titulo) || !empty($valorCriterio)) {
+                $query->orderBy('relevancia', 'desc');
+            } else {
+                $query->orderBy('vt.nombre_busqueda', 'asc');
+            }
+        }
+    }
+
+    /**
+     * Aplica ordenamiento a una colección de resultados
+     * @param \Illuminate\Support\Collection $collection
+     * @param string $sortBy
+     * @param string $sortDirection
+     * @return \Illuminate\Support\Collection
+     */
+    private function aplicarOrdenamientoColeccion($collection, $sortBy, $sortDirection)
+    {
+        // Validar dirección de ordenamiento
+        $sortDirection = in_array(strtolower($sortDirection), ['asc', 'desc']) ? strtolower($sortDirection) : 'desc';
+        
+        // Definir los campos válidos para ordenamiento (solo título y autor)
+        $camposValidos = [
+            'titulo' => 'titulo',
+            'autor' => 'autor',
+            'relevancia' => 'relevancia'
+        ];
+
+        if (in_array($sortBy, ['titulo', 'autor', 'relevancia']) && array_key_exists($sortBy, $camposValidos)) {
+            $campo = $camposValidos[$sortBy];
+            
+            if ($sortDirection === 'asc') {
+                return $collection->sortBy(function($item) use ($campo) {
+                    if (is_array($item)) {
+                        return strtolower($item[$campo] ?? '');
+                    } elseif (is_object($item)) {
+                        return strtolower($item->{$campo} ?? '');
+                    }
+                    return '';
+                })->values();
+            } else {
+                return $collection->sortByDesc(function($item) use ($campo) {
+                    if (is_array($item)) {
+                        return strtolower($item[$campo] ?? '');
+                    } elseif (is_object($item)) {
+                        return strtolower($item->{$campo} ?? '');
+                    }
+                    return '';
+                })->values();
+            }
+        }
+
+        // Fallback al ordenamiento por título si no hay campo válido
+        return $collection->sortBy(function($item) {
+            if (is_array($item)) {
+                return strtolower($item['titulo'] ?? '');
+            } elseif (is_object($item)) {
+                return strtolower($item->titulo ?? '');
+            }
+            return '';
+        })->values();
     }
 }
