@@ -18,10 +18,11 @@ class BusquedaSimpleController extends Controller
      */
     public function buscarConStoredProcedure(Request $request)
     {
-        // Log para debug
+        // Log para debug (reducido para mejor rendimiento)
         \Log::info('Iniciando búsqueda con stored procedure', [
-            'request_all' => $request->all(),
-            'method' => $request->method()
+            'busqueda' => $request->input('busqueda'),
+            'termino' => $request->input('termino'),
+            'tipo_busqueda' => $request->input('tipo_busqueda')
         ]);
 
         // Validación flexible para diferentes fuentes de parámetros
@@ -34,21 +35,18 @@ class BusquedaSimpleController extends Controller
 
         $textoBusqueda = $request->input('busqueda');
         $termino = $request->input('termino');
-        $tipoBusqueda = $request->input('tipo_busqueda', 3);
+        $tipoBusqueda = $request->input('tipo_busqueda', 3); // Valor por defecto 3 para compatibilidad
         $tipo = $request->input('tipo');
         $valorSeleccionado = $request->input('valor_seleccionado');
         $verTitulos = $request->input('ver_titulos');
         $pagina = $request->input('page', 1);
         $porPagina = 10;
 
-        // Log de parámetros procesados
+        // Log de parámetros procesados (reducido)
         \Log::info('Parámetros procesados', [
             'textoBusqueda' => $textoBusqueda,
-            'termino' => $termino,
             'tipoBusqueda' => $tipoBusqueda,
-            'tipo' => $tipo,
-            'valorSeleccionado' => $valorSeleccionado,
-            'verTitulos' => $verTitulos
+            'tipo' => $tipo
         ]);
 
         // Verificar que al menos uno de los parámetros de búsqueda esté presente
@@ -66,7 +64,9 @@ class BusquedaSimpleController extends Controller
                 'busquedaFinal' => $busquedaFinal,
                 'tipoFinal' => $tipoFinal,
                 'verTitulos' => $verTitulos,
-                'valorSeleccionado' => $valorSeleccionado
+                'valorSeleccionado' => $valorSeleccionado,
+                'textoBusqueda' => $textoBusqueda,
+                'termino' => $termino
             ]);
             
             // CASO 1: Si es búsqueda por título (tipo 3) y es búsqueda inicial, mostrar títulos directamente
@@ -88,8 +88,12 @@ class BusquedaSimpleController extends Controller
             }
             
             // CASO 4: Para otros tipos (autor, materia, editorial, serie, dewey), buscar elementos primero
-            if ($tipoFinal != 3) {
-                \Log::info('Ejecutando buscarElementos - tipos 1,2,4,5,6');
+            if ($tipoFinal != 3 && !$verTitulos && !$valorSeleccionado) {
+                \Log::info('Ejecutando buscarElementos - tipos 1,2,4,5,6', [
+                    'tipoFinal' => $tipoFinal,
+                    'verTitulos' => $verTitulos,
+                    'valorSeleccionado' => $valorSeleccionado
+                ]);
                 return $this->buscarElementos($busquedaFinal, $tipoFinal, $request);
             }
             
@@ -110,7 +114,7 @@ class BusquedaSimpleController extends Controller
     }
 
     /**
-     * Buscar títulos directamente (para búsqueda por título)
+     * Buscar títulos directamente (para búsqueda por título) - OPTIMIZADO
      */
     private function buscarTitulos($textoBusqueda, $tipoBusqueda, $request)
     {
@@ -124,31 +128,174 @@ class BusquedaSimpleController extends Controller
         $materiaFiltro = $this->procesarFiltro($request->input('materia', []));
         $serieFiltro = $this->procesarFiltro($request->input('serie', []));
         
-        // Primero intentar el stored procedure
-        $resultadosBrutos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
-            $textoBusqueda,
-            $tipoBusqueda
+        // *** NUEVO ENFOQUE OPTIMIZADO ***
+        \Log::info('buscarTitulos: Iniciando búsqueda optimizada', [
+            'textoBusqueda' => $textoBusqueda,
+            'pagina' => $pagina,
+            'porPagina' => $porPagina
         ]);
-        
-        \Log::info('buscarTitulos: Resultados del SP', [
-            'count' => count($resultadosBrutos)
-        ]);
-        
-        // Enriquecer los datos si vienen del SP
-        if (!empty($resultadosBrutos)) {
-            \Log::info('buscarTitulos: Enriqueciendo datos del SP');
-            $resultadosEnriquecidos = [];
-            foreach ($resultadosBrutos as $resultado) {
-                $enriquecido = $this->enriquecerDatosDetalle($resultado);
-                $resultadosEnriquecidos[] = $enriquecido;
-            }
-            $resultadosBrutos = $resultadosEnriquecidos;
-        }
-        
-        // Si el SP no devuelve resultados, usar consulta directa para títulos
-        if (empty($resultadosBrutos) && $tipoBusqueda == 3) {
+
+        try {
+            // OPCIÓN 1: Intentar usar stored procedure con límite
+            $resultadosBrutos = [];
             
-            // Buscar directamente en la vista V_TITULO
+            // Para títulos, intentar primero consulta directa más eficiente
+            if ($tipoBusqueda == 3) {
+                $resultadosBrutos = $this->buscarTitulosPaginados($textoBusqueda, $pagina, $porPagina);
+                
+                if (empty($resultadosBrutos['datos'])) {
+                    // Fallback al stored procedure solo si la consulta directa falla
+                    \Log::info('buscarTitulos: Fallback al stored procedure');
+                    $spResults = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
+                        $textoBusqueda,
+                        $tipoBusqueda
+                    ]);
+                    
+                    if (!empty($spResults)) {
+                        // Simular paginación con los resultados del SP
+                        $totalResultados = count($spResults);
+                        $inicio = ($pagina - 1) * $porPagina;
+                        $datosPaginados = array_slice($spResults, $inicio, $porPagina);
+                        
+                        $resultadosBrutos = [
+                            'datos' => $datosPaginados,
+                            'total' => $totalResultados
+                        ];
+                    }
+                }
+            } else {
+                // Para otros tipos, usar el stored procedure normalmente
+                $spResults = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
+                    $textoBusqueda,
+                    $tipoBusqueda
+                ]);
+                
+                $totalResultados = count($spResults);
+                $inicio = ($pagina - 1) * $porPagina;
+                $datosPaginados = array_slice($spResults, $inicio, $porPagina);
+                
+                $resultadosBrutos = [
+                    'datos' => $datosPaginados,
+                    'total' => $totalResultados
+                ];
+            }
+            
+            \Log::info('buscarTitulos: Resultados obtenidos', [
+                'total' => $resultadosBrutos['total'] ?? 0,
+                'pagina_actual' => count($resultadosBrutos['datos'] ?? [])
+            ]);
+            
+            // Enriquecer solo los datos de la página actual
+            if (!empty($resultadosBrutos['datos'])) {
+                \Log::info('buscarTitulos: Enriqueciendo solo datos de la página actual');
+                $datosEnriquecidos = $this->enriquecerDatosEnLote($resultadosBrutos['datos']);
+                $resultadosBrutos['datos'] = $datosEnriquecidos;
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Error en búsqueda optimizada', [
+                'error' => $e->getMessage()
+            ]);
+            
+            // Fallback a método anterior en caso de error
+            return $this->buscarTitulosLegacy($textoBusqueda, $tipoBusqueda, $request);
+        }
+        // Procesar los resultados para el formato esperado por la vista
+        if (!empty($resultadosBrutos['datos'])) {
+            $datosProcesados = collect($resultadosBrutos['datos'])->map(function ($item) {
+                return (object) [
+                    'nro_control' => $item->nro_control,
+                    'titulo' => $item->nombre_busqueda,
+                    'nombre_autor' => $item->autor,
+                    'nombre_editorial' => $item->editorial ?? null,
+                    'nombre_materia' => $item->materia ?? null,
+                    'nombre_serie' => $item->serie ?? null,
+                    'dewey' => $item->dewey ?? null,
+                    'biblioteca' => $item->biblioteca ?? null,
+                    'anio_publicacion' => $item->publicacion,
+                    'tipo_material' => $item->tipo,
+                    'isbn' => $item->isbn ?? null,
+                    'signatura_topografica' => $item->signatura ?? null,
+                ];
+            });
+
+            // Obtener datos únicos para filtros SOLO de la página actual
+            $autores = collect($resultadosBrutos['datos'])->pluck('autor')->filter()->unique()->sort()->values();
+            $editoriales = collect($resultadosBrutos['datos'])->pluck('editorial')->filter()->unique()->sort()->values();
+            $materias = collect($resultadosBrutos['datos'])->pluck('materia')->filter()->unique()->sort()->values();
+            $series = collect($resultadosBrutos['datos'])->pluck('serie')->filter()->unique()->sort()->values();      
+            $campuses = collect($resultadosBrutos['datos'])->pluck('biblioteca')->filter()->unique()->sort()->values();
+        } else {
+            // Inicializar con colecciones vacías cuando no hay datos
+            $datosProcesados = collect();
+            $autores = collect();
+            $editoriales = collect();
+            $materias = collect();
+            $series = collect();
+            $campuses = collect();
+        }
+
+        // Aplicar filtros si están presentes (solo sobre datos de la página actual)
+        $resultadosFiltrados = $this->aplicarFiltros($datosProcesados, $request);
+
+        // Aplicar ordenamiento
+        $orden = $request->input('orden', 'asc');
+        $resultadosFiltrados = $this->aplicarOrdenamiento($resultadosFiltrados, $orden);
+
+        // Usar el total después de aplicar filtros, no el total original de la BD
+        $totalDespuesDeFiltros = $resultadosFiltrados->count();
+        
+        // Si hay filtros activos, usar el total filtrado; si no, usar el total de BD
+        $hayFiltrosActivos = $this->hayFiltrosActivos($request);
+        $totalParaPaginacion = $hayFiltrosActivos ? $totalDespuesDeFiltros : ($resultadosBrutos['total'] ?? 0);
+        
+        \Log::info('Paginación calculada', [
+            'total_original' => $resultadosBrutos['total'] ?? 0,
+            'total_despues_filtros' => $totalDespuesDeFiltros,
+            'hay_filtros_activos' => $hayFiltrosActivos,
+            'total_para_paginacion' => $totalParaPaginacion
+        ]);
+        
+        $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
+            $resultadosFiltrados,
+            $totalParaPaginacion,
+            $porPagina,
+            $pagina,
+            [
+                'path' => $request->url(),
+                'query' => $request->query()
+            ]
+        );
+
+        // Preparar datos para la vista (compatible con vista avanzada)
+        $criterio = 'busqueda_simple';
+        $valorCriterio = $textoBusqueda;
+        $titulo = $textoBusqueda;
+        $orden = $request->input('orden', 'asc');
+        $filtros_action_route = route('busqueda.sp');
+
+        return view('BusquedaSimpleResultados', compact(
+            'resultados',
+            'criterio',
+            'valorCriterio',
+            'titulo',
+            'orden',
+            'autores',
+            'editoriales',
+            'materias',
+            'series',
+            'campuses',
+            'filtros_action_route'
+        ));
+    }
+
+    /**
+     * Buscar títulos con paginación a nivel de base de datos
+     */
+    private function buscarTitulosPaginados($textoBusqueda, $pagina, $porPagina)
+    {
+        try {
+            // Construir condiciones de búsqueda
             $palabras = explode(' ', trim($textoBusqueda));
             $condiciones = [];
             $parametros = [];
@@ -165,115 +312,147 @@ class BusquedaSimpleController extends Controller
                 $parametros[] = "%{$textoBusqueda}%";
             }
             
-            // Primero obtener los nro_control que coinciden
+            // Calcular OFFSET para la paginación
+            $offset = ($pagina - 1) * $porPagina;
+            
+            // Contar total de registros
+            $sqlCount = "
+                SELECT COUNT(*) as total 
+                FROM V_TITULO 
+                WHERE " . implode(' AND ', $condiciones);
+            
+            $totalResult = DB::select($sqlCount, $parametros);
+            $totalResultados = $totalResult[0]->total;
+            
+            \Log::info('buscarTitulosPaginados: Total encontrados', [
+                'total' => $totalResultados,
+                'textoBusqueda' => $textoBusqueda
+            ]);
+            
+            // Si hay demasiados resultados, implementar límite de seguridad
+            if ($totalResultados > 10000) {
+                \Log::warning('buscarTitulosPaginados: Demasiados resultados, limitando', [
+                    'total' => $totalResultados,
+                    'limite' => 10000
+                ]);
+                $totalResultados = 10000; // Limitar a 10k para rendimiento
+            }
+            
+            // Obtener registros paginados
             $sqlTitulos = "
                 SELECT nro_control, nombre_busqueda 
                 FROM V_TITULO 
                 WHERE " . implode(' AND ', $condiciones) . " 
                 ORDER BY nombre_busqueda
+                OFFSET ? ROWS
+                FETCH NEXT ? ROWS ONLY
             ";
             
-            try {
-                $titulosEncontrados = DB::select($sqlTitulos, $parametros);
-                \Log::info('buscarTitulos: Títulos encontrados', [
-                    'count' => count($titulosEncontrados)
+            $parametrosPaginados = array_merge($parametros, [$offset, $porPagina]);
+            $titulosEncontrados = DB::select($sqlTitulos, $parametrosPaginados);
+            
+            \Log::info('buscarTitulosPaginados: Registros de página obtenidos', [
+                'count' => count($titulosEncontrados),
+                'pagina' => $pagina
+            ]);
+            
+            // Enriquecer con datos básicos del SP para cada título de la página
+            $resultadosEnriquecidos = [];
+            foreach ($titulosEncontrados as $titulo) {
+                // Intentar obtener detalles con el SP usando el nombre exacto del título
+                $detalles = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
+                    $titulo->nombre_busqueda,
+                    3
                 ]);
                 
-                // Ahora obtener detalles completos usando el SP para cada título encontrado
-                $resultadosBrutos = [];
-                foreach ($titulosEncontrados as $titulo) {
-                    // Intentar obtener detalles con el SP usando el nombre exacto del título
-                    $detalles = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
-                        $titulo->nombre_busqueda,
-                        3
-                    ]);
+                if (!empty($detalles)) {
+                    // Tomar solo el primer registro del SP (pueden ser varios ejemplares)
+                    $resultadosEnriquecidos[] = $detalles[0];
+                } else {
+                    // Si el SP no funciona, crear un registro básico
+                    $registroBasico = new \stdClass();
+                    $registroBasico->nro_control = $titulo->nro_control;
+                    $registroBasico->nombre_busqueda = $titulo->nombre_busqueda;
+                    $registroBasico->autor = null;
+                    $registroBasico->editorial = null;
+                    $registroBasico->materia = null;
+                    $registroBasico->serie = null;
+                    $registroBasico->biblioteca = null;
+                    $registroBasico->publicacion = null;
+                    $registroBasico->tipo = null;
+                    $registroBasico->isbn = null;
+                    $registroBasico->signatura = null;
                     
-                    if (!empty($detalles)) {
-                        // Enriquecer los datos con información adicional de las vistas
-                        foreach ($detalles as $detalle) {
-                            $detalleEnriquecido = $this->enriquecerDatosDetalle($detalle);
-                            $resultadosBrutos[] = $detalleEnriquecido;
-                        }
-                    } else {
-                        // Si el SP no funciona, crear un registro básico y enriquecerlo
-                        $registroBasico = new \stdClass();
-                        $registroBasico->nro_control = $titulo->nro_control;
-                        $registroBasico->nombre_busqueda = $titulo->nombre_busqueda;
-                        $registroBasico->autor = null;
-                        $registroBasico->editorial = null;
-                        $registroBasico->materia = null;
-                        $registroBasico->serie = null;
-                        $registroBasico->biblioteca = null;
-                        $registroBasico->publicacion = null;
-                        $registroBasico->tipo = null;
-                        $registroBasico->isbn = null;
-                        $registroBasico->signatura = null;
-                        
-                        $registroEnriquecido = $this->enriquecerDatosDetalle($registroBasico);
-                        $resultadosBrutos[] = $registroEnriquecido;
-                    }
+                    $resultadosEnriquecidos[] = $registroBasico;
                 }
-                
-                \Log::info('buscarTitulos: Resultados finales procesados', [
-                    'count' => count($resultadosBrutos)
-                ]);
-                
-            } catch (\Exception $e) {
-                \Log::error('buscarTitulos: Error en consulta directa', [
-                    'error' => $e->getMessage()
-                ]);
-                $resultadosBrutos = [];
             }
+            
+            return [
+                'datos' => $resultadosEnriquecidos,
+                'total' => $totalResultados
+            ];
+            
+        } catch (\Exception $e) {
+            \Log::error('Error en buscarTitulosPaginados', [
+                'error' => $e->getMessage(),
+                'textoBusqueda' => $textoBusqueda
+            ]);
+            
+            return [
+                'datos' => [],
+                'total' => 0
+            ];
         }
+    }
 
-        // Procesar los resultados para el formato esperado por la vista
+    /**
+     * Método legacy de búsqueda de títulos (fallback en caso de error)
+     */
+    private function buscarTitulosLegacy($textoBusqueda, $tipoBusqueda, $request)
+    {
+        \Log::info('buscarTitulosLegacy: Usando método fallback');
+        
+        // Código simplificado del método anterior
+        $pagina = $request->input('page', 1);
+        $porPagina = 10;
+        
+        $resultadosBrutos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
+            $textoBusqueda,
+            $tipoBusqueda
+        ]);
+        
+        // Limitar a máximo 1000 registros para evitar timeouts
+        if (count($resultadosBrutos) > 1000) {
+            \Log::warning('buscarTitulosLegacy: Limitando resultados a 1000');
+            $resultadosBrutos = array_slice($resultadosBrutos, 0, 1000);
+        }
+        
+        // Procesar resultados básicos sin enriquecimiento extenso
         $resultadosProcesados = collect($resultadosBrutos)->map(function ($item) {
             return (object) [
-                'nro_control' => $item->nro_control,
-                'titulo' => $item->nombre_busqueda,
-                'nombre_autor' => $item->autor,
+                'nro_control' => $item->nro_control ?? null,
+                'titulo' => $item->nombre_busqueda ?? 'Sin título',
+                'nombre_autor' => $item->autor ?? null,
                 'nombre_editorial' => $item->editorial ?? null,
                 'nombre_materia' => $item->materia ?? null,
                 'nombre_serie' => $item->serie ?? null,
                 'dewey' => $item->dewey ?? null,
                 'biblioteca' => $item->biblioteca ?? null,
-                'anio_publicacion' => $item->publicacion,
-                'tipo_material' => $item->tipo,
+                'anio_publicacion' => $item->publicacion ?? null,
+                'tipo_material' => $item->tipo ?? null,
                 'isbn' => $item->isbn ?? null,
                 'signatura_topografica' => $item->signatura ?? null,
             ];
         });
 
-        // Obtener datos únicos para filtros
-        $autores = collect($resultadosBrutos)->pluck('autor')->filter()->unique()->sort()->values();
-        $años = collect($resultadosBrutos)->pluck('publicacion')->filter()->unique()->sort()->values();
-        $tipos = collect($resultadosBrutos)->pluck('tipo')->filter()->unique()->sort()->values();
-        
-        // Obtener editoriales, materias y series desde los resultados
-        $editoriales = collect($resultadosBrutos)->pluck('editorial')->filter()->unique()->sort()->values();
-        $materias = collect($resultadosBrutos)->pluck('materia')->filter()->unique()->sort()->values();
-        $series = collect($resultadosBrutos)->pluck('serie')->filter()->unique()->sort()->values();      
-        $campuses = collect($resultadosBrutos)->pluck('biblioteca')->filter()->unique()->sort()->values();
+        // Datos de filtros básicos
+        $autores = collect();
+        $editoriales = collect();
+        $materias = collect();
+        $series = collect();
+        $campuses = collect();
 
-        // Debug: Log de datos de filtros
-        \Log::info('Datos de filtros cargados', [
-            'autores_count' => $autores->count(),
-            'editoriales_count' => $editoriales->count(),
-            'materias_count' => $materias->count(),
-            'series_count' => $series->count(),
-            'campuses_count' => $campuses->count(),
-            'autores_sample' => $autores->take(3)->toArray(),
-            'editoriales_sample' => $editoriales->take(3)->toArray()
-        ]);
-
-        // Aplicar filtros si están presentes
-        $resultadosProcesados = $this->aplicarFiltros($resultadosProcesados, $request);
-
-        // Aplicar ordenamiento
-        $orden = $request->input('orden', 'asc');
-        $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
-
-        // Crear paginación
+        // Aplicar paginación en memoria
         $totalResultados = $resultadosProcesados->count();
         $resultadosPaginados = $resultadosProcesados->slice(($pagina - 1) * $porPagina, $porPagina);
 
@@ -288,8 +467,6 @@ class BusquedaSimpleController extends Controller
             ]
         );
 
-        // Preparar datos para la vista (compatible con vista avanzada)
-        // $resultados ya contiene la paginación de títulos
         $criterio = 'busqueda_simple';
         $valorCriterio = $textoBusqueda;
         $titulo = $textoBusqueda;
@@ -394,7 +571,7 @@ class BusquedaSimpleController extends Controller
     }
 
     /**
-     * Mostrar títulos asociados a un elemento seleccionado - Segundo paso
+     * Mostrar títulos asociados a un elemento seleccionado - Segundo paso - OPTIMIZADO
      */
     private function mostrarTitulosAsociados($valorSeleccionado, $tipoBusqueda, $request)
     {
@@ -402,41 +579,51 @@ class BusquedaSimpleController extends Controller
             $pagina = $request->input('page', 1);
             $porPagina = 10;
             
+            \Log::info('mostrarTitulosAsociados: Iniciando búsqueda optimizada', [
+                'valorSeleccionado' => $valorSeleccionado,
+                'tipoBusqueda' => $tipoBusqueda,
+                'pagina' => $pagina
+            ]);
+            
             // Ejecutar el stored procedure con el valor exacto seleccionado
             $resultadosBrutos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
                 $valorSeleccionado,
                 $tipoBusqueda
             ]);
             
-            // DEBUG: Agregar información de debug para ver la estructura real
-            if (count($resultadosBrutos) > 0) {
-                $primerElemento = $resultadosBrutos[0];
-                \Log::info('DEBUG: Estructura del resultado del SP:', [
-                    'campos' => get_object_vars($primerElemento),
-                    'valor_seleccionado' => $valorSeleccionado,
-                    'tipo_busqueda' => $tipoBusqueda
+            \Log::info('mostrarTitulosAsociados: Resultados del SP', [
+                'total_registros' => count($resultadosBrutos)
+            ]);
+            
+            // Si hay demasiados resultados, aplicar límite y paginación optimizada
+            $totalResultados = count($resultadosBrutos);
+            if ($totalResultados > 1000) {
+                \Log::warning('mostrarTitulosAsociados: Demasiados resultados, limitando', [
+                    'total' => $totalResultados,
+                    'limite' => 1000
                 ]);
+                $resultadosBrutos = array_slice($resultadosBrutos, 0, 1000);
+                $totalResultados = 1000;
             }
             
-            // Enriquecer los datos del SP con información adicional
-            if (!empty($resultadosBrutos)) {
-                \Log::info('mostrarTitulosAsociados: Enriqueciendo datos del SP');
-                foreach ($resultadosBrutos as &$resultado) {
-                    \Log::info('mostrarTitulosAsociados: Antes de enriquecer', [
-                        'nro_control' => $resultado->nro_control ?? 'null',
-                        'editorial' => $resultado->editorial ?? 'null'
-                    ]);
-                    $enriquecido = $this->enriquecerDatosDetalle($resultado);
-                    \Log::info('mostrarTitulosAsociados: Después de enriquecer', [
-                        'nro_control' => $enriquecido->nro_control ?? 'null',
-                        'editorial' => $enriquecido->editorial ?? 'null'
-                    ]);
-                    $resultado = $enriquecido;
-                }
-                unset($resultado); // Romper la referencia
+            // Aplicar paginación antes del enriquecimiento
+            $inicio = ($pagina - 1) * $porPagina;
+            $datosPaginados = array_slice($resultadosBrutos, $inicio, $porPagina);
+            
+            \Log::info('mostrarTitulosAsociados: Datos paginados', [
+                'registros_pagina' => count($datosPaginados),
+                'inicio' => $inicio,
+                'por_pagina' => $porPagina
+            ]);
+            
+            // Enriquecer solo los datos de la página actual
+            if (!empty($datosPaginados)) {
+                \Log::info('mostrarTitulosAsociados: Enriqueciendo datos de la página actual');
+                $datosEnriquecidos = $this->enriquecerDatosEnLote($datosPaginados);
+                $datosPaginados = $datosEnriquecidos;
             }
             
-            $resultadosProcesados = collect($resultadosBrutos)->map(function ($item) {
+            $resultadosProcesados = collect($datosPaginados)->map(function ($item) {
                 return (object) [
                     'nro_control' => $this->getValue($item, ['nro_control', 'numero_control']),
                     'titulo' => $this->getValue($item, ['nombre_busqueda', 'titulo']),
@@ -453,27 +640,36 @@ class BusquedaSimpleController extends Controller
                 ];
             });
 
-            // Obtener datos únicos para filtros desde los datos enriquecidos
-            $autores = collect($resultadosBrutos)->pluck('autor')->filter()->unique()->sort()->values();
-            $editoriales = collect($resultadosBrutos)->pluck('editorial')->filter()->unique()->sort()->values();
-            $materias = collect($resultadosBrutos)->pluck('materia')->filter()->unique()->sort()->values();
-            $series = collect($resultadosBrutos)->pluck('serie')->filter()->unique()->sort()->values();
-            $campuses = collect($resultadosBrutos)->pluck('biblioteca')->filter()->unique()->sort()->values();
+            // Obtener datos únicos para filtros SOLO desde los datos de la página actual
+            $autores = collect($datosPaginados)->pluck('autor')->filter()->unique()->sort()->values();
+            $editoriales = collect($datosPaginados)->pluck('editorial')->filter()->unique()->sort()->values();
+            $materias = collect($datosPaginados)->pluck('materia')->filter()->unique()->sort()->values();
+            $series = collect($datosPaginados)->pluck('serie')->filter()->unique()->sort()->values();
+            $campuses = collect($datosPaginados)->pluck('biblioteca')->filter()->unique()->sort()->values();
 
-            // Aplicar filtros si están presentes
-            $resultadosProcesados = $this->aplicarFiltros($resultadosProcesados, $request);
+            // Aplicar filtros si están presentes (los filtros se aplicarán sobre toda la colección en futuras versiones)
+            $resultadosFilteredOrdered = $this->aplicarFiltros($resultadosProcesados, $request);
 
             // Aplicar ordenamiento
             $orden = $request->input('orden', 'asc');
-            $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
+            $resultadosFilteredOrdered = $this->aplicarOrdenamiento($resultadosFilteredOrdered, $orden);
 
-            // Crear paginación
-            $totalResultados = $resultadosProcesados->count();
-            $resultadosPaginados = $resultadosProcesados->slice(($pagina - 1) * $porPagina, $porPagina);
+            // Usar el total después de aplicar filtros para una paginación correcta
+            $totalDespuesDeFiltros = $resultadosFilteredOrdered->count();
+            $hayFiltrosActivos = $this->hayFiltrosActivos($request);
+            $totalParaPaginacion = $hayFiltrosActivos ? $totalDespuesDeFiltros : $totalResultados;
+            
+            \Log::info('Paginación mostrarTitulosAsociados', [
+                'total_original' => $totalResultados,
+                'total_despues_filtros' => $totalDespuesDeFiltros,
+                'hay_filtros_activos' => $hayFiltrosActivos,
+                'total_para_paginacion' => $totalParaPaginacion
+            ]);
 
+            // Crear paginación con el total correcto
             $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
-                $resultadosPaginados,
-                $totalResultados,
+                $resultadosFilteredOrdered,
+                $totalParaPaginacion,
                 $porPagina,
                 $pagina,
                 [
@@ -483,7 +679,6 @@ class BusquedaSimpleController extends Controller
             );
 
             // Preparar datos para la vista (compatible con vista avanzada)
-            // $resultados ya contiene la paginación de títulos
             $criterio = 'busqueda_simple';
             $valorCriterio = $valorSeleccionado;
             $titulo = $valorSeleccionado;
@@ -544,6 +739,11 @@ class BusquedaSimpleController extends Controller
      */
     private function aplicarFiltros($resultados, $request)
     {
+        // Asegurar que $resultados sea una colección
+        if (is_array($resultados)) {
+            $resultados = collect($resultados);
+        }
+        
         $filtrados = $resultados;
 
         // Procesar filtros para manejar tanto arrays como strings separadas por comas
@@ -554,11 +754,13 @@ class BusquedaSimpleController extends Controller
         $campusFiltro = $this->procesarFiltro($request->input('campus', []));
 
         \Log::info('aplicarFiltros: Filtros recibidos', [
-            'autor' => $autorFiltro,
-            'editorial' => $editorialFiltro,
-            'materia' => $materiaFiltro,
-            'serie' => $serieFiltro,
-            'campus' => $campusFiltro,
+            'filtros_activos' => [
+                'autor' => count($autorFiltro),
+                'editorial' => count($editorialFiltro),
+                'materia' => count($materiaFiltro),
+                'serie' => count($serieFiltro),
+                'campus' => count($campusFiltro)
+            ],
             'total_antes' => $resultados->count()
         ]);
 
@@ -782,6 +984,11 @@ class BusquedaSimpleController extends Controller
      */
     private function aplicarOrdenamiento($resultados, $orden)
     {
+        // Asegurar que $resultados sea una colección
+        if (is_array($resultados)) {
+            $resultados = collect($resultados);
+        }
+        
         // Simplificado: solo ordenamiento por título
         if ($orden === 'desc' || $orden === 'titulo_desc') {
             return $resultados->sortByDesc('titulo');
@@ -789,6 +996,24 @@ class BusquedaSimpleController extends Controller
             // Por defecto: ascendente (asc, titulo_asc, o cualquier otro valor)
             return $resultados->sortBy('titulo');
         }
+    }
+
+    /**
+     * Verificar si hay filtros activos en la solicitud
+     */
+    private function hayFiltrosActivos($request)
+    {
+        $autorFiltro = $this->procesarFiltro($request->input('autor', []));
+        $editorialFiltro = $this->procesarFiltro($request->input('editorial', []));
+        $materiaFiltro = $this->procesarFiltro($request->input('materia', []));
+        $serieFiltro = $this->procesarFiltro($request->input('serie', []));
+        $campusFiltro = $this->procesarFiltro($request->input('campus', []));
+        
+        return !empty($autorFiltro) || 
+               !empty($editorialFiltro) || 
+               !empty($materiaFiltro) || 
+               !empty($serieFiltro) || 
+               !empty($campusFiltro);
     }
 
     /**
@@ -826,7 +1051,137 @@ class BusquedaSimpleController extends Controller
     }
 
     /**
-     * Enriquecer datos del detalle con información adicional de las vistas
+     * Enriquecer datos en lote para mejorar el rendimiento
+     */
+    private function enriquecerDatosEnLote($detalles)
+    {
+        if (empty($detalles)) {
+            return $detalles;
+        }
+
+        $startTime = microtime(true);
+        \Log::info('enriquecerDatosEnLote: Iniciando', ['total_registros' => count($detalles)]);
+
+        // Recopilar todos los nro_control únicos
+        $nrosControl = collect($detalles)
+            ->pluck('nro_control')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (empty($nrosControl)) {
+            \Log::warning('enriquecerDatosEnLote: No hay números de control válidos');
+            return $detalles;
+        }
+
+        \Log::info('enriquecerDatosEnLote: Números de control únicos', ['count' => count($nrosControl)]);
+
+        try {
+            // Crear placeholders para la consulta IN
+            $placeholders = str_repeat('?,', count($nrosControl) - 1) . '?';
+            
+            // Obtener datos de editorial para todos los registros de una vez
+            $editoriales = DB::select("
+                SELECT nro_control, nombre_busqueda 
+                FROM V_EDITORIAL 
+                WHERE nro_control IN ($placeholders)
+            ", $nrosControl);
+            $editorialesMap = collect($editoriales)->keyBy('nro_control');
+
+            // Obtener datos de materia para todos los registros de una vez
+            $materias = DB::select("
+                SELECT nro_control, nombre_busqueda 
+                FROM V_MATERIA 
+                WHERE nro_control IN ($placeholders)
+            ", $nrosControl);
+            $materiasMap = collect($materias)->keyBy('nro_control');
+
+            // Obtener datos de serie para todos los registros de una vez
+            $series = DB::select("
+                SELECT nro_control, nombre_busqueda 
+                FROM V_SERIE 
+                WHERE nro_control IN ($placeholders)
+            ", $nrosControl);
+            $seriesMap = collect($series)->keyBy('nro_control');
+
+            // Obtener datos de dewey para todos los registros de una vez
+            $deweys = DB::select("
+                SELECT nro_control, nombre_busqueda 
+                FROM V_DEWEY 
+                WHERE nro_control IN ($placeholders)
+            ", $nrosControl);
+            $deweysMap = collect($deweys)->keyBy('nro_control');
+
+            // Obtener datos de biblioteca para todos los registros de una vez
+            $bibliotecas = DB::select("
+                SELECT e.nro_control, tc.nombre_tb_campus 
+                FROM EXISTENCIA e 
+                INNER JOIN TB_CAMPUS tc ON e.campus_tb_campus = tc.campus_tb_campus 
+                WHERE e.nro_control IN ($placeholders)
+            ", $nrosControl);
+            $bibliotecasMap = collect($bibliotecas)->keyBy('nro_control');
+
+            \Log::info('enriquecerDatosEnLote: Datos obtenidos', [
+                'editoriales' => $editorialesMap->count(),
+                'materias' => $materiasMap->count(),
+                'series' => $seriesMap->count(),
+                'deweys' => $deweysMap->count(),
+                'bibliotecas' => $bibliotecasMap->count()
+            ]);
+
+            // Enriquecer cada detalle con los datos obtenidos
+            foreach ($detalles as $detalle) {
+                if (!isset($detalle->nro_control)) {
+                    continue;
+                }
+
+                $nroControl = $detalle->nro_control;
+
+                // Enriquecer solo si el campo está vacío
+                if (empty($detalle->editorial) && $editorialesMap->has($nroControl)) {
+                    $detalle->editorial = $editorialesMap[$nroControl]->nombre_busqueda;
+                }
+
+                if (empty($detalle->materia) && $materiasMap->has($nroControl)) {
+                    $detalle->materia = $materiasMap[$nroControl]->nombre_busqueda;
+                }
+
+                if (empty($detalle->serie) && $seriesMap->has($nroControl)) {
+                    $detalle->serie = $seriesMap[$nroControl]->nombre_busqueda;
+                }
+
+                if (empty($detalle->dewey) && $deweysMap->has($nroControl)) {
+                    $detalle->dewey = $deweysMap[$nroControl]->nombre_busqueda;
+                }
+
+                if (empty($detalle->biblioteca) && $bibliotecasMap->has($nroControl)) {
+                    $detalle->biblioteca = $bibliotecasMap[$nroControl]->nombre_tb_campus;
+                }
+            }
+
+            $endTime = microtime(true);
+            $duration = round(($endTime - $startTime) * 1000, 2);
+            
+            \Log::info('enriquecerDatosEnLote: Completado', [
+                'total_registros' => count($detalles),
+                'duration_ms' => $duration
+            ]);
+
+            return $detalles;
+
+        } catch (\Exception $e) {
+            \Log::error('Error enriqueciendo datos en lote', [
+                'total_registros' => count($detalles),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $detalles;
+        }
+    }
+
+    /**
+     * Enriquecer datos del detalle con información adicional de las vistas (método legacy - mantenido para compatibilidad)
      */
     private function enriquecerDatosDetalle($detalle)
     {
@@ -835,72 +1190,8 @@ class BusquedaSimpleController extends Controller
             return $detalle;
         }
 
-        try {
-            $nroControl = $detalle->nro_control;
-            
-            \Log::info('enriquecerDatosDetalle: Procesando', [
-                'nro_control' => $nroControl,
-                'editorial_antes' => $detalle->editorial ?? 'null',
-                'materia_antes' => $detalle->materia ?? 'null',
-                'serie_antes' => $detalle->serie ?? 'null',
-                'dewey_antes' => $detalle->dewey ?? 'null',
-                'biblioteca_antes' => $detalle->biblioteca ?? 'null'
-            ]);
-            
-            // Obtener datos adicionales si no están presentes
-            if (empty($detalle->editorial)) {
-                $editorial = DB::select("SELECT TOP 1 nombre_busqueda FROM V_EDITORIAL WHERE nro_control = ?", [$nroControl]);
-                $detalle->editorial = !empty($editorial) ? $editorial[0]->nombre_busqueda : null;
-                \Log::info('enriquecerDatosDetalle: Editorial obtenida', ['editorial' => $detalle->editorial]);
-            }
-            
-            if (empty($detalle->materia)) {
-                $materia = DB::select("SELECT TOP 1 nombre_busqueda FROM V_MATERIA WHERE nro_control = ?", [$nroControl]);
-                $detalle->materia = !empty($materia) ? $materia[0]->nombre_busqueda : null;
-                \Log::info('enriquecerDatosDetalle: Materia obtenida', ['materia' => $detalle->materia]);
-            }
-            
-            if (empty($detalle->serie)) {
-                $serie = DB::select("SELECT TOP 1 nombre_busqueda FROM V_SERIE WHERE nro_control = ?", [$nroControl]);
-                $detalle->serie = !empty($serie) ? $serie[0]->nombre_busqueda : null;
-                \Log::info('enriquecerDatosDetalle: Serie obtenida', ['serie' => $detalle->serie]);
-            }
-            
-            if (empty($detalle->dewey)) {
-                $dewey = DB::select("SELECT TOP 1 nombre_busqueda FROM V_DEWEY WHERE nro_control = ?", [$nroControl]);
-                $detalle->dewey = !empty($dewey) ? $dewey[0]->nombre_busqueda : null;
-                \Log::info('enriquecerDatosDetalle: Dewey obtenido', ['dewey' => $detalle->dewey]);
-            }
-            
-            if (empty($detalle->biblioteca)) {
-                $biblioteca = DB::select("
-                    SELECT TOP 1 tc.nombre_tb_campus 
-                    FROM EXISTENCIA e 
-                    INNER JOIN TB_CAMPUS tc ON e.campus_tb_campus = tc.campus_tb_campus 
-                    WHERE e.nro_control = ?
-                ", [$nroControl]);
-                $detalle->biblioteca = !empty($biblioteca) ? $biblioteca[0]->nombre_tb_campus : null;
-                \Log::info('enriquecerDatosDetalle: Biblioteca obtenida', ['biblioteca' => $detalle->biblioteca]);
-            }
-            
-            \Log::info('enriquecerDatosDetalle: Completado', [
-                'nro_control' => $nroControl,
-                'editorial_despues' => $detalle->editorial,
-                'materia_despues' => $detalle->materia,
-                'serie_despues' => $detalle->serie,
-                'dewey_despues' => $detalle->dewey,
-                'biblioteca_despues' => $detalle->biblioteca
-            ]);
-            
-            return $detalle;
-            
-        } catch (\Exception $e) {
-            \Log::error('Error enriqueciendo datos del detalle', [
-                'nro_control' => $detalle->nro_control ?? 'null',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return $detalle;
-        }
+        // Para casos individuales, usar el método en lote que es más eficiente
+        $resultados = $this->enriquecerDatosEnLote([$detalle]);
+        return !empty($resultados) ? $resultados[0] : $detalle;
     }
 }
