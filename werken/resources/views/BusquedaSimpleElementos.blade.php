@@ -71,6 +71,51 @@
                 <p class="mb-0">Término: "{{ $valorCriterio }}" | Selecciona un elemento para ver los títulos asociados</p>
             </div>
 
+            <!-- Formulario de nueva búsqueda -->
+            <div style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 1.5rem;">
+                <h5 style="color: #003876; margin-bottom: 1.5rem; font-weight: bold; font-size: 1.25rem;">
+                    <i class="fas fa-search mr-3" style="color: #007bff;"></i>Nueva Búsqueda
+                </h5>
+                <form action="{{ route('busqueda.sp') }}" method="GET">
+                    <div style="display: table; width: 100%; table-layout: fixed;">
+                        <div style="display: table-row;">
+                            <div style="display: table-cell; width: 25%; padding-right: 1rem; vertical-align: top;">
+                                <label for="tipo_busqueda_nueva" style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.75rem; font-size: 1rem;">Buscar por:</label>
+                                <select name="tipo_busqueda" id="tipo_busqueda_nueva" style="width: 100%; padding: 0.75rem; border: 2px solid #6c757d; border-radius: 0.5rem; background-color: white; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.borderColor='#007bff'" onmouseout="this.style.borderColor='#6c757d'" onfocus="this.style.borderColor='#007bff'; this.style.outline='none'; this.style.boxShadow='0 0 0 3px rgba(0,123,255,0.25)'">
+                                    <option value="1" {{ request('tipo_busqueda') == '1' ? 'selected' : '' }}>Autor</option>
+                                    <option value="3" {{ request('tipo_busqueda') == '3' || !request('tipo_busqueda') ? 'selected' : '' }}>Título</option>
+                                    <option value="2" {{ request('tipo_busqueda') == '2' ? 'selected' : '' }}>Materia</option>
+                                    <option value="4" {{ request('tipo_busqueda') == '4' ? 'selected' : '' }}>Editorial</option>
+                                    <option value="5" {{ request('tipo_busqueda') == '5' ? 'selected' : '' }}>Serie</option>
+                                </select>
+                            </div>
+                            <div style="display: table-cell; width: 55%; padding-right: 1rem; vertical-align: top;">
+                                <label for="busqueda_nueva" style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.75rem; font-size: 1rem;">Término de búsqueda:</label>
+                                <input type="text" 
+                                       id="busqueda_nueva"
+                                       name="busqueda" 
+                                       style="width: 100%; padding: 0.75rem; border: 2px solid #6c757d; border-radius: 0.5rem; background-color: white; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" 
+                                       placeholder="Ingrese el término a buscar..."
+                                       value="{{ request('busqueda') ?? request('termino') ?? '' }}"
+                                       onmouseover="this.style.borderColor='#007bff'" 
+                                       onmouseout="this.style.borderColor='#6c757d'" 
+                                       onfocus="this.style.borderColor='#007bff'; this.style.outline='none'; this.style.boxShadow='0 0 0 3px rgba(0,123,255,0.25)'">
+                            </div>
+                            <div style="display: table-cell; width: 20%; vertical-align: bottom;">
+                                <div style="display: flex; gap: 0.5rem; padding-top: 2rem;">
+                                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1rem; font-size: 1rem; white-space: nowrap;">
+                                        <i class="fas fa-search mr-1"></i>Buscar
+                                    </button>
+                                    <a href="{{ route('busqueda') }}" class="btn btn-secondary" style="padding: 0.75rem 1rem; font-size: 1rem; text-decoration: none; display: inline-flex; align-items: center; white-space: nowrap;">
+                                        <i class="fas fa-refresh mr-1"></i>Limpiar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div class="card-body">
                 @if($resultados->count() > 0)
                     <div class="table-responsive">
