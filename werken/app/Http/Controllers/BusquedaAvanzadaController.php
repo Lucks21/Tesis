@@ -206,9 +206,8 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($autorFiltro) {
                     foreach ($autorFiltro as $autor) {
                         $q->orWhere(function($subQ) use ($autor) {
-                            $subQ->where('va.nombre_busqueda', '=', trim($autor))
-                                 ->orWhereRaw('TRIM(va.nombre_busqueda) = ?', [trim($autor)])
-                                 ->whereNotNull('va.nombre_busqueda');
+                            $this->aplicarBusquedaFlexible($subQ, 'va.nombre_busqueda', $autor);
+                            $subQ->whereNotNull('va.nombre_busqueda');
                         });
                     }
                 });
@@ -218,9 +217,8 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($editorialFiltro) {
                     foreach ($editorialFiltro as $editorial) {
                         $q->orWhere(function($subQ) use ($editorial) {
-                            $subQ->where('ve.nombre_busqueda', '=', trim($editorial))
-                                 ->orWhereRaw('TRIM(ve.nombre_busqueda) = ?', [trim($editorial)])
-                                 ->whereNotNull('ve.nombre_busqueda');
+                            $this->aplicarBusquedaFlexible($subQ, 've.nombre_busqueda', $editorial);
+                            $subQ->whereNotNull('ve.nombre_busqueda');
                         });
                     }
                 });
@@ -230,9 +228,8 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($materiaFiltro) {
                     foreach ($materiaFiltro as $materia) {
                         $q->orWhere(function($subQ) use ($materia) {
-                            $subQ->where('vm.nombre_busqueda', '=', trim($materia))
-                                 ->orWhereRaw('TRIM(vm.nombre_busqueda) = ?', [trim($materia)])
-                                 ->whereNotNull('vm.nombre_busqueda');
+                            $this->aplicarBusquedaFlexible($subQ, 'vm.nombre_busqueda', $materia);
+                            $subQ->whereNotNull('vm.nombre_busqueda');
                         });
                     }
                 });
@@ -242,9 +239,8 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($serieFiltro) {
                     foreach ($serieFiltro as $serie) {
                         $q->orWhere(function($subQ) use ($serie) {
-                            $subQ->where('vs.nombre_busqueda', '=', trim($serie))
-                                 ->orWhereRaw('TRIM(vs.nombre_busqueda) = ?', [trim($serie)])
-                                 ->whereNotNull('vs.nombre_busqueda');
+                            $this->aplicarBusquedaFlexible($subQ, 'vs.nombre_busqueda', $serie);
+                            $subQ->whereNotNull('vs.nombre_busqueda');
                         });
                     }
                 });
@@ -254,9 +250,8 @@ class BusquedaAvanzadaController extends Controller
                 $query->where(function($q) use ($campusFiltro) {
                     foreach ($campusFiltro as $campus) {
                         $q->orWhere(function($subQ) use ($campus) {
-                            $subQ->where('tc.nombre_tb_campus', '=', trim($campus))
-                                 ->orWhereRaw('TRIM(tc.nombre_tb_campus) = ?', [trim($campus)])
-                                 ->whereNotNull('tc.nombre_tb_campus');
+                            $this->aplicarBusquedaFlexible($subQ, 'tc.nombre_tb_campus', $campus);
+                            $subQ->whereNotNull('tc.nombre_tb_campus');
                         });
                     }
                 });
@@ -667,6 +662,170 @@ class BusquedaAvanzadaController extends Controller
         return response()->json($resultado);
     }
 
+    /**
+     * Método para depurar problemas con filtros
+     * Ayuda a identificar por qué un filtro no funciona
+     */
+    public function depurarFiltros(Request $request)
+    {
+        $criterio = $request->input('criterio', 'autor');
+        $filtroSeleccionado = $request->input('filtro_seleccionado', '');
+        
+        if (empty($filtroSeleccionado)) {
+            return response()->json(['error' => 'Debe proporcionar un valor de filtro para depurar']);
+        }
+
+        // Procesar el filtro
+        $filtroProcessado = $this->procesarFiltro([$filtroSeleccionado]);
+        
+        // Obtener algunos registros de la tabla correspondiente para comparar
+        $query = DB::table('V_TITULO as vt');
+        
+        switch ($criterio) {
+            case 'autor':
+                $query->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
+                      ->select('va.nombre_busqueda as campo_valor')
+                      ->whereNotNull('va.nombre_busqueda')
+                      ->where('va.nombre_busqueda', '!=', '');
+                break;
+            case 'editorial':
+                $query->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
+                      ->select('ve.nombre_busqueda as campo_valor')
+                      ->whereNotNull('ve.nombre_busqueda')
+                      ->where('ve.nombre_busqueda', '!=', '');
+                break;
+            case 'materia':
+                $query->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
+                      ->select('vm.nombre_busqueda as campo_valor')
+                      ->whereNotNull('vm.nombre_busqueda')
+                      ->where('vm.nombre_busqueda', '!=', '');
+                break;
+            case 'serie':
+                $query->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
+                      ->select('vs.nombre_busqueda as campo_valor')
+                      ->whereNotNull('vs.nombre_busqueda')
+                      ->where('vs.nombre_busqueda', '!=', '');
+                break;
+            default:
+                return response()->json(['error' => 'Criterio no válido']);
+        }
+
+        // Obtener valores similares
+        $valoresSimilares = $query->where('campo_valor', 'LIKE', '%' . $filtroSeleccionado . '%')
+                                 ->distinct()
+                                 ->limit(20)
+                                 ->get()
+                                 ->pluck('campo_valor')
+                                 ->toArray();
+
+        // Buscar coincidencias exactas con diferentes comparaciones
+        $coincidenciasExactas = $query->where(function($q) use ($filtroSeleccionado) {
+            $q->where('campo_valor', '=', $filtroSeleccionado)
+              ->orWhereRaw('TRIM(campo_valor) = ?', [trim($filtroSeleccionado)])
+              ->orWhere('campo_valor', 'LIKE', '%' . $filtroSeleccionado . '%');
+        })->distinct()->limit(10)->get()->pluck('campo_valor')->toArray();
+
+        return response()->json([
+            'filtro_original' => $filtroSeleccionado,
+            'filtro_procesado' => $filtroProcessado,
+            'criterio' => $criterio,
+            'coincidencias_exactas' => $coincidenciasExactas,
+            'valores_similares' => $valoresSimilares,
+            'longitud_filtro' => strlen($filtroSeleccionado),
+            'caracteres_especiales' => preg_match('/[^\w\s\p{L}]/u', $filtroSeleccionado) ? 'SÍ' : 'NO',
+            'espacios_inicio_fin' => ($filtroSeleccionado !== trim($filtroSeleccionado)) ? 'SÍ' : 'NO'
+        ]);
+    }
+
+    /**
+     * Obtiene información detallada sobre los filtros disponibles para depuración
+     */
+    public function analizarFiltrosDisponibles(Request $request)
+    {
+        $criterio = $request->input('criterio', 'autor');
+        $limite = $request->input('limite', 50);
+        
+        // Configurar timeout para la consulta
+        $this->configurarTimeoutBD();
+
+        $query = DB::table('V_TITULO as vt');
+        
+        switch ($criterio) {
+            case 'autor':
+                $query->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
+                      ->select(
+                          'va.nombre_busqueda as valor',
+                          DB::raw('COUNT(*) as cantidad'),
+                          DB::raw('LENGTH(va.nombre_busqueda) as longitud'),
+                          DB::raw('CASE WHEN va.nombre_busqueda REGEXP "[^a-zA-Z0-9\s\p{L}]" THEN "SÍ" ELSE "NO" END as tiene_especiales')
+                      )
+                      ->whereNotNull('va.nombre_busqueda')
+                      ->where('va.nombre_busqueda', '!=', '')
+                      ->groupBy('va.nombre_busqueda');
+                break;
+            case 'editorial':
+                $query->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
+                      ->select(
+                          've.nombre_busqueda as valor',
+                          DB::raw('COUNT(*) as cantidad'),
+                          DB::raw('LENGTH(ve.nombre_busqueda) as longitud'),
+                          DB::raw('CASE WHEN ve.nombre_busqueda REGEXP "[^a-zA-Z0-9\s\p{L}]" THEN "SÍ" ELSE "NO" END as tiene_especiales')
+                      )
+                      ->whereNotNull('ve.nombre_busqueda')
+                      ->where('ve.nombre_busqueda', '!=', '')
+                      ->groupBy('ve.nombre_busqueda');
+                break;
+            case 'materia':
+                $query->leftJoin('V_MATERIA as vm', 'vt.nro_control', '=', 'vm.nro_control')
+                      ->select(
+                          'vm.nombre_busqueda as valor',
+                          DB::raw('COUNT(*) as cantidad'),
+                          DB::raw('LENGTH(vm.nombre_busqueda) as longitud'),
+                          DB::raw('CASE WHEN vm.nombre_busqueda REGEXP "[^a-zA-Z0-9\s\p{L}]" THEN "SÍ" ELSE "NO" END as tiene_especiales')
+                      )
+                      ->whereNotNull('vm.nombre_busqueda')
+                      ->where('vm.nombre_busqueda', '!=', '')
+                      ->groupBy('vm.nombre_busqueda');
+                break;
+            case 'serie':
+                $query->leftJoin('V_SERIE as vs', 'vt.nro_control', '=', 'vs.nro_control')
+                      ->select(
+                          'vs.nombre_busqueda as valor',
+                          DB::raw('COUNT(*) as cantidad'),
+                          DB::raw('LENGTH(vs.nombre_busqueda) as longitud'),
+                          DB::raw('CASE WHEN vs.nombre_busqueda REGEXP "[^a-zA-Z0-9\s\p{L}]" THEN "SÍ" ELSE "NO" END as tiene_especiales')
+                      )
+                      ->whereNotNull('vs.nombre_busqueda')
+                      ->where('vs.nombre_busqueda', '!=', '')
+                      ->groupBy('vs.nombre_busqueda');
+                break;
+            default:
+                return response()->json(['error' => 'Criterio no válido']);
+        }
+
+        $resultados = $query->orderBy('cantidad', 'desc')
+                           ->limit($limite)
+                           ->get();
+
+        // Análisis adicional
+        $estadisticas = [
+            'total_valores' => $resultados->count(),
+            'valores_con_espacios_extra' => $resultados->filter(function($item) {
+                return $item->valor !== trim($item->valor);
+            })->count(),
+            'valores_con_caracteres_especiales' => $resultados->where('tiene_especiales', 'SÍ')->count(),
+            'longitud_promedio' => $resultados->avg('longitud'),
+            'longitud_minima' => $resultados->min('longitud'),
+            'longitud_maxima' => $resultados->max('longitud')
+        ];
+
+        return response()->json([
+            'criterio' => $criterio,
+            'estadisticas' => $estadisticas,
+            'muestra_valores' => $resultados->toArray()
+        ]);
+    }
+
 
     //Configura el timeout para consultas SQL
     private function configurarTimeoutBD()
@@ -698,9 +857,9 @@ class BusquedaAvanzadaController extends Controller
             $resultado = array_filter($filtro, function($valor) {
                 return !empty(trim($valor)) && $valor !== null;
             });
-            // Limpiar espacios, normalizar y aplicar limpieza de texto
+            // Limpiar espacios y normalizar PERO NO aplicar limpiarTexto para mantener compatibilidad
             return array_values(array_map(function($valor) {
-                return $this->limpiarTexto(trim($valor));
+                return trim($valor);
             }, $resultado));
         }
 
@@ -710,14 +869,8 @@ class BusquedaAvanzadaController extends Controller
             $resultado = array_filter(array_map('trim', $valores), function($valor) {
                 return !empty($valor) && $valor !== null;
             });
-            // Aplicar limpieza de texto a cada valor
-            return array_values(array_map(function($valor) {
-                return $this->limpiarTexto($valor);
-            }, $resultado));
-            // Aplicar limpieza de texto a cada valor
-            return array_values(array_map(function($valor) {
-                return $this->limpiarTexto($valor);
-            }, $resultado));
+            // Solo limpiar espacios, no aplicar limpiarTexto
+            return array_values($resultado);
         }
 
         return [];
@@ -868,14 +1021,28 @@ class BusquedaAvanzadaController extends Controller
         }
 
         $query->where(function($subQuery) use ($campo, $valorBusqueda, $palabras) {
-            // 1. Búsqueda exacta sin signos de puntuación
-            $valorLimpio = implode(' ', $palabras);
-            $subQuery->where($campo, 'LIKE', "%{$valorLimpio}%");
+            // 1. Búsqueda exacta (sin limpiar para mantener compatibilidad)
+            $subQuery->where($campo, '=', $valorBusqueda);
             
-            // 2. Búsqueda con el texto original (por si coincide exactamente)
+            // 2. Búsqueda exacta limpiando espacios
+            $subQuery->orWhereRaw("TRIM({$campo}) = ?", [trim($valorBusqueda)]);
+            
+            // 3. Búsqueda exacta con texto limpio (sin signos de puntuación)
+            $valorLimpio = implode(' ', $palabras);
+            if ($valorLimpio !== $valorBusqueda) {
+                $subQuery->orWhere($campo, '=', $valorLimpio);
+                $subQuery->orWhereRaw("TRIM({$campo}) = ?", [trim($valorLimpio)]);
+            }
+            
+            // 4. Búsqueda con LIKE para coincidencias parciales
             $subQuery->orWhere($campo, 'LIKE', "%{$valorBusqueda}%");
             
-            // 3. Búsqueda que contenga todas las palabras individuales
+            // 5. Búsqueda con LIKE para texto limpio
+            if ($valorLimpio !== $valorBusqueda) {
+                $subQuery->orWhere($campo, 'LIKE', "%{$valorLimpio}%");
+            }
+            
+            // 6. Búsqueda que contenga todas las palabras individuales
             $subQuery->orWhere(function($wordQuery) use ($campo, $palabras) {
                 foreach ($palabras as $palabra) {
                     $palabra = trim($palabra);
@@ -885,7 +1052,7 @@ class BusquedaAvanzadaController extends Controller
                 }
             });
             
-            // 4. Para nombres de 2 palabras, probar diferentes formatos comunes
+            // 7. Para nombres de 2 palabras, probar diferentes formatos comunes
             if (count($palabras) == 2) {
                 $palabra1 = trim($palabras[0]);
                 $palabra2 = trim($palabras[1]);
@@ -906,7 +1073,7 @@ class BusquedaAvanzadaController extends Controller
                 });
             }
             
-            // 5. Para nombres de 3 o más palabras, buscar todas las combinaciones posibles
+            // 8. Para nombres de 3 o más palabras, buscar todas las combinaciones posibles
             if (count($palabras) > 2) {
                 // Buscar que contenga todas las palabras en cualquier orden
                 $subQuery->orWhere(function($multiWordQuery) use ($campo, $palabras) {
