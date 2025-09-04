@@ -51,18 +51,20 @@
         @endif
 
         {{-- Filtro por Autor --}}
-        <div class="collapsible-filter {{ request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
+        <div class="collapsible-filter {{ (isset($filtrosActivos['autor']) && !empty($filtrosActivos['autor'])) || request()->filled('autor') ? 'has-active-filter expanded' : '' }}">
             <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
                 <h2 style="color: white !important; margin: 0;">
                     <i class="fas fa-user-edit mr-2" style="color: white !important;"></i>Filtrar por Autor
-                    @if(request()->filled('autor'))
-                        @php
-                            $autorActivos = is_array(request('autor')) 
+                    @php
+                        $autorActivos = isset($filtrosActivos['autor']) && !empty($filtrosActivos['autor'])
+                            ? (is_array($filtrosActivos['autor']) ? $filtrosActivos['autor'] : [$filtrosActivos['autor']])
+                            : (is_array(request('autor')) 
                                 ? array_filter(request('autor'), function($value) { 
                                     return !empty(trim($value)); 
                                 })
-                                : (request('autor') ? [request('autor')] : []);
-                        @endphp
+                                : (request('autor') ? [request('autor')] : []));
+                    @endphp
+                    @if(!empty($autorActivos))
                         <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                             {{ count($autorActivos) }} activo(s)
                         </span>
@@ -83,7 +85,7 @@
                         @foreach ($autores as $autor)
                             <div class="filter-option">
                                 <input type="checkbox" name="autor[]" id="autor_{{ $loop->index }}"
-                                       value="{{ $autor }}" {{ is_array(request('autor')) && in_array($autor, request('autor')) ? 'checked' : '' }}
+                                       value="{{ $autor }}" {{ in_array($autor, $autorActivos) ? 'checked' : '' }}
                                        class="form-checkbox rounded">
                                 <label for="autor_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                     {{ $autor }}
@@ -99,18 +101,20 @@
         </div>
 
         {{-- Filtro por Editorial --}}
-        <div class="collapsible-filter {{ request()->filled('editorial') ? 'has-active-filter expanded' : '' }}">
+        <div class="collapsible-filter {{ (isset($filtrosActivos['editorial']) && !empty($filtrosActivos['editorial'])) || request()->filled('editorial') ? 'has-active-filter expanded' : '' }}">
             <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
                 <h2 style="color: white !important; margin: 0;">
                     <i class="fas fa-building mr-2" style="color: white !important;"></i>Filtrar por Editorial
-                    @if(request()->filled('editorial'))
-                        @php
-                            $editorialActivos = is_array(request('editorial')) 
+                    @php
+                        $editorialActivos = isset($filtrosActivos['editorial']) && !empty($filtrosActivos['editorial'])
+                            ? (is_array($filtrosActivos['editorial']) ? $filtrosActivos['editorial'] : [$filtrosActivos['editorial']])
+                            : (is_array(request('editorial')) 
                                 ? array_filter(request('editorial'), function($value) { 
                                     return !empty(trim($value)); 
                                 })
-                                : (request('editorial') ? [request('editorial')] : []);
-                        @endphp
+                                : (request('editorial') ? [request('editorial')] : []));
+                    @endphp
+                    @if(!empty($editorialActivos))
                         <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                             {{ count($editorialActivos) }} activo(s)
                         </span>
@@ -131,7 +135,7 @@
                         @foreach ($editoriales as $editorial)
                             <div class="filter-option">
                                 <input type="checkbox" name="editorial[]" id="editorial_{{ $loop->index }}"
-                                       value="{{ $editorial }}" {{ is_array(request('editorial')) && in_array($editorial, request('editorial')) ? 'checked' : '' }}
+                                       value="{{ $editorial }}" {{ in_array($editorial, $editorialActivos) ? 'checked' : '' }}
                                        class="form-checkbox rounded">
                                 <label for="editorial_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                     {{ $editorial }}
@@ -147,18 +151,20 @@
         </div>
 
         {{-- Filtro por Biblioteca --}}
-        <div class="collapsible-filter {{ request()->filled('campus') ? 'has-active-filter expanded' : '' }}">
+        <div class="collapsible-filter {{ (isset($filtrosActivos['campus']) && !empty($filtrosActivos['campus'])) || request()->filled('campus') ? 'has-active-filter expanded' : '' }}">
             <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
                 <h2 style="color: white !important; margin: 0;">
                     <i class="fas fa-building mr-2" style="color: white !important;"></i>Filtrar por Biblioteca
-                    @if(request()->filled('campus'))
-                        @php
-                            $campusActivos = is_array(request('campus')) 
+                    @php
+                        $campusActivos = isset($filtrosActivos['campus']) && !empty($filtrosActivos['campus'])
+                            ? (is_array($filtrosActivos['campus']) ? $filtrosActivos['campus'] : [$filtrosActivos['campus']])
+                            : (is_array(request('campus')) 
                                 ? array_filter(request('campus'), function($value) { 
                                     return !empty(trim($value)); 
                                 })
-                                : (request('campus') ? [request('campus')] : []);
-                        @endphp
+                                : (request('campus') ? [request('campus')] : []));
+                    @endphp
+                    @if(!empty($campusActivos))
                         <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                             {{ count($campusActivos) }} activo(s)
                         </span>
@@ -179,7 +185,7 @@
                         @foreach ($campuses as $campus)
                             <div class="filter-option">
                                 <input type="checkbox" name="campus[]" id="campus_{{ $loop->index }}"
-                                       value="{{ $campus }}" {{ is_array(request('campus')) && in_array($campus, request('campus')) ? 'checked' : '' }}
+                                       value="{{ $campus }}" {{ in_array($campus, $campusActivos) ? 'checked' : '' }}
                                        class="form-checkbox rounded">
                                 <label for="campus_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                     {{ $campus }}
@@ -195,18 +201,20 @@
         </div>
 
         {{-- Filtro por Materia --}}
-        <div class="collapsible-filter {{ request()->filled('materia') ? 'has-active-filter expanded' : '' }}">
+        <div class="collapsible-filter {{ (isset($filtrosActivos['materia']) && !empty($filtrosActivos['materia'])) || request()->filled('materia') ? 'has-active-filter expanded' : '' }}">
             <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
                 <h2 style="color: white !important; margin: 0;">
                     <i class="fas fa-book mr-2" style="color: white !important;"></i>Filtrar por Materia
-                    @if(request()->filled('materia'))
-                        @php
-                            $materiaActivos = is_array(request('materia')) 
+                    @php
+                        $materiaActivos = isset($filtrosActivos['materia']) && !empty($filtrosActivos['materia'])
+                            ? (is_array($filtrosActivos['materia']) ? $filtrosActivos['materia'] : [$filtrosActivos['materia']])
+                            : (is_array(request('materia')) 
                                 ? array_filter(request('materia'), function($value) { 
                                     return !empty(trim($value)); 
                                 })
-                                : (request('materia') ? [request('materia')] : []);
-                        @endphp
+                                : (request('materia') ? [request('materia')] : []));
+                    @endphp
+                    @if(!empty($materiaActivos))
                         <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                             {{ count($materiaActivos) }} activo(s)
                         </span>
@@ -227,7 +235,7 @@
                         @foreach ($materias as $materia)
                             <div class="filter-option">
                                 <input type="checkbox" name="materia[]" id="materia_{{ $loop->index }}"
-                                       value="{{ $materia }}" {{ is_array(request('materia')) && in_array($materia, request('materia')) ? 'checked' : '' }}
+                                       value="{{ $materia }}" {{ in_array($materia, $materiaActivos) ? 'checked' : '' }}
                                        class="form-checkbox rounded">
                                 <label for="materia_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                     {{ $materia }}
@@ -243,18 +251,20 @@
         </div>
 
         {{-- Filtro por Serie --}}
-        <div class="collapsible-filter {{ request()->filled('serie') ? 'has-active-filter expanded' : '' }}">
+        <div class="collapsible-filter {{ (isset($filtrosActivos['serie']) && !empty($filtrosActivos['serie'])) || request()->filled('serie') ? 'has-active-filter expanded' : '' }}">
             <div class="collapsible-header" style="background-color: #003876 !important; color: white !important;">
                 <h2 style="color: white !important; margin: 0;">
                     <i class="fas fa-layer-group mr-2" style="color: white !important;"></i>Filtrar por Serie
-                    @if(request()->filled('serie'))
-                        @php
-                            $serieActivos = is_array(request('serie')) 
+                    @php
+                        $serieActivos = isset($filtrosActivos['serie']) && !empty($filtrosActivos['serie'])
+                            ? (is_array($filtrosActivos['serie']) ? $filtrosActivos['serie'] : [$filtrosActivos['serie']])
+                            : (is_array(request('serie')) 
                                 ? array_filter(request('serie'), function($value) { 
                                     return !empty(trim($value)); 
                                 })
-                                : (request('serie') ? [request('serie')] : []);
-                        @endphp
+                                : (request('serie') ? [request('serie')] : []));
+                    @endphp
+                    @if(!empty($serieActivos))
                         <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                             {{ count($serieActivos) }} activo(s)
                         </span>
@@ -275,7 +285,7 @@
                         @foreach ($series as $serie)
                             <div class="filter-option">
                                 <input type="checkbox" name="serie[]" id="serie_{{ $loop->index }}"
-                                       value="{{ $serie }}" {{ is_array(request('serie')) && in_array($serie, request('serie')) ? 'checked' : '' }}
+                                       value="{{ $serie }}" {{ in_array($serie, $serieActivos) ? 'checked' : '' }}
                                        class="form-checkbox rounded">
                                 <label for="serie_{{ $loop->index }}" class="ml-2 text-gray-700 cursor-pointer flex-1">
                                     {{ $serie }}

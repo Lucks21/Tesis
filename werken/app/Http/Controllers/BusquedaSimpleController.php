@@ -184,6 +184,15 @@ class BusquedaSimpleController extends Controller
         $orden = $request->input('orden', 'asc');
         $filtros_action_route = route('busqueda.sp');
 
+        // Preservar filtros activos para la vista (vacíos en este caso)
+        $filtrosActivos = [
+            'autor' => $request->input('autor', []),
+            'editorial' => $request->input('editorial', []),
+            'materia' => $request->input('materia', []),
+            'serie' => $request->input('serie', []),
+            'campus' => $request->input('campus', [])
+        ];
+
         return view('BusquedaSimpleResultados', compact(
             'resultados',
             'criterio',
@@ -195,7 +204,8 @@ class BusquedaSimpleController extends Controller
             'materias',
             'series',
             'campuses',
-            'filtros_action_route'
+            'filtros_action_route',
+            'filtrosActivos'
         ));
     }
 
@@ -285,6 +295,15 @@ class BusquedaSimpleController extends Controller
         $orden = $request->input('orden', 'asc');
         $filtros_action_route = route('busqueda.sp');
 
+        // Preservar filtros activos para la vista
+        $filtrosActivos = [
+            'autor' => $request->input('autor', []),
+            'editorial' => $request->input('editorial', []),
+            'materia' => $request->input('materia', []),
+            'serie' => $request->input('serie', []),
+            'campus' => $request->input('campus', [])
+        ];
+
         return view('BusquedaSimpleResultados', compact(
             'resultados',
             'criterio',
@@ -296,7 +315,8 @@ class BusquedaSimpleController extends Controller
             'materias',
             'series',
             'campuses',
-            'filtros_action_route'
+            'filtros_action_route',
+            'filtrosActivos'
         ));
     }
 
@@ -516,6 +536,15 @@ class BusquedaSimpleController extends Controller
         $orden = $request->input('orden', 'asc');
         $filtros_action_route = route('busqueda.sp');
 
+        // Preservar filtros activos para la vista (vacíos en este caso)
+        $filtrosActivos = [
+            'autor' => $request->input('autor', []),
+            'editorial' => $request->input('editorial', []),
+            'materia' => $request->input('materia', []),
+            'serie' => $request->input('serie', []),
+            'campus' => $request->input('campus', [])
+        ];
+
         return view('BusquedaSimpleResultados', compact(
             'resultados',
             'criterio',
@@ -527,7 +556,8 @@ class BusquedaSimpleController extends Controller
             'materias',
             'series',
             'campuses',
-            'filtros_action_route'
+            'filtros_action_route',
+            'filtrosActivos'
         ));
     }
 
@@ -645,6 +675,9 @@ class BusquedaSimpleController extends Controller
             $campuses = collect();
             $filtros_action_route = route('busqueda.sp');
             
+            // Crear array de filtros activos vacío para el error
+            $filtrosActivos = [];
+            
             session()->flash('error', 'Error en la búsqueda: ' . $e->getMessage());
             
             return view('BusquedaSimpleResultados', compact(
@@ -660,7 +693,8 @@ class BusquedaSimpleController extends Controller
                 'valorCriterio',
                 'titulo',
                 'orden',
-                'filtros_action_route'
+                'filtros_action_route',
+                'filtrosActivos'
             ));
         }
     }
@@ -744,6 +778,15 @@ class BusquedaSimpleController extends Controller
         $orden = $request->input('orden', 'asc');
         $filtros_action_route = route('busqueda.sp');
 
+        // Preservar filtros activos para la vista (vacíos en este caso)
+        $filtrosActivos = [
+            'autor' => $request->input('autor', []),
+            'editorial' => $request->input('editorial', []),
+            'materia' => $request->input('materia', []),
+            'serie' => $request->input('serie', []),
+            'campus' => $request->input('campus', [])
+        ];
+
         return view('BusquedaSimpleResultados', compact(
             'resultados',
             'criterio',
@@ -755,7 +798,8 @@ class BusquedaSimpleController extends Controller
             'materias',
             'series',
             'campuses',
-            'filtros_action_route'
+            'filtros_action_route',
+            'filtrosActivos'
         ));
     }
 
@@ -839,6 +883,15 @@ class BusquedaSimpleController extends Controller
         $orden = $request->input('orden', 'asc');
         $filtros_action_route = route('busqueda.sp');
 
+        // Preservar filtros activos para la vista
+        $filtrosActivos = [
+            'autor' => $request->input('autor', []),
+            'editorial' => $request->input('editorial', []),
+            'materia' => $request->input('materia', []),
+            'serie' => $request->input('serie', []),
+            'campus' => $request->input('campus', [])
+        ];
+
         return view('BusquedaSimpleResultados', compact(
             'resultados',
             'criterio',
@@ -850,7 +903,8 @@ class BusquedaSimpleController extends Controller
             'materias',
             'series',
             'campuses',
-            'filtros_action_route'
+            'filtros_action_route',
+            'filtrosActivos'
         ));
     }
 
@@ -1021,6 +1075,15 @@ class BusquedaSimpleController extends Controller
         $campuses = collect();
         $filtros_action_route = route('busqueda.sp');
 
+        // Preservar filtros activos para la vista (vacíos en caso de error)
+        $filtrosActivos = [
+            'autor' => $request->input('autor', []),
+            'editorial' => $request->input('editorial', []),
+            'materia' => $request->input('materia', []),
+            'serie' => $request->input('serie', []),
+            'campus' => $request->input('campus', [])
+        ];
+
         session()->flash('error', 'Error en la búsqueda: ' . $mensaje);
 
         return view('BusquedaSimpleResultados', compact(
@@ -1034,7 +1097,8 @@ class BusquedaSimpleController extends Controller
             'materias',
             'series',
             'campuses',
-            'filtros_action_route'
+            'filtros_action_route',
+            'filtrosActivos'
         ));
     }
 
