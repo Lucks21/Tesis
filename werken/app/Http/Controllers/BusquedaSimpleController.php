@@ -153,6 +153,10 @@ class BusquedaSimpleController extends Controller
             ];
         });
 
+        // Aplicar ordenamiento
+        $orden = $request->input('orden', 'asc');
+        $datosProcesados = $this->aplicarOrdenamiento($datosProcesados, $orden);
+
         // Obtener todos los filtros disponibles para la búsqueda completa
         $filtrosCompletos = $this->obtenerFiltrosCompletos($textoBusqueda, $tipoBusqueda);
         $autores = $filtrosCompletos['autores'];
@@ -487,6 +491,10 @@ class BusquedaSimpleController extends Controller
         $series = collect();
         $campuses = collect();
 
+        // Aplicar ordenamiento
+        $orden = $request->input('orden', 'asc');
+        $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
+
         // Aplicar paginación en memoria
         $totalResultados = $resultadosProcesados->count();
         $resultadosPaginados = $resultadosProcesados->slice(($pagina - 1) * $porPagina, $porPagina);
@@ -704,6 +712,10 @@ class BusquedaSimpleController extends Controller
                 'signatura_topografica' => $this->getValue($item, ['signatura', 'signatura_topografica']),
             ];
         });
+
+        // Aplicar ordenamiento
+        $orden = $request->input('orden', 'asc');
+        $resultadosProcesados = $this->aplicarOrdenamiento($resultadosProcesados, $orden);
 
         // Obtener todos los filtros disponibles para la búsqueda completa
         $filtrosCompletos = $this->obtenerFiltrosCompletos($valorSeleccionado, $tipoBusqueda);
@@ -1117,11 +1129,18 @@ class BusquedaSimpleController extends Controller
             $resultados = collect($resultados);
         }
         
-        // Simplificado: solo ordenamiento por título
-        if ($orden === 'desc' || $orden === 'titulo_desc') {
+        // Normalizar los valores de orden que pueden venir de la vista
+        $ordenNormalizado = strtolower($orden);
+        
+        // Mapear diferentes formatos de ordenamiento
+        $ordenamientoDesc = [
+            'desc', 'descendente', 'titulo_desc', 'descending'
+        ];
+        
+        if (in_array($ordenNormalizado, $ordenamientoDesc)) {
             return $resultados->sortByDesc('titulo');
         } else {
-            // Por defecto: ascendente (asc, titulo_asc, o cualquier otro valor)
+            // Por defecto: ascendente (asc, ascendente, titulo_asc, o cualquier otro valor)
             return $resultados->sortBy('titulo');
         }
     }
