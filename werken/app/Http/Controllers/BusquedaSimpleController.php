@@ -255,13 +255,12 @@ class BusquedaSimpleController extends Controller
         $inicio = ($pagina - 1) * $porPagina;
         $datosPaginados = $datosFiltrados->slice($inicio, $porPagina)->values();
 
-        // Obtener todos los filtros disponibles para la búsqueda completa
-        $filtrosCompletos = $this->obtenerFiltrosCompletos($textoBusqueda, $tipoBusqueda);
-        $autores = $filtrosCompletos['autores'];
-        $editoriales = $filtrosCompletos['editoriales'];
-        $materias = $filtrosCompletos['materias'];
-        $series = $filtrosCompletos['series'];
-        $campuses = $filtrosCompletos['campuses'];
+        // Obtener filtros DESPUÉS de aplicar filtros (igual que en búsqueda avanzada)
+        $autores = $datosFiltrados->pluck('nombre_autor')->filter()->unique()->sort()->values();
+        $editoriales = $datosFiltrados->pluck('nombre_editorial')->filter()->unique()->sort()->values();
+        $materias = $datosFiltrados->pluck('nombre_materia')->filter()->unique()->sort()->values();
+        $series = $datosFiltrados->pluck('nombre_serie')->filter()->unique()->sort()->values();
+        $campuses = $datosFiltrados->pluck('biblioteca')->filter()->unique()->sort()->values();
 
         // Crear paginación con el total filtrado
         $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -802,13 +801,12 @@ class BusquedaSimpleController extends Controller
         $inicio = ($pagina - 1) * $porPagina;
         $datosPaginados = $datosFiltrados->slice($inicio, $porPagina)->values();
 
-        // Obtener todos los filtros disponibles para la búsqueda completa
-        $filtrosCompletos = $this->obtenerFiltrosCompletos($valorSeleccionado, $tipoBusqueda);
-        $autores = $filtrosCompletos['autores'];
-        $editoriales = $filtrosCompletos['editoriales'];
-        $materias = $filtrosCompletos['materias'];
-        $series = $filtrosCompletos['series'];
-        $campuses = $filtrosCompletos['campuses'];
+        // Obtener filtros DESPUÉS de aplicar filtros (igual que en búsqueda avanzada)
+        $autores = $datosFiltrados->pluck('nombre_autor')->filter()->unique()->sort()->values();
+        $editoriales = $datosFiltrados->pluck('nombre_editorial')->filter()->unique()->sort()->values();
+        $materias = $datosFiltrados->pluck('nombre_materia')->filter()->unique()->sort()->values();
+        $series = $datosFiltrados->pluck('nombre_serie')->filter()->unique()->sort()->values();
+        $campuses = $datosFiltrados->pluck('biblioteca')->filter()->unique()->sort()->values();
 
         // Crear paginación con el total filtrado
         $resultados = new \Illuminate\Pagination\LengthAwarePaginator(
