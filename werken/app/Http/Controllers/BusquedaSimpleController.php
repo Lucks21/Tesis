@@ -18,17 +18,6 @@ class BusquedaSimpleController extends Controller
      */
     public function buscarConStoredProcedure(Request $request)
     {
-        \Log::info('buscarConStoredProcedure: Request completo', [
-            'all_inputs' => $request->all(),
-            'has_autor' => $request->has('autor'),
-            'autor_value' => $request->input('autor', 'NOT_SET'),
-            'has_editorial' => $request->has('editorial'),
-            'editorial_value' => $request->input('editorial', 'NOT_SET'),
-            'method' => $request->method(),
-            'url' => $request->url(),
-            'query_params' => $request->query()
-        ]);
-        
         // Validación flexible para diferentes fuentes de parámetros
         $request->validate([
             'busqueda' => 'nullable|string|max:255',
@@ -97,15 +86,6 @@ class BusquedaSimpleController extends Controller
         
         // Verificar si hay filtros activos
         $hayFiltrosActivos = $this->hayFiltrosActivos($request);
-        
-        \Log::info('buscarTitulos: Decidiendo estrategia', [
-            'hayFiltrosActivos' => $hayFiltrosActivos,
-            'autor_input' => $request->input('autor', []),
-            'editorial_input' => $request->input('editorial', []),
-            'materia_input' => $request->input('materia', []),
-            'serie_input' => $request->input('serie', []),
-            'campus_input' => $request->input('campus', [])
-        ]);
         
         try {
             if ($hayFiltrosActivos) {
@@ -883,29 +863,6 @@ class BusquedaSimpleController extends Controller
         $serieFiltro = $this->procesarFiltro($request->input('serie', []));
         $campusFiltro = $this->procesarFiltro($request->input('campus', []));
 
-        // Debug: Ver datos antes del filtrado
-        \Log::info('Aplicando filtros', [
-            'total_inicial' => $filtrados->count(),
-            'autor_filtro' => $autorFiltro,
-            'editorial_filtro' => $editorialFiltro,
-            'materia_filtro' => $materiaFiltro,
-            'serie_filtro' => $serieFiltro,
-            'campus_filtro' => $campusFiltro,
-            'muestra_datos_antes_filtro' => $filtrados->take(3)->map(function($item) {
-                return [
-                    'titulo' => substr($item->nombre_busqueda ?? 'N/A', 0, 40),
-                    'autor_raw' => $item->autor ?? $item->nombre_autor ?? 'N/A',
-                    'materia_raw' => $item->materia ?? $item->nombre_materia ?? 'N/A',
-                    'editorial_raw' => $item->editorial ?? $item->nombre_editorial ?? 'N/A'
-                ];
-            })->toArray(),
-            'tiene_aenor_en_datos' => !empty($autorFiltro) && in_array('AENOR (España)', $autorFiltro) ? 
-                $filtrados->filter(function($item) {
-                    $autor = $item->autor ?? $item->nombre_autor ?? '';
-                    return strpos($autor, 'AENOR') !== false;
-                })->count() : 'N/A'
-        ]);
-
         // Filtrar por autor - usar comparación exacta como en búsqueda avanzada
         if (!empty($autorFiltro) && count($autorFiltro) > 0) {
             $antesFiltro = $filtrados->count();
@@ -924,18 +881,6 @@ class BusquedaSimpleController extends Controller
                 foreach ($autorFiltro as $filtroAutor) {
                     $filtroNormalizado = $this->normalizarTexto(trim($filtroAutor));
                     
-                    // Log detallado para debugging
-                    if ($filtroAutor === 'AENOR (España)') {
-                        \Log::info('Debug comparación autor AENOR', [
-                            'autor_original' => $autor,
-                            'autor_normalizado' => $autorNormalizado,
-                            'filtro_original' => $filtroAutor,
-                            'filtro_normalizado' => $filtroNormalizado,
-                            'coincide_exacto' => ($autorNormalizado === $filtroNormalizado),
-                            'coincide_contains' => (strpos($autorNormalizado, $filtroNormalizado) !== false)
-                        ]);
-                    }
-                    
                     // Intentar coincidencia exacta primero
                     if ($autorNormalizado === $filtroNormalizado) {
                         return true;
@@ -949,19 +894,6 @@ class BusquedaSimpleController extends Controller
                 }
                 return false;
             });
-            
-            $despuesFiltro = $filtrados->count();
-            \Log::info('Filtro autor aplicado', [
-                'antes' => $antesFiltro,
-                'despues' => $despuesFiltro,
-                'filtro_aplicado' => $autorFiltro,
-                'muestra_datos' => $filtrados->take(2)->map(function($item) {
-                    return [
-                        'autor' => $item->autor ?? $item->nombre_autor ?? 'N/A',
-                        'titulo' => substr($item->nombre_busqueda ?? 'N/A', 0, 50)
-                    ];
-                })->toArray()
-            ]);
         }
 
         // Filtrar por editorial - usar comparación exacta como en búsqueda avanzada
@@ -1012,19 +944,6 @@ class BusquedaSimpleController extends Controller
                 }
                 return false;
             });
-            
-            $despuesFiltro = $filtrados->count();
-            \Log::info('Filtro materia aplicado', [
-                'antes' => $antesFiltro,
-                'despues' => $despuesFiltro,
-                'filtro_aplicado' => $materiaFiltro,
-                'muestra_datos' => $filtrados->take(2)->map(function($item) {
-                    return [
-                        'materia' => $item->materia ?? $item->nombre_materia ?? 'N/A',
-                        'titulo' => substr($item->nombre_busqueda ?? 'N/A', 0, 50)
-                    ];
-                })->toArray()
-            ]);
         }
 
         // Filtrar por serie - usar comparación exacta como en búsqueda avanzada
@@ -1270,17 +1189,6 @@ class BusquedaSimpleController extends Controller
             return $detalles;
         }
 
-        \Log::info('enriquecerDatosEnLote: Iniciando', [
-            'total_registros' => count($detalles),
-            'primer_registro_antes' => [
-                'nro_control' => $detalles[0]->nro_control ?? 'NULL',
-                'nombre_busqueda' => $detalles[0]->nombre_busqueda ?? 'NULL',
-                'autor' => $detalles[0]->autor ?? 'NULL',
-                'editorial' => $detalles[0]->editorial ?? 'NULL',
-                'materia' => $detalles[0]->materia ?? 'NULL'
-            ]
-        ]);
-
         // Recopilar todos los nro_control únicos
         $nrosControl = collect($detalles)
             ->pluck('nro_control')
@@ -1290,14 +1198,8 @@ class BusquedaSimpleController extends Controller
             ->toArray();
 
         if (empty($nrosControl)) {
-            \Log::warning('enriquecerDatosEnLote: No hay números de control válidos');
             return $detalles;
         }
-
-        \Log::info('enriquecerDatosEnLote: Números de control', [
-            'count' => count($nrosControl),
-            'primeros_3' => array_slice($nrosControl, 0, 3)
-        ]);
 
         try {
             // Crear placeholders para la consulta IN
@@ -1352,15 +1254,6 @@ class BusquedaSimpleController extends Controller
             ", $nrosControl);
             $bibliotecasMap = collect($bibliotecas)->keyBy('nro_control');
 
-            \Log::info('enriquecerDatosEnLote: Datos consultados', [
-                'autores_encontrados' => $autoresMap->count(),
-                'editoriales_encontradas' => $editorialesMap->count(),
-                'materias_encontradas' => $materiasMap->count(),
-                'series_encontradas' => $seriesMap->count(),
-                'deweys_encontrados' => $deweysMap->count(),
-                'bibliotecas_encontradas' => $bibliotecasMap->count()
-            ]);
-
             // Enriquecer cada detalle con los datos obtenidos
             foreach ($detalles as $detalle) {
                 if (!isset($detalle->nro_control)) {
@@ -1407,10 +1300,6 @@ class BusquedaSimpleController extends Controller
             return $detalles;
 
         } catch (\Exception $e) {
-            \Log::error('Error en enriquecerDatosEnLote', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return $detalles;
         }
     }
@@ -1434,23 +1323,15 @@ class BusquedaSimpleController extends Controller
      */
     private function obtenerFiltrosCompletos($textoBusqueda, $tipoBusqueda)
     {
-        \Log::info('obtenerFiltrosCompletos: Iniciando', [
-            'textoBusqueda' => $textoBusqueda,
-            'tipoBusqueda' => $tipoBusqueda
-        ]);
-        
         try {
             // Para títulos, usar método específico que sí funciona
             if ($tipoBusqueda == 3) {
-                \Log::info('obtenerFiltrosCompletos: Usando método específico para títulos');
                 return $this->obtenerFiltrosPorTituloEficaz($textoBusqueda);
             } else {
-                \Log::info('obtenerFiltrosCompletos: Usando SP para tipo', ['tipo' => $tipoBusqueda]);
                 // Para otros tipos, usar el SP
                 return $this->obtenerFiltrosPorSP($textoBusqueda, $tipoBusqueda);
             }
         } catch (\Exception $e) {
-            \Log::error('obtenerFiltrosCompletos: Error', ['error' => $e->getMessage()]);
             // En caso de error, retornar filtros vacíos
             return [
                 'autores' => collect(),
@@ -1468,10 +1349,6 @@ class BusquedaSimpleController extends Controller
      */
     private function obtenerFiltrosPorTituloEficaz($textoBusqueda)
     {
-        \Log::info('obtenerFiltrosPorTituloEficaz: Iniciando', [
-            'textoBusqueda' => $textoBusqueda
-        ]);
-
         try {
             // PASO 1: Obtener exactamente los mismos títulos que obtenerTodosTitulos
             $titulosReales = $this->obtenerTodosTitulos($textoBusqueda);
@@ -1532,26 +1409,9 @@ class BusquedaSimpleController extends Controller
                 'campuses' => $campuses->filter()->unique()->sort()->values()
             ];
             
-            \Log::info('obtenerFiltrosPorTituloEficaz: Resultado EXACTAMENTE SINCRONIZADO', [
-                'titulos_procesados' => count($titulosEnriquecidos),
-                'autores_count' => $filtros['autores']->count(),
-                'editoriales_count' => $filtros['editoriales']->count(),
-                'materias_count' => $filtros['materias']->count(),
-                'series_count' => $filtros['series']->count(),
-                'campuses_count' => $filtros['campuses']->count(),
-                'primeros_3_autores' => $filtros['autores']->take(3)->toArray(),
-                'tiene_aenor' => $filtros['autores']->contains('AENOR (España)'),
-                'muestra_autores' => $filtros['autores']->take(10)->toArray()
-            ]);
-            
             return $filtros;
             
         } catch (\Exception $e) {
-            \Log::error('Error en obtenerFiltrosPorTituloEficaz', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return [
                 'autores' => collect(),
                 'editoriales' => collect(),
@@ -1693,21 +1553,10 @@ class BusquedaSimpleController extends Controller
      */
     private function obtenerFiltrosPorSP($textoBusqueda, $tipoBusqueda)
     {
-        // Log temporal para diagnóstico
-        \Log::info('obtenerFiltrosPorSP: Iniciando', [
-            'textoBusqueda' => $textoBusqueda,
-            'tipoBusqueda' => $tipoBusqueda
-        ]);
-
         // Ejecutar SP una sola vez para obtener todos los resultados
         $resultadosCompletos = DB::select('EXEC sp_WEB_detalle_busqueda ?, ?', [
             $textoBusqueda,
             $tipoBusqueda
-        ]);
-        
-        \Log::info('obtenerFiltrosPorSP: Resultados SP', [
-            'total_registros' => count($resultadosCompletos),
-            'primer_registro' => !empty($resultadosCompletos) ? (array)$resultadosCompletos[0] : 'N/A'
         ]);
         
         // Limitar a 2000 registros máximo para evitar timeout
@@ -1716,7 +1565,6 @@ class BusquedaSimpleController extends Controller
         }
         
         if (empty($resultadosCompletos)) {
-            \Log::warning('obtenerFiltrosPorSP: No hay resultados del SP');
             return [
                 'autores' => collect(),
                 'editoriales' => collect(),
@@ -1729,32 +1577,12 @@ class BusquedaSimpleController extends Controller
         // Enriquecer datos en lote
         $resultadosEnriquecidos = $this->enriquecerDatosEnLote($resultadosCompletos);
         
-        \Log::info('obtenerFiltrosPorSP: Después del enriquecimiento', [
-            'primer_registro_enriquecido' => !empty($resultadosEnriquecidos) ? [
-                'autor' => $resultadosEnriquecidos[0]->autor ?? 'NULL',
-                'editorial' => $resultadosEnriquecidos[0]->editorial ?? 'NULL',
-                'materia' => $resultadosEnriquecidos[0]->materia ?? 'NULL',
-                'serie' => $resultadosEnriquecidos[0]->serie ?? 'NULL',
-                'biblioteca' => $resultadosEnriquecidos[0]->biblioteca ?? 'NULL'
-            ] : 'N/A'
-        ]);
-        
         // Extraer filtros únicos
         $autores = collect($resultadosEnriquecidos)->pluck('autor')->filter()->unique()->sort()->values();
         $editoriales = collect($resultadosEnriquecidos)->pluck('editorial')->filter()->unique()->sort()->values();
         $materias = collect($resultadosEnriquecidos)->pluck('materia')->filter()->unique()->sort()->values();
         $series = collect($resultadosEnriquecidos)->pluck('serie')->filter()->unique()->sort()->values();
         $campuses = collect($resultadosEnriquecidos)->pluck('biblioteca')->filter()->unique()->sort()->values();
-        
-        \Log::info('obtenerFiltrosPorSP: Filtros extraídos', [
-            'autores_count' => $autores->count(),
-            'editoriales_count' => $editoriales->count(),
-            'materias_count' => $materias->count(),
-            'series_count' => $series->count(),
-            'campuses_count' => $campuses->count(),
-            'primeros_autores' => $autores->take(3)->toArray(),
-            'primeras_editoriales' => $editoriales->take(3)->toArray()
-        ]);
         
         return [
             'autores' => $autores,
