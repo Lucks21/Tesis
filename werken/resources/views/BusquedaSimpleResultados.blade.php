@@ -730,6 +730,42 @@
         <div class="results-container p-6">
             <h1 class="text-3xl font-bold text-gray-800 mb-6">Resultados de la Búsqueda Simple</h1>
             
+            <!-- Formulario de nueva búsqueda -->
+            <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-search mr-2 text-blue-600"></i>Nueva Búsqueda
+                </h2>
+                <form action="{{ route('busqueda.sp') }}" method="GET" class="flex items-end gap-4">
+                    <div class="flex-shrink-0" style="min-width: 180px;">
+                        <label for="tipo_busqueda_nueva" class="block text-sm font-semibold text-gray-700 mb-2">Buscar por:</label>
+                        <select name="tipo_busqueda" id="tipo_busqueda_nueva" class="w-full text-sm p-2 rounded-lg border-2 border-gray-400 shadow-md bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition-colors">
+                            <option value="1" {{ request('tipo_busqueda') == '1' ? 'selected' : '' }}>Autor</option>
+                            <option value="3" {{ request('tipo_busqueda') == '3' || !request('tipo_busqueda') ? 'selected' : '' }}>Título</option>
+                            <option value="2" {{ request('tipo_busqueda') == '2' ? 'selected' : '' }}>Materia</option>
+                            <option value="4" {{ request('tipo_busqueda') == '4' ? 'selected' : '' }}>Editorial</option>
+                            <option value="5" {{ request('tipo_busqueda') == '5' ? 'selected' : '' }}>Serie</option>
+                        </select>
+                    </div>
+                    <div class="flex-grow">
+                        <label for="busqueda_nueva" class="block text-sm font-semibold text-gray-700 mb-2">Término de búsqueda:</label>
+                        <input type="text" 
+                               id="busqueda_nueva"
+                               name="busqueda" 
+                               class="w-full text-sm p-2 rounded-lg border-2 border-gray-400 shadow-md bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition-colors" 
+                               placeholder="Ingrese el término a buscar..."
+                               value="{{ request('busqueda') ?? request('termino') ?? '' }}">
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="search-button text-sm px-4 py-2">
+                            <i class="fas fa-search mr-1"></i>Buscar
+                        </button>
+                        <a href="{{ route('busqueda') }}" class="filter-button text-sm px-4 py-2 text-center">
+                            <i class="fas fa-refresh mr-1"></i>Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
             <div class="flex flex-col lg:flex-row gap-3">
                 {{-- Incluir filtros unificados desde archivo separado --}}
                 @include('partials.filtros.filtros-busqueda-unificado')
