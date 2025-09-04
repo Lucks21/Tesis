@@ -19,6 +19,10 @@ class BusquedaAvanzadaController extends Controller
         $titulo = $request->input('titulo');
         $pagina = $request->input('page', 1);
 
+        // Limpiar el texto de entrada eliminando signos de puntuación
+        $valorCriterio = $this->limpiarTexto($valorCriterio);
+        $titulo = $this->limpiarTexto($titulo);
+
         // Parámetros de ordenamiento
         $sortBy = $request->input('sort_by', 'relevancia');
         $sortDirection = $request->input('sort_direction', 'desc');
@@ -297,6 +301,10 @@ class BusquedaAvanzadaController extends Controller
         $titulo = $request->input('titulo');
         $pagina = $request->input('page', 1);
         
+        // Limpiar el texto de entrada eliminando signos de puntuación
+        $autor = $this->limpiarTexto(urldecode($autor));
+        $titulo = $this->limpiarTexto($titulo);
+        
         // Crear texto procesado para identificar la consulta
         $texto_procesado = $autor . '|' . $titulo;
         
@@ -311,7 +319,7 @@ class BusquedaAvanzadaController extends Controller
             // Ejecutar la consulta y almacenar en sesión
             $query = DetalleMaterial::query()
                 ->select('DSM_TITULO')
-                ->where('DSM_AUTOR_EDITOR', '=', urldecode($autor));
+                ->where('DSM_AUTOR_EDITOR', '=', $autor);
 
             if ($titulo) {
                 $query->where('DSM_TITULO', 'LIKE', '%' . $titulo . '%');
@@ -342,6 +350,10 @@ class BusquedaAvanzadaController extends Controller
         $titulo = $request->input('titulo');
         $pagina = $request->input('page', 1);
         
+        // Limpiar el texto de entrada eliminando signos de puntuación
+        $editorial = $this->limpiarTexto(urldecode($editorial));
+        $titulo = $this->limpiarTexto($titulo);
+        
         // Crear texto procesado para identificar la consulta
         $texto_procesado = $editorial . '|' . $titulo;
         
@@ -356,7 +368,7 @@ class BusquedaAvanzadaController extends Controller
             // Ejecutar la consulta y almacenar en sesión
             $query = DetalleMaterial::query()
                 ->select('DSM_TITULO')
-                ->where('DSM_EDITORIAL', '=', urldecode($editorial));
+                ->where('DSM_EDITORIAL', '=', $editorial);
 
             if ($titulo) {
                 $query->where('DSM_TITULO', 'LIKE', '%' . $titulo . '%');
@@ -387,6 +399,10 @@ class BusquedaAvanzadaController extends Controller
         $titulo = $request->input('titulo');
         $pagina = $request->input('page', 1);
         
+        // Limpiar el texto de entrada eliminando signos de puntuación
+        $materia = $this->limpiarTexto(urldecode($materia));
+        $titulo = $this->limpiarTexto($titulo);
+        
         // Crear texto procesado para identificar la consulta
         $texto_procesado = $materia . '|' . $titulo;
         
@@ -402,7 +418,7 @@ class BusquedaAvanzadaController extends Controller
             $query = DB::table('DETALLE_MATERIAL')
                 ->join('V_MATERIA', 'DETALLE_MATERIAL.som_numero', '=', 'V_MATERIA.nro_control')
                 ->select('DETALLE_MATERIAL.DSM_TITULO')
-                ->where('V_MATERIA.nombre_busqueda', '=', urldecode($materia));
+                ->where('V_MATERIA.nombre_busqueda', '=', $materia);
 
             if ($titulo) {
                 $query->where('DETALLE_MATERIAL.DSM_TITULO', 'LIKE', '%' . $titulo . '%');
@@ -433,6 +449,10 @@ class BusquedaAvanzadaController extends Controller
         $titulo = $request->input('titulo');
         $pagina = $request->input('page', 1);
         
+        // Limpiar el texto de entrada eliminando signos de puntuación
+        $serie = $this->limpiarTexto(urldecode($serie));
+        $titulo = $this->limpiarTexto($titulo);
+        
         // Crear texto procesado para identificar la consulta
         $texto_procesado = $serie . '|' . $titulo;
         
@@ -448,7 +468,7 @@ class BusquedaAvanzadaController extends Controller
             $query = DB::table('DETALLE_MATERIAL')
                 ->join('V_SERIE', 'DETALLE_MATERIAL.som_numero', '=', 'V_SERIE.nro_control')
                 ->select('DETALLE_MATERIAL.DSM_TITULO')
-                ->where('V_SERIE.nombre_busqueda', '=', urldecode($serie));
+                ->where('V_SERIE.nombre_busqueda', '=', $serie);
 
             if ($titulo) {
                 $query->where('DETALLE_MATERIAL.DSM_TITULO', 'LIKE', '%' . $titulo . '%');
@@ -606,9 +626,9 @@ class BusquedaAvanzadaController extends Controller
             $resultado = array_filter($filtro, function($valor) {
                 return !empty(trim($valor)) && $valor !== null;
             });
-            // Limpiar espacios y normalizar
+            // Limpiar espacios, normalizar y aplicar limpieza de texto
             return array_values(array_map(function($valor) {
-                return trim($valor);
+                return $this->limpiarTexto(trim($valor));
             }, $resultado));
         }
 
@@ -618,7 +638,14 @@ class BusquedaAvanzadaController extends Controller
             $resultado = array_filter(array_map('trim', $valores), function($valor) {
                 return !empty($valor) && $valor !== null;
             });
-            return array_values($resultado);
+            // Aplicar limpieza de texto a cada valor
+            return array_values(array_map(function($valor) {
+                return $this->limpiarTexto($valor);
+            }, $resultado));
+            // Aplicar limpieza de texto a cada valor
+            return array_values(array_map(function($valor) {
+                return $this->limpiarTexto($valor);
+            }, $resultado));
         }
 
         return [];
@@ -720,5 +747,27 @@ class BusquedaAvanzadaController extends Controller
             }
             return '';
         })->values();
+    }
+
+    /**
+     * Limpia el texto de entrada eliminando signos de puntuación
+     * Mantiene solo letras, números y espacios
+     * @param string $texto El texto a limpiar
+     * @return string El texto limpio
+     */
+    private function limpiarTexto($texto)
+    {
+        if (empty($texto)) {
+            return '';
+        }
+
+        // Eliminar todos los caracteres que no sean letras, números o espacios
+        // Mantener caracteres acentuados y especiales del español
+        $textoLimpio = preg_replace('/[^\w\s\p{L}]/u', '', $texto);
+        
+        // Eliminar espacios múltiples y limpiar espacios al inicio y final
+        $textoLimpio = preg_replace('/\s+/', ' ', trim($textoLimpio));
+        
+        return $textoLimpio;
     }
 }
