@@ -77,22 +77,22 @@ class BusquedaAvanzadaController extends Controller
             switch ($criterio) {
                 case 'autor':
                     if (!empty($valorCriterio)) {
-                        $query->where('va.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                        $this->aplicarBusquedaFlexible($query, 'va.nombre_busqueda', $valorCriterio);
                     }
                     break;
                 case 'editorial':
                     if (!empty($valorCriterio)) {
-                        $query->where('ve.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                        $this->aplicarBusquedaFlexible($query, 've.nombre_busqueda', $valorCriterio);
                     }
                     break;
                 case 'materia':
                     if (!empty($valorCriterio)) {
-                        $query->where('vm.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                        $this->aplicarBusquedaFlexible($query, 'vm.nombre_busqueda', $valorCriterio);
                     }
                     break;
                 case 'serie':
                     if (!empty($valorCriterio)) {
-                        $query->where('vs.nombre_busqueda', 'LIKE', "%{$valorCriterio}%");
+                        $this->aplicarBusquedaFlexible($query, 'vs.nombre_busqueda', $valorCriterio);
                     }
                     break;
                 default:
@@ -113,12 +113,84 @@ class BusquedaAvanzadaController extends Controller
 
             // Solo agregar cálculo de relevancia si hay criterios de búsqueda
             if (!empty($titulo) || !empty($valorCriterio)) {
-                $selectFields[] = DB::raw("(
-                    (CASE WHEN vt.nombre_busqueda = '{$titulo}' THEN 5 ELSE 0 END) +
-                    (CASE WHEN vt.nombre_busqueda LIKE '%{$titulo}%' THEN 3 ELSE 0 END) +
-                    (CASE WHEN va.nombre_busqueda = '{$valorCriterio}' THEN 4 ELSE 0 END) +
-                    (CASE WHEN va.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 2 ELSE 0 END)
-                ) as relevancia");
+                // Dividir criterios en palabras para cálculo de relevancia (removiendo signos de puntuación)
+                $palabrasTitulo = !empty($titulo) ? array_filter(preg_split('/[\s,]+/', $titulo)) : [];
+                $palabrasCriterio = !empty($valorCriterio) ? array_filter(preg_split('/[\s,]+/', $valorCriterio)) : [];
+                
+                $relevanciaSQL = "( 0";
+                
+                // Relevancia para título exacto
+                if (!empty($titulo)) {
+                    $tituloLimpio = implode(' ', $palabrasTitulo);
+                    $relevanciaSQL .= " + (CASE WHEN vt.nombre_busqueda = '{$titulo}' THEN 10 ELSE 0 END)";
+                    $relevanciaSQL .= " + (CASE WHEN vt.nombre_busqueda = '{$tituloLimpio}' THEN 9 ELSE 0 END)";
+                    $relevanciaSQL .= " + (CASE WHEN vt.nombre_busqueda LIKE '%{$titulo}%' THEN 5 ELSE 0 END)";
+                    $relevanciaSQL .= " + (CASE WHEN vt.nombre_busqueda LIKE '%{$tituloLimpio}%' THEN 4 ELSE 0 END)";
+                }
+                
+                // Relevancia para valor criterio exacto
+                if (!empty($valorCriterio)) {
+                    $criterioLimpio = implode(' ', $palabrasCriterio);
+                    switch ($criterio) {
+                        case 'autor':
+                            $relevanciaSQL .= " + (CASE WHEN va.nombre_busqueda = '{$valorCriterio}' THEN 10 ELSE 0 END)";
+                            $relevanciaSQL .= " + (CASE WHEN va.nombre_busqueda = '{$criterioLimpio}' THEN 9 ELSE 0 END)";
+                            $relevanciaSQL .= " + (CASE WHEN va.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 6 ELSE 0 END)";
+                            $relevanciaSQL .= " + (CASE WHEN va.nombre_busqueda LIKE '%{$criterioLimpio}%' THEN 5 ELSE 0 END)";
+                            
+                            // Buscar formato "Apellido, Nombre" si hay 2 palabras
+                            if (count($palabrasCriterio) == 2) {
+                                $formatoInverso = $palabrasCriterio[1] . ', ' . $palabrasCriterio[0];
+                                $formatoInverso2 = $palabrasCriterio[1] . ' ' . $palabrasCriterio[0];
+                                $relevanciaSQL .= " + (CASE WHEN va.nombre_busqueda LIKE '%{$formatoInverso}%' THEN 7 ELSE 0 END)";
+                                $relevanciaSQL .= " + (CASE WHEN va.nombre_busqueda LIKE '%{$formatoInverso2}%' THEN 6 ELSE 0 END)";
+                            }
+                            break;
+                        case 'editorial':
+                            $relevanciaSQL .= " + (CASE WHEN ve.nombre_busqueda = '{$valorCriterio}' THEN 8 ELSE 0 END)";
+                            $relevanciaSQL .= " + (CASE WHEN ve.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 4 ELSE 0 END)";
+                            break;
+                        case 'materia':
+                            $relevanciaSQL .= " + (CASE WHEN vm.nombre_busqueda = '{$valorCriterio}' THEN 8 ELSE 0 END)";
+                            $relevanciaSQL .= " + (CASE WHEN vm.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 4 ELSE 0 END)";
+                            break;
+                        case 'serie':
+                            $relevanciaSQL .= " + (CASE WHEN vs.nombre_busqueda = '{$valorCriterio}' THEN 8 ELSE 0 END)";
+                            $relevanciaSQL .= " + (CASE WHEN vs.nombre_busqueda LIKE '%{$valorCriterio}%' THEN 4 ELSE 0 END)";
+                            break;
+                    }
+                }
+                
+                // Relevancia adicional por palabras individuales
+                foreach ($palabrasTitulo as $palabra) {
+                    if (strlen(trim($palabra)) > 2) { // Solo palabras de más de 2 caracteres
+                        $palabra = trim($palabra);
+                        $relevanciaSQL .= " + (CASE WHEN vt.nombre_busqueda LIKE '%{$palabra}%' THEN 1 ELSE 0 END)";
+                    }
+                }
+                
+                foreach ($palabrasCriterio as $palabra) {
+                    if (strlen(trim($palabra)) > 2) { // Solo palabras de más de 2 caracteres
+                        $palabra = trim($palabra);
+                        switch ($criterio) {
+                            case 'autor':
+                                $relevanciaSQL .= " + (CASE WHEN va.nombre_busqueda LIKE '%{$palabra}%' THEN 2 ELSE 0 END)";
+                                break;
+                            case 'editorial':
+                                $relevanciaSQL .= " + (CASE WHEN ve.nombre_busqueda LIKE '%{$palabra}%' THEN 2 ELSE 0 END)";
+                                break;
+                            case 'materia':
+                                $relevanciaSQL .= " + (CASE WHEN vm.nombre_busqueda LIKE '%{$palabra}%' THEN 2 ELSE 0 END)";
+                                break;
+                            case 'serie':
+                                $relevanciaSQL .= " + (CASE WHEN vs.nombre_busqueda LIKE '%{$palabra}%' THEN 2 ELSE 0 END)";
+                                break;
+                        }
+                    }
+                }
+                
+                $relevanciaSQL .= " ) as relevancia";
+                $selectFields[] = DB::raw($relevanciaSQL);
             } else {
                 $selectFields[] = DB::raw("0 as relevancia");
             }
@@ -127,7 +199,7 @@ class BusquedaAvanzadaController extends Controller
 
             // Filtros adicionales - usar comparación más robusta
             if (!empty($titulo)) {
-                $query->where('vt.nombre_busqueda', 'LIKE', "%{$titulo}%");
+                $this->aplicarBusquedaFlexible($query, 'vt.nombre_busqueda', $titulo);
             }
 
             if (!empty($autorFiltro) && count($autorFiltro) > 0) {
@@ -769,5 +841,83 @@ class BusquedaAvanzadaController extends Controller
         $textoLimpio = preg_replace('/\s+/', ' ', trim($textoLimpio));
         
         return $textoLimpio;
+    }
+
+    /**
+     * Aplica búsqueda flexible que encuentra coincidencias independientemente del orden de las palabras
+     * @param \Illuminate\Database\Query\Builder $query
+     * @param string $campo El campo de la base de datos
+     * @param string $valorBusqueda El valor a buscar
+     */
+    private function aplicarBusquedaFlexible($query, $campo, $valorBusqueda)
+    {
+        if (empty($valorBusqueda)) {
+            return;
+        }
+
+        // Dividir el valor de búsqueda en palabras (removiendo comas y otros signos)
+        $palabras = array_filter(
+            preg_split('/[\s,]+/', $valorBusqueda), 
+            function($palabra) {
+                return strlen(trim($palabra)) > 1; // Solo palabras de más de 1 carácter
+            }
+        );
+
+        if (empty($palabras)) {
+            return;
+        }
+
+        $query->where(function($subQuery) use ($campo, $valorBusqueda, $palabras) {
+            // 1. Búsqueda exacta sin signos de puntuación
+            $valorLimpio = implode(' ', $palabras);
+            $subQuery->where($campo, 'LIKE', "%{$valorLimpio}%");
+            
+            // 2. Búsqueda con el texto original (por si coincide exactamente)
+            $subQuery->orWhere($campo, 'LIKE', "%{$valorBusqueda}%");
+            
+            // 3. Búsqueda que contenga todas las palabras individuales
+            $subQuery->orWhere(function($wordQuery) use ($campo, $palabras) {
+                foreach ($palabras as $palabra) {
+                    $palabra = trim($palabra);
+                    if (strlen($palabra) > 1) {
+                        $wordQuery->where($campo, 'LIKE', "%{$palabra}%");
+                    }
+                }
+            });
+            
+            // 4. Para nombres de 2 palabras, probar diferentes formatos comunes
+            if (count($palabras) == 2) {
+                $palabra1 = trim($palabras[0]);
+                $palabra2 = trim($palabras[1]);
+                
+                // Formato: "Apellido, Nombre"
+                $subQuery->orWhere($campo, 'LIKE', "%{$palabra2}, {$palabra1}%");
+                
+                // Formato: "Apellido Nombre" (orden inverso)
+                $subQuery->orWhere($campo, 'LIKE', "%{$palabra2} {$palabra1}%");
+                
+                // Formato: "Apellido,Nombre" (sin espacio después de coma)
+                $subQuery->orWhere($campo, 'LIKE', "%{$palabra2},{$palabra1}%");
+                
+                // También buscar con cualquier signo de puntuación entre las palabras
+                $subQuery->orWhere(function($punctQuery) use ($campo, $palabra1, $palabra2) {
+                    $punctQuery->where($campo, 'LIKE', "%{$palabra1}%")
+                               ->where($campo, 'LIKE', "%{$palabra2}%");
+                });
+            }
+            
+            // 5. Para nombres de 3 o más palabras, buscar todas las combinaciones posibles
+            if (count($palabras) > 2) {
+                // Buscar que contenga todas las palabras en cualquier orden
+                $subQuery->orWhere(function($multiWordQuery) use ($campo, $palabras) {
+                    foreach ($palabras as $palabra) {
+                        $palabra = trim($palabra);
+                        if (strlen($palabra) > 1) {
+                            $multiWordQuery->where($campo, 'LIKE', "%{$palabra}%");
+                        }
+                    }
+                });
+            }
+        });
     }
 }
