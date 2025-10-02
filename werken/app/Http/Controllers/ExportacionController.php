@@ -67,22 +67,10 @@ class ExportacionController extends Controller
         // Eliminar duplicados por nro_control
         $nroControles = array_unique($nroControles);
 
-        // Crear un archivo temporal para el ZIP
-        $zipFileName = 'referencias_' . date('Y-m-d_H-i-s') . '.zip';
-        $zipPath = storage_path('app/temp/' . $zipFileName);
-        
-        // Crear directorio temporal si no existe
-        if (!file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0755, true);
-        }
+        // Inicializar contenido RIS combinado
+        $risContentCombinado = "";
 
-        // Crear el archivo ZIP
-        $zip = new \ZipArchive();
-        if ($zip->open($zipPath, \ZipArchive::CREATE) !== TRUE) {
-            return response()->json(['error' => 'No se pudo crear el archivo ZIP'], 500);
-        }
-
-        // Generar un archivo RIS por cada recurso seleccionado
+        // Generar contenido RIS combinado para todos los recursos
         foreach ($nroControles as $nroControl) {
             $recurso = DB::table('V_TITULO as vt')
                 ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
@@ -109,35 +97,33 @@ class ExportacionController extends Controller
                 // Mapear tipo de material a tipo RIS
                 $tipoRIS = $this->mapearTipoMaterialAFormato($recurso->tipo_material);
                 
-                // Generar contenido RIS
-                $risContent = "TY  - " . $tipoRIS . "\r\n";
-                $risContent .= "TI  - " . $recurso->titulo . "\r\n";
-                $risContent .= "AU  - " . $recurso->autor . "\r\n";
-                $risContent .= "PB  - " . $recurso->editorial . "\r\n";
-                $risContent .= "LA  - " . $recurso->idioma . "\r\n";
-                $risContent .= "ER  - \r\n"; // End of record marker
-
-                // Limpiar el título para usarlo como nombre de archivo
-                $tituloLimpio = preg_replace('/[^A-Za-z0-9\-_]/', '_', $recurso->titulo);
-                $tituloLimpio = substr($tituloLimpio, 0, 50); // Limitar longitud
-                $fileName = $tituloLimpio . '_' . $nroControl . '.ris';
-
-                // Agregar al ZIP
-                $zip->addFromString($fileName, $risContent);
+                // Agregar contenido RIS al contenido combinado
+                $risContentCombinado .= "TY  - " . $tipoRIS . "\r\n";
+                $risContentCombinado .= "TI  - " . $recurso->titulo . "\r\n";
+                $risContentCombinado .= "AU  - " . $recurso->autor . "\r\n";
+                $risContentCombinado .= "PB  - " . $recurso->editorial . "\r\n";
+                $risContentCombinado .= "LA  - " . $recurso->idioma . "\r\n";
+                $risContentCombinado .= "ER  - \r\n"; // End of record marker
+                $risContentCombinado .= "\r\n"; // Línea en blanco entre registros para mejor legibilidad
             }
         }
 
-        $zip->close();
-
-        // Verificar que el archivo se creó correctamente
-        if (!file_exists($zipPath)) {
-            return response()->json(['error' => 'Error al crear el archivo ZIP'], 500);
+        // Verificar que se generó contenido
+        if (empty($risContentCombinado)) {
+            return response()->json(['error' => 'No se encontraron recursos válidos para exportar'], 404);
         }
 
-        // Enviar el archivo ZIP como descarga
-        return response()->download($zipPath, $zipFileName, [
-            'Content-Type' => 'application/zip',
-        ])->deleteFileAfterSend(true);
+        // Generar nombre de archivo único
+        $fileName = 'referencias_multiples_' . date('Y-m-d_H-i-s') . '.ris';
+        
+        // Generar respuesta para descarga del archivo RIS único
+        $headers = [
+            'Content-Type' => 'application/x-research-info-systems; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Length' => strlen($risContentCombinado),
+        ];
+
+        return response($risContentCombinado, 200, $headers);
     }
 
     /**
