@@ -13,34 +13,35 @@ class BusquedaAvanzadaController extends Controller
 {
     public function buscar(Request $request)
     {
-        // Recuperar los parámetros del request
+        // se recuperar los parámetros del request
         $criterio = $request->input('criterio');
         $valorCriterio = $request->input('valor_criterio');
         $titulo = $request->input('titulo');
         $pagina = $request->input('page', 1);
 
-        // Limpiar el texto de entrada eliminando signos de puntuación
+        // Se limpia el texto
         $valorCriterio = $this->limpiarTexto($valorCriterio);
         $titulo = $this->limpiarTexto($titulo);
 
-        // Parámetros de ordenamiento
+        // Parametros de ordenamiento por defecto
         $sortBy = $request->input('sort_by', 'relevancia');
         $sortDirection = $request->input('sort_direction', 'desc');
-
+        
+        // Se obtienen filtros adicionales desde el request
         $autorFiltro = $request->input('autor', []);
         $editorialFiltro = $request->input('editorial', []);
         $campusFiltro = $request->input('campus', []);
         $materiaFiltro = $request->input('materia', []);
         $serieFiltro = $request->input('serie', []);
 
-        // Procesar los filtros para manejar tanto arrays como strings separadas por comas
+        // Se convierten los filtros recibidos en arrays limpios y uniformes
         $autorFiltro = $this->procesarFiltro($autorFiltro);
         $editorialFiltro = $this->procesarFiltro($editorialFiltro);
         $campusFiltro = $this->procesarFiltro($campusFiltro);
         $materiaFiltro = $this->procesarFiltro($materiaFiltro);
         $serieFiltro = $this->procesarFiltro($serieFiltro);
 
-        // Procesar los parámetros de entrada para crear un texto procesado
+        // Agrupa todos los parametros de búsqueda en un array
         $filtros = [
             'autor' => $autorFiltro,
             'editorial' => $editorialFiltro,
@@ -52,7 +53,7 @@ class BusquedaAvanzadaController extends Controller
         ];
         $texto_procesado = $titulo . '|' . $valorCriterio . '|' . serialize($filtros);
 
-        // Verificar si necesitamos ejecutar nueva consulta
+        // Se verifica si la consulta está en la session
         $ejecutar_nueva_consulta = (
             !session()->has('texto_busqueda') ||
             session('texto_busqueda') != $texto_procesado ||
@@ -61,9 +62,9 @@ class BusquedaAvanzadaController extends Controller
         );
 
         if ($ejecutar_nueva_consulta) {
-            // Configurar timeout para la consulta
+            // se configura el timeout para la consulta
             $this->configurarTimeoutBD();
-
+            // esto crea una consulta que combina la información de diferentes tablas para obtener datos completos
             $query = DB::table('V_TITULO as vt')
                 ->leftJoin('V_AUTOR as va', 'vt.nro_control', '=', 'va.nro_control')
                 ->leftJoin('V_EDITORIAL as ve', 'vt.nro_control', '=', 've.nro_control')
@@ -73,7 +74,7 @@ class BusquedaAvanzadaController extends Controller
                 ->leftJoin('EXISTENCIA as e', 'vt.nro_control', '=', 'e.nro_control')
                 ->leftJoin('TB_CAMPUS as tc', 'e.campus_tb_campus', '=', 'tc.campus_tb_campus');
 
-            // Aplicar criterios de búsqueda solo si tienen valores
+            // evalúa la variable criterio y aplica la búsqueda en el campo correspondiente
             switch ($criterio) {
                 case 'autor':
                     if (!empty($valorCriterio)) {
@@ -99,7 +100,8 @@ class BusquedaAvanzadaController extends Controller
                     break;
             }
 
-            // Definir campos de selección con cálculo de relevancia
+            // especifica qué columnas de las tablas unidas se traerán en los resultados y se les asigna un alias
+            // esto con el propósito de estructurar los datos que se mostrarán al usuario
             $selectFields = [
                 'vt.nro_control',
                 'vt.nombre_busqueda as titulo',
@@ -111,9 +113,41 @@ class BusquedaAvanzadaController extends Controller
                 'tc.nombre_tb_campus as biblioteca'
             ];
 
-            // Solo agregar cálculo de relevancia si hay criterios de búsqueda
+            /* 
+                    Sistema de puntuación de relevancia
+                Objetivo: crear una puntuación numérica que indique qué tan relevante es cada resultado para la busqueda del usuario
+                Funcionamiento: 
+                    1.se ejecuta solo si hay criterios de búsqueda
+                    2.contruye una fórmula SQL compleja que suma puntos según diferentes tipos de coincidencias
+                    3.asigna más puntos a coincidencias exactas y menos puntos a coincidencias parciales
+                    4.considera formatos alternativos (especialmente para nombres de autores)
+                    5.agrega el campo calculado "relevancia" a los resultados de la consulta
+                
+                Sistema de puntuación:
+                Puntuación base:
+                Sin criterios de búsqueda: 0 puntos (valor por defecto)
+                Para TÍTULOS:
+                    Coincidencia exacta original: +10 puntos
+                    Coincidencia exacta limpia: +9 puntos
+                    Coincidencia parcial original (LIKE): +5 puntos
+                    Coincidencia parcial limpia (LIKE): +4 puntos
+                    Cada palabra individual del título (>2 caracteres): +1 punto
+                Para AUTORES:
+                    Coincidencia exacta original: +10 puntos
+                    Coincidencia exacta limpia: +9 puntos
+                    Coincidencia parcial original (LIKE): +6 puntos
+                    Coincidencia parcial limpia (LIKE): +5 puntos
+                    Formato "Nombre, Apellido" (si hay 2 palabras): +7 puntos
+                    Formato "Nombre Apellido" (si hay 2 palabras): +6 puntos
+                    Cada palabra individual del autor (>2 caracteres): +2 puntos
+                Para EDITORIAL/MATERIA/SERIE:
+                    Coincidencia exacta: +8 puntos
+                    Coincidencia parcial (LIKE): +4 puntos
+                    Cada palabra individual (>2 caracteres): +2 puntos
+            */
+
             if (!empty($titulo) || !empty($valorCriterio)) {
-                // Dividir criterios en palabras para cálculo de relevancia (removiendo signos de puntuación)
+                // se dividen criterios en palabras para cálculo de relevancia (removiendo signos de puntuación)
                 $palabrasTitulo = !empty($titulo) ? array_filter(preg_split('/[\s,]+/', $titulo)) : [];
                 $palabrasCriterio = !empty($valorCriterio) ? array_filter(preg_split('/[\s,]+/', $valorCriterio)) : [];
                 
@@ -197,7 +231,9 @@ class BusquedaAvanzadaController extends Controller
 
             $query->select($selectFields);
 
-            // Filtros adicionales - usar comparación más robusta
+            // Permite filtrar por título específico Y por uno o varios autores seleccionados, usando 
+            // búsqueda inteligente que encuentra coincidencias aunque los nombres estén en diferentes formatos.
+            
             if (!empty($titulo)) {
                 $this->aplicarBusquedaFlexible($query, 'vt.nombre_busqueda', $titulo);
             }
